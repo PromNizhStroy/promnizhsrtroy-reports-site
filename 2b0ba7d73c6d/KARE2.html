@@ -769,6 +769,7 @@ function delNeed(n) {
 
 // ── Draft (localStorage) ───────────────────────────────────────────────────
 const DRAFT_KEY = 'report-draft-' + OBJECT_CODE + '-' + WEEK;
+const SENT_KEY  = 'report-sent-'  + OBJECT_CODE + '-' + WEEK;
 
 function collectDraft() {
   const works_state = {};
@@ -1119,11 +1120,17 @@ function submitOk(path) {
     text: 'Отчёт зашифрован и лёг в репозиторий. Пересылать его не нужно.',
     items: ['Файл: ' + path, 'Время отправки: ' + t],
   });
+  const btn = document.getElementById('btnSubmit');
+  if (btn) { btn.disabled = true; btn.textContent = 'Отправлено ✓'; }
   document.getElementById('saveState').textContent = 'Отчёт отправлен ' + t;
+  try { localStorage.setItem(SENT_KEY, t); } catch(e) {}
+  draftSave();
 }
 
 // Исход (г). saved=true — файл уже скачан автоматически (пропала сеть).
 function submitFailed(reason, payload, opts) {
+  const btn = document.getElementById('btnSubmit');
+  if (btn) { btn.disabled = false; btn.textContent = 'Отправить'; }
   const o = opts || {};
   let saved = false;
   if (o.autoSave) {
@@ -1144,6 +1151,9 @@ async function doSubmit() {
     return;
   }
   clearProblems();
+
+  const _sb = document.getElementById('btnSubmit');
+  if (_sb) { _sb.disabled = true; _sb.textContent = 'Отправляем…'; }
 
   showBanner('sending', 'Отправляем…', {    // исход (б)
     text: 'Отчёт шифруется и уходит в репозиторий. Не закрывайте страницу.',
@@ -1342,11 +1352,17 @@ function wire() {
   }));
 
   const sheet = document.querySelector('.sheet');
+  function unlockSubmit() {
+    const sb = document.getElementById('btnSubmit');
+    if (sb && sb.disabled) { sb.disabled = false; sb.textContent = 'Отправить изменения'; }
+  }
   sheet.addEventListener('input', guard(e => {
     // Рамка «заполните это поле» снимается с того поля, которое правят.
     if (e.target && e.target.classList) e.target.classList.remove('field-problem');
+    unlockSubmit();
     draftSave();
   }));
+  sheet.addEventListener('change', guard(() => unlockSubmit()));
 
   // Высота верхнего блока меняется вместе с баннером и переносом кнопок.
   if (typeof ResizeObserver === 'function') {
@@ -1373,6 +1389,17 @@ WORKS.forEach(w => {
 
 wire();
 syncToolbarHeight();
+
+// Плашка о предыдущей отправке: при следующем открытии страницы начальник
+// участка видит, что отчёт уже был отправлен, и может внести правки.
+const _sentTime = (() => { try { return localStorage.getItem(SENT_KEY); } catch(e) { return null; } })();
+if (_sentTime) {
+  document.getElementById('saveState').textContent =
+    'Последний отчёт отправлен ' + _sentTime +
+    ' — можно внести правки и нажать «Отправить изменения»';
+  const _btnS = document.getElementById('btnSubmit');
+  if (_btnS && !_btnS.disabled) _btnS.textContent = 'Отправить изменения';
+}
 
 })();
 </script>
