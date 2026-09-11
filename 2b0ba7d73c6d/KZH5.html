@@ -186,6 +186,51 @@ tr.row-explained td{border-color:var(--green-border)}
    прокрутки было видно, о каком именно поле речь. */
 .field-problem{outline:2px solid var(--red-border);outline-offset:1px}
 
+/* ── Выбор отчётной недели: защита от дурака ─────────────────────────────────
+   11.09.2026 Артём сделал правку, пощёлкал неделю стрелками ←/→ и увидел одну
+   и ту же правку сразу в трёх неделях: переключатель менял подпись и ключ
+   черновика, но таблицу не перерисовывал. Стрелки убраны. Неделя выбирается
+   один раз, из списка, до заполнения; пока она не выбрана, заполнять нечего —
+   таблица и кнопки заблокированы, а поверх формы висит жёлтое окно. */
+.wk{position:relative}
+.wk-btn{width:100%;min-height:34px;padding:6px 9px;text-align:left;
+  display:flex;justify-content:space-between;align-items:center;gap:6px;
+  font-size:13px;font-weight:700}
+.wk-btn.empty{color:#6b4700;font-weight:400;border-color:#b38f00;background:#fffbe0}
+.wk-caret{color:var(--muted);font-weight:400}
+.wk-list{position:absolute;z-index:28;top:100%;left:0;margin-top:3px;
+  width:260px;max-height:238px;overflow-y:auto;background:#fff;
+  border:1px solid var(--accent);border-radius:6px;
+  box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.wk-list[hidden]{display:none}
+.wk-opt{padding:6px 10px;font-size:13px;cursor:pointer;white-space:nowrap;
+  border-bottom:1px solid #eef1f4}
+.wk-opt:hover{background:#e6f2f5}
+.wk-opt.past{background:#f3fafb}
+.wk-opt.selected{font-weight:700;color:var(--accent)}
+.wk-tag{display:inline-block;margin-left:6px;font-size:10px;
+  background:var(--accent);color:#fff;border-radius:3px;padding:1px 5px}
+.wk-hint{margin-top:4px;font-size:11px;color:var(--muted)}
+.wk-hint.dirty{color:#8a5a00;font-weight:700}
+
+/* Жёлтое окно поверх формы. Стрелка нарисована его же рамкой, а не отдельным
+   элементом: так она не может разъехаться с окном. */
+.week-gate{position:absolute;z-index:25;top:calc(100% + 14px);left:0;
+  width:330px;padding:14px 16px 15px;background:#ffe93d;color:#3a2f00;
+  border:3px solid #b38f00;border-radius:8px;
+  box-shadow:0 10px 30px rgba(0,0,0,.28);font-size:13px;line-height:1.4}
+.week-gate[hidden]{display:none}
+.week-gate .g-title{margin:0 0 6px;font-size:16px;font-weight:700}
+.week-gate p{margin:0 0 6px}
+.week-gate .g-arrow{margin:0;font-weight:700}
+.week-gate:before{content:"";position:absolute;top:-14px;left:24px;
+  border:13px solid transparent;border-bottom-color:#b38f00;border-top:0}
+.week-gate:after{content:"";position:absolute;top:-10px;left:27px;
+  border:10px solid transparent;border-bottom-color:#ffe93d;border-top:0}
+
+/* Пока неделя не выбрана — форма полупрозрачна и не нажимается. */
+.locked{opacity:.3;pointer-events:none;user-select:none}
+
 /* validation */
 .validation{color:var(--danger);font-size:13px;font-weight:700;margin:8px 0}
 
@@ -201,6 +246,10 @@ tr.row-explained td{border-color:var(--green-border)}
   .topbar,.toolbar,#banner{display:none !important}
   .sheet{border:none;padding:0}
   .works-wrap{overflow:visible}
+  /* На бумаге жёлтому окну и списку недель места нет, а блокировку печатать
+     полупрозрачной незачем: печатают уже заполненную форму. */
+  .week-gate,.wk-list{display:none !important}
+  .locked{opacity:1}
   .works-table{min-width:0;font-size:10px}
   .works-table th,.works-table td{padding:3px 4px}
   /* На бумаге прилипать некуда — иначе колонки накладываются друг на друга. */
@@ -235,22 +284,34 @@ tr.row-explained td{border-color:var(--green-border)}
     <div class="span2"><label>Объект</label>
       <input type="text" id="f-object" value="ГРАФИК КЖ 5 этап"></div>
     <div><label>Внутреннее название</label>
-      <input type="text" id="f-internal-name" value="«Тепляк этап №5»"></div>
+      <input type="text" id="f-internal-name" value="Тепляк этап №5"></div>
     <div><label>Договор №</label>
       <input type="text" id="f-contract" value=""></div>
     <div><label>Захватки / оси</label>
       <input type="text" id="f-zahvatki" value="13.1, 13.10, 13.11, 13.12, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8, 13.9"></div>
     <div><label>Начальник участка</label>
-      <input type="text" id="f-author" value=""></div>
+      <input type="text" id="f-author" value="Мажоров.А.В"></div>
     <div><label>Отчётная неделя</label>
-      <div style="display:flex;align-items:center;gap:5px">
-        <button type="button" id="btnWeekPrev" style="min-height:28px;padding:2px 8px;font-size:13px" title="Предыдущая неделя">←</button>
-        <span id="f-week-display" style="font-size:13px;font-weight:700;white-space:nowrap;text-align:center;min-width:170px"></span>
-        <button type="button" id="btnWeekNext" style="min-height:28px;padding:2px 8px;font-size:13px" title="Следующая неделя">→</button>
+      <div class="wk">
+        <button type="button" id="f-week-btn" class="wk-btn empty"
+          aria-haspopup="listbox" aria-expanded="false"
+          title="Выберите неделю, за которую сдаёте отчёт"><span
+          id="f-week-text">— выберите неделю —</span><span class="wk-caret">▾</span></button>
+        <div class="wk-list" id="f-week-list" role="listbox" hidden></div>
+        <div class="week-gate" id="weekGate">
+          <p class="g-title">Сначала выберите отчётную неделю</p>
+          <p>Отчёт заполняется за одну конкретную неделю. Пока она не выбрана,
+            таблица работ и кнопки заблокированы.</p>
+          <p class="g-arrow">↑ нажмите поле «Отчётная неделя»</p>
+        </div>
+        <div class="wk-hint" id="f-week-hint"></div>
       </div></div>
     <div><label>Дата отчёта</label>
       <input type="date" id="f-date" value="2026-09-11"></div>
   </div>
+
+  <!-- Всё ниже шапки блокируется, пока не выбрана отчётная неделя. -->
+  <div id="formBody">
 
   <h2>Таблица работ</h2>
   <p style="font-size:13px;color:var(--muted);margin:0 0 8px">
@@ -323,6 +384,8 @@ tr.row-explained td{border-color:var(--green-border)}
       Данные проверены перед отправкой</label>
   </div>
   <div class="validation" id="validation"></div>
+
+  </div><!-- /formBody -->
 </div>
 
 </main>
@@ -332,8 +395,18 @@ tr.row-explained td{border-color:var(--green-border)}
 
 // ── Embedded data ──────────────────────────────────────────────────────────
 const OBJECT_CODE = "KZH5";
-let WEEK = "2026-W36";
+// Неделя, на которую собрана страница. Списку недель она не нужна — он считает
+// их от даты в браузере, иначе зашитая неделя врала бы всякий раз, когда сайт
+// не перевыкладывали. Нужна она только как метка сборки и имя файла на случай,
+// если неделю почему-то не выбрали.
+const WEEK_BAKED = "2026-W38";
+// Пустая, пока начальник участка не выбрал неделю в списке. Пустая WEEK значит:
+// ключей черновика нет, отправлять нельзя, форма заблокирована.
+let WEEK = '';
 const WORKS = [{"work_id": "KZH5-01", "src_no": "1", "group": null, "name": "Утройство песчаного слоя основания РВС №13.10, №13.12", "zahvatki_from_name": ["13.10", "13.12"], "unit": null, "qty_plan": null, "base_start": "2026-09-01", "base_duration_days": 1, "base_finish": "2026-09-01", "plan_start": "2026-09-01", "plan_finish": "2026-09-01", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": null, "aliases": []}, {"work_id": "KZH5-02", "src_no": "2", "group": null, "name": "Монтаж геомембраны и устройство защитного слоя  основания РВС№13.10, №13.12", "zahvatki_from_name": ["13.10", "13.12"], "unit": null, "qty_plan": null, "base_start": "2026-09-06", "base_duration_days": 3, "base_finish": "2026-09-08", "plan_start": "2026-09-06", "plan_finish": "2026-09-08", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-01", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 4, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-03", "src_no": "3", "group": null, "name": "Монтаж КУ-1 РВС 13.10, №13.12", "zahvatki_from_name": ["13.10", "13.12"], "unit": null, "qty_plan": null, "base_start": "2026-09-09", "base_duration_days": 1, "base_finish": "2026-09-09", "plan_start": "2026-09-09", "plan_finish": "2026-09-09", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-02", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-04", "src_no": "4", "group": null, "name": "Устройство гидрофобного слоя из асфальтобетона РВС №13.10, №13.12", "zahvatki_from_name": ["13.10", "13.12"], "unit": null, "qty_plan": null, "base_start": "2026-09-10", "base_duration_days": 3, "base_finish": "2026-09-13", "plan_start": "2026-09-10", "plan_finish": "2026-09-13", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-03", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-05", "src_no": "5", "group": null, "name": "Устройство песчаного слоя основания РВС №13.11", "zahvatki_from_name": ["13.11"], "unit": null, "qty_plan": null, "base_start": "2026-09-03", "base_duration_days": 2, "base_finish": "2026-09-05", "plan_start": "2026-09-03", "plan_finish": "2026-09-05", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": null, "aliases": []}, {"work_id": "KZH5-06", "src_no": "6", "group": null, "name": "Монтаж геомембраны и устройство защитного слоя  основания РВС№13.11", "zahvatki_from_name": ["13.11"], "unit": null, "qty_plan": null, "base_start": "2026-09-06", "base_duration_days": 3, "base_finish": "2026-09-09", "plan_start": "2026-09-06", "plan_finish": "2026-09-09", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-05", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-07", "src_no": "7", "group": null, "name": "Устройство гидрофобного слоя из асфальтобетона РВС №13.11", "zahvatki_from_name": ["13.11"], "unit": null, "qty_plan": null, "base_start": "2026-09-10", "base_duration_days": 3, "base_finish": "2026-09-13", "plan_start": "2026-09-10", "plan_finish": "2026-09-13", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-06", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-08", "src_no": "8", "group": null, "name": "Устройство бетонной подготовки фундаментов КФ  РВС №13.5, №13.6,", "zahvatki_from_name": ["13.5", "13.6"], "unit": null, "qty_plan": null, "base_start": "2026-09-01", "base_duration_days": 1, "base_finish": "2026-09-01", "plan_start": "2026-09-01", "plan_finish": "2026-09-01", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": null, "aliases": []}, {"work_id": "KZH5-09", "src_no": "9", "group": null, "name": "Армирование фундаментов РВС№13.5, 13.6", "zahvatki_from_name": ["13.5", "13.6"], "unit": null, "qty_plan": null, "base_start": "2026-09-03", "base_duration_days": 2, "base_finish": "2026-09-04", "plan_start": "2026-09-03", "plan_finish": "2026-09-04", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-08", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 1, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-10", "src_no": "10", "group": null, "name": "Бетонирование КФ РВС№ 13.5, 13.6", "zahvatki_from_name": ["13.5", "13.6"], "unit": null, "qty_plan": null, "base_start": "2026-09-05", "base_duration_days": 1, "base_finish": "2026-09-05", "plan_start": "2026-09-05", "plan_finish": "2026-09-05", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-09", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-11", "src_no": "11", "group": null, "name": "Устройство песчаного слоя основания РВС№13.5, 13.6", "zahvatki_from_name": ["13.5", "13.6"], "unit": null, "qty_plan": null, "base_start": "2026-09-07", "base_duration_days": 2, "base_finish": "2026-09-08", "plan_start": "2026-09-07", "plan_finish": "2026-09-08", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-10", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 1, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-12", "src_no": "12", "group": null, "name": "Монтаж геомембраны и устройство защитного слоя  основания РВС№13.5, 13.6", "zahvatki_from_name": ["13.5", "13.6"], "unit": null, "qty_plan": null, "base_start": "2026-09-09", "base_duration_days": 3, "base_finish": "2026-09-11", "plan_start": "2026-09-09", "plan_finish": "2026-09-11", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-11", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-13", "src_no": "13", "group": null, "name": "Устройство гидрофобного слоя из асфальтобетона РВС №13.5, 13.6", "zahvatki_from_name": ["13.5", "13.6"], "unit": null, "qty_plan": null, "base_start": "2026-09-12", "base_duration_days": 3, "base_finish": "2026-09-14", "plan_start": "2026-09-12", "plan_finish": "2026-09-14", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-12", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-14", "src_no": "14", "group": null, "name": "Устройство системы обнаружения утечек РВС№13.7, 13.8", "zahvatki_from_name": ["13.7", "13.8"], "unit": null, "qty_plan": null, "base_start": "2026-09-15", "base_duration_days": 1, "base_finish": "2026-09-15", "plan_start": "2026-09-15", "plan_finish": "2026-09-15", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": null, "aliases": []}, {"work_id": "KZH5-15", "src_no": "15", "group": null, "name": "Устройство бетонной подготовки фундаментов КФ  РВС№13.7, 13.8", "zahvatki_from_name": ["13.7", "13.8"], "unit": null, "qty_plan": null, "base_start": "2026-09-15", "base_duration_days": 1, "base_finish": "2026-09-15", "plan_start": "2026-09-15", "plan_finish": "2026-09-15", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-14", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": -1, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-16", "src_no": "16", "group": null, "name": "Армирование фундаментов РВС№13.7, 13.8", "zahvatki_from_name": ["13.7", "13.8"], "unit": null, "qty_plan": null, "base_start": "2026-09-16", "base_duration_days": 2, "base_finish": "2026-09-17", "plan_start": "2026-09-16", "plan_finish": "2026-09-17", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-15", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-17", "src_no": "17", "group": null, "name": "Бетонирование КФ РВС№ 13.7, 13.8", "zahvatki_from_name": ["13.7", "13.8"], "unit": null, "qty_plan": null, "base_start": "2026-09-18", "base_duration_days": 1, "base_finish": "2026-09-18", "plan_start": "2026-09-18", "plan_finish": "2026-09-18", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-16", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-18", "src_no": "18", "group": null, "name": "Устройство песчаного слоя основания РВС№13.7, 13.8", "zahvatki_from_name": ["13.7", "13.8"], "unit": null, "qty_plan": null, "base_start": "2026-09-20", "base_duration_days": 2, "base_finish": "2026-09-21", "plan_start": "2026-09-20", "plan_finish": "2026-09-21", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-17", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 1, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-19", "src_no": "19", "group": null, "name": "Монтаж геомембраны и устройство защитного слоя  основания РВС№13.7, 13.8", "zahvatki_from_name": ["13.7", "13.8"], "unit": null, "qty_plan": null, "base_start": "2026-09-22", "base_duration_days": 3, "base_finish": "2026-09-24", "plan_start": "2026-09-22", "plan_finish": "2026-09-24", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-18", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-20", "src_no": "20", "group": null, "name": "Устройство гидрофобного слоя из асфальтобетона РВС №13.7, 13.8", "zahvatki_from_name": ["13.7", "13.8"], "unit": null, "qty_plan": null, "base_start": "2026-09-25", "base_duration_days": 3, "base_finish": "2026-09-27", "plan_start": "2026-09-25", "plan_finish": "2026-09-27", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-19", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-21", "src_no": "21", "group": null, "name": "Бетонная подготовка фундамента колодцев КУ-1 РВС №13.7-13.12", "zahvatki_from_name": ["13.7", "13.8", "13.9", "13.10", "13.11", "13.12"], "unit": null, "qty_plan": null, "base_start": "2026-09-15", "base_duration_days": 1, "base_finish": "2026-09-15", "plan_start": "2026-09-15", "plan_finish": "2026-09-15", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": null, "aliases": []}, {"work_id": "KZH5-22", "src_no": "17", "group": null, "name": "Устройство системы обнаружения утечек РВС№13.3, 13.4, 13.9", "zahvatki_from_name": ["13.3", "13.4", "13.9"], "unit": null, "qty_plan": null, "base_start": "2026-09-19", "base_duration_days": 1, "base_finish": "2026-09-19", "plan_start": "2026-09-19", "plan_finish": "2026-09-19", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": null, "aliases": []}, {"work_id": "KZH5-23", "src_no": "18", "group": null, "name": "Устройство бетонной подготовки фундаментов КФ  РВС№13.3, 13.4, 13.9", "zahvatki_from_name": ["13.3", "13.4", "13.9"], "unit": null, "qty_plan": null, "base_start": "2026-09-19", "base_duration_days": 1, "base_finish": "2026-09-20", "plan_start": "2026-09-19", "plan_finish": "2026-09-20", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-22", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": -1, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-24", "src_no": "19", "group": null, "name": "Армирование фундаментов РВС№13.3, 13.4, 13.9", "zahvatki_from_name": ["13.3", "13.4", "13.9"], "unit": null, "qty_plan": null, "base_start": "2026-09-21", "base_duration_days": 3, "base_finish": "2026-09-24", "plan_start": "2026-09-21", "plan_finish": "2026-09-24", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-23", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-25", "src_no": "20", "group": null, "name": "Бетонирование КФ РВС№13.3, 13.4, 13.9", "zahvatki_from_name": ["13.3", "13.4", "13.9"], "unit": null, "qty_plan": null, "base_start": "2026-09-25", "base_duration_days": 3, "base_finish": "2026-09-28", "plan_start": "2026-09-25", "plan_finish": "2026-09-28", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-24", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-26", "src_no": "21", "group": null, "name": "Устройство песчаного слоя основания РВС№13.3, 13.4, 13.9", "zahvatki_from_name": ["13.3", "13.4", "13.9"], "unit": null, "qty_plan": null, "base_start": "2026-09-30", "base_duration_days": 1, "base_finish": "2026-10-01", "plan_start": "2026-09-30", "plan_finish": "2026-10-01", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-25", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 1, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-27", "src_no": "22", "group": null, "name": "Монтаж геомембраны и устройство защитного слоя  основания РВС№13.3, 13.4, 13.9", "zahvatki_from_name": ["13.3", "13.4", "13.9"], "unit": null, "qty_plan": null, "base_start": "2026-10-02", "base_duration_days": 5, "base_finish": "2026-10-07", "plan_start": "2026-10-02", "plan_finish": "2026-10-07", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-26", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-28", "src_no": "23", "group": null, "name": "Устройство гидрофобного слоя из асфальтобетона РВС №13.3, 13.4, 13.9", "zahvatki_from_name": ["13.3", "13.4", "13.9"], "unit": null, "qty_plan": null, "base_start": "2026-10-08", "base_duration_days": 4, "base_finish": "2026-10-12", "plan_start": "2026-10-08", "plan_finish": "2026-10-12", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-27", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-29", "src_no": "24", "group": null, "name": "Бетонирование фундаментов колодца КУ-1 РВС№13.7-13.12", "zahvatki_from_name": ["13.7", "13.8", "13.9", "13.10", "13.11", "13.12"], "unit": null, "qty_plan": null, "base_start": "2026-09-18", "base_duration_days": 1, "base_finish": "2026-09-18", "plan_start": "2026-09-18", "plan_finish": "2026-09-18", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-21", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 2, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-30", "src_no": "25", "group": null, "name": "Монтаж колодцев КУ РВС№13.7-13.12", "zahvatki_from_name": ["13.7", "13.8", "13.9", "13.10", "13.11", "13.12"], "unit": null, "qty_plan": null, "base_start": "2026-09-25", "base_duration_days": 2, "base_finish": "2026-09-26", "plan_start": "2026-09-25", "plan_finish": "2026-09-26", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-29", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 6, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-31", "src_no": "27", "group": null, "name": "Устройство системы обнаружения утечек РВС№13.1, 13.2", "zahvatki_from_name": ["13.1", "13.2"], "unit": null, "qty_plan": null, "base_start": "2026-09-29", "base_duration_days": 1, "base_finish": "2026-09-29", "plan_start": "2026-09-29", "plan_finish": "2026-09-29", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": null, "aliases": []}, {"work_id": "KZH5-32", "src_no": "28", "group": null, "name": "Устройство бетонной подготовки фундаментов КФ  РВС№13.1, 13,2", "zahvatki_from_name": ["13.1", "13.2"], "unit": null, "qty_plan": null, "base_start": "2026-09-30", "base_duration_days": 1, "base_finish": "2026-09-30", "plan_start": "2026-09-30", "plan_finish": "2026-09-30", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-31", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-33", "src_no": "29", "group": null, "name": "Армирование фундаментов РВС№13.1, 13.2", "zahvatki_from_name": ["13.1", "13.2"], "unit": null, "qty_plan": null, "base_start": "2026-10-01", "base_duration_days": 3, "base_finish": "2026-10-03", "plan_start": "2026-10-01", "plan_finish": "2026-10-03", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-32", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-34", "src_no": "30", "group": null, "name": "Бетонирование КФ РВС№13.1, 13.2", "zahvatki_from_name": ["13.1", "13.2"], "unit": null, "qty_plan": null, "base_start": "2026-10-04", "base_duration_days": 2, "base_finish": "2026-10-05", "plan_start": "2026-10-04", "plan_finish": "2026-10-05", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-33", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-35", "src_no": "31", "group": null, "name": "Устройство песчаного слоя основания РВС№13.1, 13.2", "zahvatki_from_name": ["13.1", "13.2"], "unit": null, "qty_plan": null, "base_start": "2026-10-07", "base_duration_days": 2, "base_finish": "2026-10-08", "plan_start": "2026-10-07", "plan_finish": "2026-10-08", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-34", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 1, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-36", "src_no": "32", "group": null, "name": "Монтаж геомембраны и устройство защитного слоя  основания РВС№13.1, 13.2", "zahvatki_from_name": ["13.1", "13.2"], "unit": null, "qty_plan": null, "base_start": "2026-10-09", "base_duration_days": 3, "base_finish": "2026-10-11", "plan_start": "2026-10-09", "plan_finish": "2026-10-11", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-35", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-37", "src_no": "33", "group": null, "name": "Устройство гидрофобного слоя из асфальтобетона РВС №13.1, 13.2", "zahvatki_from_name": ["13.1", "13.2"], "unit": null, "qty_plan": null, "base_start": "2026-10-12", "base_duration_days": 3, "base_finish": "2026-10-14", "plan_start": "2026-10-12", "plan_finish": "2026-10-14", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-36", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-38", "src_no": "34", "group": null, "name": "Бетонная подготовка фундамента колодцев КУ-1 РВС №13.1-13.6", "zahvatki_from_name": ["13.1", "13.2", "13.3", "13.4", "13.5", "13.6"], "unit": null, "qty_plan": null, "base_start": "2026-09-30", "base_duration_days": 1, "base_finish": "2026-09-30", "plan_start": "2026-09-30", "plan_finish": "2026-09-30", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": null, "aliases": []}, {"work_id": "KZH5-39", "src_no": "35", "group": null, "name": "Бетонирование фундаментов колодца КУ-1 РВС№13.1-13.6", "zahvatki_from_name": ["13.1", "13.2", "13.3", "13.4", "13.5", "13.6"], "unit": null, "qty_plan": null, "base_start": "2026-10-05", "base_duration_days": 1, "base_finish": "2026-10-05", "plan_start": "2026-10-05", "plan_finish": "2026-10-05", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KZH5-38", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 4, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KZH5-40", "src_no": "36", "group": null, "name": "Монтаж КУ-1 РВС 13.5", "zahvatki_from_name": ["13.5"], "unit": null, "qty_plan": null, "base_start": "2026-10-14", "base_duration_days": 1, "base_finish": "2026-10-14", "plan_start": "2026-10-14", "plan_finish": "2026-10-14", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": null, "aliases": []}];
+// Состояние, с которым страница собрана: план из хранилища и шапка. К нему
+// возвращает resetForm() — при переключении недели и по кнопке «Очистить».
+const DEFAULTS = {"object": "ГРАФИК КЖ 5 этап", "internal_name": "Тепляк этап №5", "contract": "", "zahvatki": "13.1, 13.10, 13.11, 13.12, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8, 13.9", "author": "Мажоров.А.В"};
 const TODAY = isoLocal(new Date());
 const GH_OWNER  = "PromNizhStroy";
 const GH_REPO   = "promnizhsrtroy-reports-data";
@@ -805,13 +878,22 @@ function delNeed(n) {
 }
 
 // ── Draft (localStorage) ───────────────────────────────────────────────────
-let DRAFT_KEY = 'report-draft-' + OBJECT_CODE + '-' + WEEK;
-let SENT_KEY  = 'report-sent-'  + OBJECT_CODE + '-' + WEEK;
+// Ключи свои у каждой пары (объект, отчётная неделя): черновик одной недели не
+// виден в другой и не переезжает туда при переключении. Пустые, пока неделя не
+// выбрана, — тогда draftSave/draftLoad/checkSentBanner молча не делают ничего.
+let DRAFT_KEY = '';
+let SENT_KEY  = '';
 
-// ── Week picker ────────────────────────────────────────────────────────────
-// Отчётная неделя = неделя, заканчивающаяся последним воскресеньем ≤ сегодня.
-// _weekOffset: 0 = отчётная неделя; -1 = предыдущая; +1 = следующая (переключатель).
-let _weekOffset = 0;
+// ── Выбор отчётной недели ──────────────────────────────────────────────────
+// Неделя не подставляется сама и не переключается стрелками: до 11.09.2026
+// стрелки ←/→ меняли подпись и ключ черновика, но не перерисовывали таблицу, и
+// одна правка оказывалась видна сразу в нескольких неделях.
+//
+// _weekOffset: null — не выбрана; 0 — последняя прошедшая (та, за которую
+// отчёт сдают в девяти случаях из десяти); -1 — на неделю раньше; +1 — текущая,
+// ещё не закончившаяся.
+let _weekOffset = null;
+const WEEKS_BACK = 8, WEEKS_FWD = 8;
 
 function _lastSunBeforeOrOn(d) {
   // d.getDay(): 0=вс, 1=пн … 6=сб. Откатываемся до ближайшего воскресенья.
@@ -834,35 +916,214 @@ function _fmtD(d) {
   return p(d.getDate()) + '.' + p(d.getMonth() + 1) + '.' + d.getFullYear();
 }
 
-function applyWeekOffset() {
-  const today = new Date(TODAY + 'T00:00:00');
-  const baseSun = _lastSunBeforeOrOn(today);
-  const sun = new Date(baseSun);
-  sun.setDate(baseSun.getDate() + _weekOffset * 7);
+function _fmtDM(d) {
+  const p = n => String(n).padStart(2, '0');
+  return p(d.getDate()) + '.' + p(d.getMonth() + 1);
+}
+
+// Границы недели по смещению от последней прошедшей. Считается от даты в
+// браузере, а не от недели, на которую собрана страница: сайт перевыкладывается
+// не каждую неделю, и зашитый якорь через месяц показывал бы прошлое.
+function weekBounds(offset) {
+  const sun = _lastSunBeforeOrOn(new Date(TODAY + 'T00:00:00'));
+  sun.setDate(sun.getDate() + offset * 7);
   const mon = new Date(sun);
   mon.setDate(sun.getDate() - 6);
+  return {mon: mon, sun: sun, iso: _isoWeek(mon),
+          range: _fmtD(mon) + ' – ' + _fmtD(sun),
+          short: _fmtDM(mon) + ' – ' + _fmtDM(sun)};
+}
 
-  const nextMon = new Date(sun);
-  nextMon.setDate(sun.getDate() + 1);
-  const nextSun = new Date(nextMon);
-  nextSun.setDate(nextMon.getDate() + 6);
+function buildWeekList() {
+  const list = document.getElementById('f-week-list');
+  list.innerHTML = '';
+  for (let off = -WEEKS_BACK; off <= WEEKS_FWD; off++) {
+    const b = weekBounds(off);
+    const el = document.createElement('div');
+    el.className = 'wk-opt' + (off === 0 ? ' past' : '');
+    el.setAttribute('role', 'option');
+    el.dataset.offset = String(off);
+    el.dataset.week = b.iso;
+    el.textContent = b.range;
+    if (off === 0) {
+      const tag = document.createElement('span');
+      tag.className = 'wk-tag';
+      tag.textContent = 'прошедшая неделя';
+      el.appendChild(tag);
+    }
+    list.appendChild(el);
+  }
+  markSelectedWeek();
+}
 
-  WEEK      = _isoWeek(mon);
-  DRAFT_KEY = 'report-draft-' + OBJECT_CODE + '-' + WEEK;
-  SENT_KEY  = 'report-sent-'  + OBJECT_CODE + '-' + WEEK;
+function markSelectedWeek() {
+  document.querySelectorAll('#f-week-list .wk-opt').forEach(el => {
+    el.classList.toggle('selected', Number(el.dataset.offset) === _weekOffset);
+  });
+}
 
-  const rangeStr  = _fmtD(mon)     + ' – ' + _fmtD(sun);
-  const nextRange = _fmtD(nextMon) + ' – ' + _fmtD(nextSun);
+// Список открывается прокрученным так, что прошедшая неделя — по центру.
+// Выбранной она при этом не становится: выбрать должен человек.
+function centerPastWeek() {
+  const list = document.getElementById('f-week-list');
+  const past = list.querySelector('.wk-opt.past');
+  if (!past) return;
+  list.scrollTop = Math.max(
+    0, past.offsetTop - (list.clientHeight - past.offsetHeight) / 2);
+}
 
+function openWeekList() {
+  const list = document.getElementById('f-week-list');
+  buildWeekList();      // страница могла быть открыта с вечера — даты пересчитываются
+  list.hidden = false;
+  document.getElementById('f-week-btn').setAttribute('aria-expanded', 'true');
+  centerPastWeek();
+}
+
+function closeWeekList() {
+  const list = document.getElementById('f-week-list');
+  if (!list || list.hidden) return;
+  list.hidden = true;
+  document.getElementById('f-week-btn').setAttribute('aria-expanded', 'false');
+}
+
+// Подписи недели: в шапке, в поле и в заголовке потребностей (там — следующая).
+function applyWeekOffset() {
+  const chosen = _weekOffset !== null;
+  const b = weekBounds(chosen ? _weekOffset : 0);
+  const next = weekBounds((chosen ? _weekOffset : 0) + 1);
+
+  WEEK      = chosen ? b.iso : '';
+  DRAFT_KEY = chosen ? 'report-draft-' + OBJECT_CODE + '-' + WEEK : '';
+  SENT_KEY  = chosen ? 'report-sent-'  + OBJECT_CODE + '-' + WEEK : '';
+
+  const txt = document.getElementById('f-week-text');
+  if (txt) txt.textContent = chosen ? b.range : '— выберите неделю —';
+  const btn = document.getElementById('f-week-btn');
+  if (btn) btn.classList.toggle('empty', !chosen);
   const hdr = document.getElementById('hdr-week-range');
-  if (hdr) hdr.textContent = rangeStr;
-  const fwd = document.getElementById('f-week-display');
-  if (fwd) fwd.textContent = rangeStr;
+  if (hdr) hdr.textContent = chosen ? b.range : 'не выбрана';
   const nwr = document.getElementById('needs-week-range');
-  if (nwr) nwr.textContent = nextRange;
+  if (nwr) nwr.textContent = chosen ? next.range : '—';
+}
+
+// Строка под полем недели. Без неё переключение недели ничем себя не выдавало,
+// и понять, куда делась правка, было невозможно.
+function weekHasEdits() {
+  if (_manualEdited.size) return true;
+  if (document.querySelector('#worksTbody tr.row-changed')) return true;
+  if (['f-risks', 'f-decisions', 'f-plan-notes'].some(
+        id => ((document.getElementById(id) || {}).value || '').trim())) return true;
+  for (let i = 1; i <= needsCount; i++) {
+    const d = document.getElementById('ndesc-' + i);
+    if (d && d.value.trim()) return true;
+  }
+  return false;
+}
+
+function updateWeekHint() {
+  const el = document.getElementById('f-week-hint');
+  if (!el) return;
+  if (_weekOffset === null) {
+    el.textContent = 'неделя не выбрана';
+    el.className = 'wk-hint';
+    return;
+  }
+  const sent = (() => {
+    try { return localStorage.getItem(SENT_KEY); } catch(e) { return null; }
+  })();
+  if (sent) {
+    el.textContent = 'отчёт за эту неделю отправлен ' + sent;
+    el.className = 'wk-hint';
+    return;
+  }
+  const dirty = weekHasEdits();
+  el.textContent = dirty ? 'есть неотправленные правки' : 'в этой неделе правок нет';
+  el.className = 'wk-hint' + (dirty ? ' dirty' : '');
+}
+
+// Форма заблокирована, пока неделя не выбрана. Не украшение: без недели правка
+// легла бы в черновик без адреса, а отчёт ушёл бы неизвестно за какую неделю.
+const LOCK_BUTTONS = ['btnSubmit', 'btnSave', 'btnPrint', 'btnClear'];
+
+function setLocked(locked) {
+  const body = document.getElementById('formBody');
+  if (body) body.classList.toggle('locked', locked);
+  const gate = document.getElementById('weekGate');
+  if (gate) gate.hidden = !locked;
+  LOCK_BUTTONS.forEach(id => {
+    const b = document.getElementById(id);
+    if (b) b.disabled = locked;
+  });
+  const ss = document.getElementById('saveState');
+  if (ss) ss.textContent = locked ? 'Неделя не выбрана'
+                                  : 'Черновик сохраняется автоматически';
+}
+
+// Всё, что делает выбор недели: сохранить черновик прежней, вернуть форму к
+// плану из хранилища, наложить черновик выбранной. Сброс обязателен — draftLoad
+// только подставляет значения и ничего не убирает.
+function chooseWeek(offset) {
+  closeWeekList();
+  if (offset === _weekOffset) return;
+  if (_weekOffset !== null) draftSave();
+  _weekOffset = offset;
+  applyWeekOffset();
+  resetForm();
+  draftLoad();
+  refreshPrevFinish();
+  markSelectedWeek();
+  setLocked(false);
+  checkSentBanner();
+  updateWeekHint();
+}
+
+// Форма возвращается ровно к тому, с чем собрана страница: «Исх.» — базовая
+// линия по договору, «Тек.» — текущий план из хранилища. Примечание об
+// отклонении при этом исчезает: оно принадлежит отчёту той недели, в которой
+// правку сделали, и в форме следующей недели ему места нет — там уже
+// скорректированные даты.
+function resetForm() {
+  _manualEdited.clear();
+  Object.keys(_prevFinish).forEach(k => { delete _prevFinish[k]; });
+  Object.keys(_prevStatus).forEach(k => { delete _prevStatus[k]; });
+
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
+  set('f-object', DEFAULTS.object);
+  set('f-internal-name', DEFAULTS.internal_name);
+  set('f-contract', DEFAULTS.contract);
+  set('f-zahvatki', DEFAULTS.zahvatki);
+  set('f-author', DEFAULTS.author);
+  set('f-date', TODAY);
+  ['f-risks', 'f-decisions', 'f-plan-notes'].forEach(id => set(id, ''));
+  ['chk1', 'chk2', 'chk3', 'chk4'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.checked = false;
+  });
+
+  needsCount = 0;
+  document.getElementById('needsTbody').innerHTML = '';
+  addNeedRow();
+
+  renderWorks();          // строки собираются заново из WORKS
+  clearProblems();
+  hideBanner();
+  const sb = document.getElementById('btnSubmit');
+  if (sb) { sb.disabled = false; sb.textContent = 'Отправить'; }
+}
+
+// Каскад считает сдвиг от прежнего окончания, поэтому после сброса и загрузки
+// черновика запомненные значения надо освежить — иначе первая же правка
+// сдвинет преемников на разницу с датой из другой недели.
+function refreshPrevFinish() {
+  WORKS.forEach(w => {
+    const cf = document.getElementById('cf-' + w.work_id);
+    if (cf) _prevFinish[w.work_id] = cf.value;
+  });
 }
 
 function checkSentBanner() {
+  if (!SENT_KEY) return;
   const sentTime = (() => { try { return localStorage.getItem(SENT_KEY); } catch(e) { return null; } })();
   const ss = document.getElementById('saveState');
   const sb = document.getElementById('btnSubmit');
@@ -933,6 +1194,7 @@ function collectDraft() {
 }
 
 function draftSave() {
+  if (!DRAFT_KEY) return;        // неделя не выбрана — сохранять некуда
   try {
     localStorage.setItem(DRAFT_KEY, JSON.stringify(collectDraft()));
     const t = new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
@@ -940,9 +1202,11 @@ function draftSave() {
   } catch(e) {
     document.getElementById('saveState').textContent = 'Ошибка сохранения черновика';
   }
+  updateWeekHint();
 }
 
 function draftLoad() {
+  if (!DRAFT_KEY) return;
   try {
     const raw = localStorage.getItem(DRAFT_KEY);
     if (!raw) return;
@@ -1087,7 +1351,7 @@ function buildPayload() {
 
 function downloadJson(payload) {
   const today = payload.report.date || TODAY;
-  const fname = `${OBJECT_CODE}-${WEEK}-${today}.json`;
+  const fname = `${OBJECT_CODE}-${WEEK || WEEK_BAKED}-${today}.json`;
   const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -1278,6 +1542,17 @@ async function doSubmit() {
   }
   clearProblems();
 
+  // Неделя подтверждается вслух: отчёт уходит в файл с её номером, и «не та
+  // неделя» разбирается не как ошибка, а как отчёт за другую неделю.
+  const _wb = weekBounds(_weekOffset);
+  if (!confirm('Отправляете отчёт за неделю ' + _wb.short + '. Верно?')) {
+    showBanner('warn', 'Отправка отменена', {
+      text: 'Отчёт никуда не ушёл. Если неделя не та — выберите её в поле '
+            + '«Отчётная неделя» вверху.',
+    });
+    return;
+  }
+
   const _sb = document.getElementById('btnSubmit');
   if (_sb) { _sb.disabled = true; _sb.textContent = 'Отправляем…'; }
 
@@ -1348,6 +1623,11 @@ async function doSubmit() {
 // по «KARE2-03» начальник участка не поймёт, о чём речь.
 function validate() {
   const problems = [];
+  // Без недели остальное спрашивать бессмысленно: отчёт всё равно некуда класть.
+  if (_weekOffset === null) {
+    problems.push({focus: 'f-week-btn', text: 'Отчётная неделя не выбрана.'});
+    return problems;
+  }
   const author = document.getElementById('f-author').value.trim();
   if (!author) problems.push({focus: 'f-author', text: 'Начальник участка — фамилия не указана.'});
 
@@ -1460,20 +1740,25 @@ function wire() {
   document.getElementById('addNeed').addEventListener('click',
     guard(() => { addNeedRow(); draftSave(); }));
 
-  // Переключатель недели: ← предыдущая / следующая →
-  document.getElementById('btnWeekPrev').addEventListener('click', guard(() => {
-    draftSave();
-    _weekOffset -= 1;
-    applyWeekOffset();
-    draftLoad();
-    checkSentBanner();
+  // Выбор отчётной недели: список недель, а не переключатель.
+  const wkBtn = document.getElementById('f-week-btn');
+  wkBtn.addEventListener('click', guard(e => {
+    // stopPropagation — иначе этот же клик дойдёт до document и закроет список.
+    e.stopPropagation();
+    if (document.getElementById('f-week-list').hidden) openWeekList();
+    else closeWeekList();
   }));
-  document.getElementById('btnWeekNext').addEventListener('click', guard(() => {
-    draftSave();
-    _weekOffset += 1;
-    applyWeekOffset();
-    draftLoad();
-    checkSentBanner();
+  wkBtn.addEventListener('keydown', guard(e => {
+    if (e.key === 'Escape') closeWeekList();
+    else if (e.key === 'ArrowDown') { e.preventDefault(); openWeekList(); }
+  }));
+  document.getElementById('f-week-list').addEventListener('click', guard(e => {
+    const opt = e.target.closest('.wk-opt');
+    if (opt) chooseWeek(Number(opt.dataset.offset));
+  }));
+  // Клик мимо списка его закрывает — и ничего не выбирает.
+  document.addEventListener('click', guard(e => {
+    if (!e.target.closest('.wk')) closeWeekList();
   }));
 
   document.getElementById('btnSubmit').addEventListener('click', () => {
@@ -1498,10 +1783,21 @@ function wire() {
 
   document.getElementById('btnPrint').addEventListener('click', guard(() => window.print()));
 
+  // Очистка не перезагружает страницу: после перезагрузки пришлось бы заново
+  // выбирать неделю. Стирается черновик именно выбранной недели, форма
+  // возвращается к плану из хранилища, неделя остаётся выбранной.
   document.getElementById('btnClear').addEventListener('click', guard(() => {
-    if (!confirm('Очистить черновик? Все введённые данные будут потеряны.')) return;
-    try { localStorage.removeItem(DRAFT_KEY); } catch(e) {}
-    location.reload();
+    if (_weekOffset === null) return;
+    const b = weekBounds(_weekOffset);
+    if (!confirm('Очистить черновик за неделю ' + b.short +
+                 '? Введённые данные будут потеряны.')) return;
+    try { localStorage.removeItem(DRAFT_KEY); localStorage.removeItem(SENT_KEY); } catch(e) {}
+    resetForm();
+    refreshPrevFinish();
+    updateWeekHint();
+    showBanner('ok', 'Черновик очищен', {
+      text: 'Форма вернулась к плану из хранилища. Неделя ' + b.short + ' осталась выбранной.',
+    });
   }));
 
   const sheet = document.querySelector('.sheet');
@@ -1512,10 +1808,15 @@ function wire() {
   sheet.addEventListener('input', guard(e => {
     // Рамка «заполните это поле» снимается с того поля, которое правят.
     if (e.target && e.target.classList) e.target.classList.remove('field-problem');
+    // Пока неделя не выбрана, «Отправить» не разблокируется и черновик не
+    // пишется: шапка формы доступна и без недели, но адреса у правки ещё нет.
+    if (_weekOffset === null) return;
     unlockSubmit();
     draftSave();
   }));
-  sheet.addEventListener('change', guard(() => unlockSubmit()));
+  sheet.addEventListener('change', guard(() => {
+    if (_weekOffset !== null) unlockSubmit();
+  }));
 
   // Высота верхнего блока меняется вместе с баннером и переносом кнопок.
   if (typeof ResizeObserver === 'function') {
@@ -1530,23 +1831,19 @@ function wire() {
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
+// Неделя при открытии не выбрана и не подставляется: форма заблокирована, поверх
+// неё жёлтое окно. Черновик грузится не здесь, а в chooseWeek — у каждой недели
+// он свой, и до выбора недели загружать нечего.
 renderWorks();
 addNeedRow(); // one empty row
-applyWeekOffset(); // вычислить отчётную неделю и обновить отображение
-draftLoad();
-
-// Init prevFinish from current values after load
-WORKS.forEach(w => {
-  const cf = document.getElementById('cf-' + w.work_id);
-  if (cf) _prevFinish[w.work_id] = cf.value;
-});
+applyWeekOffset();
+buildWeekList();
+refreshPrevFinish();
+setLocked(true);
+updateWeekHint();
 
 wire();
 syncToolbarHeight();
-
-// Плашка о предыдущей отправке: при следующем открытии страницы начальник
-// участка видит, что отчёт уже был отправлен, и может внести правки.
-checkSentBanner();
 
 })();
 </script>
