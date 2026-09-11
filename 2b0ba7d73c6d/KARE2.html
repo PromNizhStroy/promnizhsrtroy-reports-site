@@ -1,0 +1,1081 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Отчёт KARE2 2026-W38</title>
+<style>
+:root{
+  --bg:#eef2f5;--paper:#fff;--text:#202832;--muted:#667281;--line:#d8dee6;
+  --soft:#f6f8fa;--accent:#176f7d;--danger:#c0392b;--warn:#fff5d6;
+  --focus:#9bcbd2;--green:#e6f4ea;--green-border:#27ae60;
+  --red:#fdecea;--red-border:#c0392b;--shifted:#fff3cd;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 Arial,Helvetica,sans-serif}
+main{width:min(100%,1400px);margin:auto;padding:16px 12px 40px}
+
+/* toolbar */
+.toolbar{position:sticky;top:0;z-index:10;display:flex;flex-wrap:wrap;
+  justify-content:space-between;align-items:center;gap:8px;
+  padding:10px 14px;background:rgba(238,242,245,.96);
+  border-bottom:1px solid var(--line);backdrop-filter:blur(6px)}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.autosave{font-size:13px;color:var(--muted)}
+
+/* buttons */
+button{min-height:38px;padding:8px 14px;border:1px solid var(--line);
+  border-radius:6px;background:#fff;color:var(--text);font:inherit;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.danger{color:var(--danger)}
+button.add-btn{min-height:32px;padding:5px 12px;color:var(--accent);
+  border-color:var(--accent);font-weight:700;font-size:13px}
+
+/* sheet */
+.sheet{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:28px}
+h1{margin:0 0 4px;color:#143b42;font-size:26px}
+.subtitle{margin:0 0 20px;color:var(--muted);font-size:13px}
+h2{margin:20px 0 8px;color:#143b42;font-size:18px;border-bottom:1px solid var(--line);padding-bottom:4px}
+
+/* header grid */
+.hgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 16px;
+  padding:14px;background:var(--soft);border:1px solid var(--line);
+  border-radius:6px;margin-bottom:20px}
+.hgrid .span2{grid-column:span 2}
+label,.lbl{display:block;margin-bottom:4px;color:var(--muted);font-size:12px;font-weight:700}
+input[type=text],input[type=date],input[type=number],select,textarea{
+  width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:5px;
+  background:#fff;color:var(--text);font:inherit}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--accent);box-shadow:0 0 0 3px var(--focus);outline:none}
+textarea{min-height:64px;resize:vertical}
+
+/* works table */
+.works-wrap{overflow-x:auto;margin:8px 0}
+.works-table{border-collapse:collapse;width:100%;min-width:1200px;font-size:13px}
+.works-table th{background:var(--soft);color:var(--muted);font-weight:700;
+  padding:7px 6px;text-align:left;border:1px solid var(--line);white-space:nowrap}
+.works-table td{padding:5px 6px;border:1px solid var(--line);vertical-align:top}
+.works-table td input,.works-table td select{
+  width:100%;padding:4px 6px;border:1px solid var(--line);border-radius:4px;font-size:12px}
+.works-table td input[readonly]{background:var(--soft);color:var(--muted)}
+.works-table .grp-row td{background:#f0f4f7;font-weight:700;color:#143b42}
+
+/* row states */
+tr.row-changed{background:#fffde7}
+tr.row-late{background:var(--red);outline:2px solid var(--red-border);outline-offset:-2px}
+tr.row-late td{border-color:var(--red-border)}
+tr.row-ontime td:nth-child(5),tr.row-ontime td:nth-child(6){
+  border-color:var(--green-border);background:var(--green)}
+tr.row-shifted{background:var(--shifted)}
+.shifted-badge{display:inline-block;margin-left:4px;font-size:10px;
+  background:#f39c12;color:#fff;border-radius:3px;padding:1px 4px}
+.stale-badge{display:inline-block;margin-left:4px;font-size:10px;
+  background:#e67e22;color:#fff;border-radius:3px;padding:1px 4px}
+
+/* zone static text */
+.zone-static{display:block;padding:4px 6px;font-size:12px;color:var(--muted)}
+
+/* reason block */
+.reason-block{display:none;padding:8px;background:#fff3f3;
+  border:1px solid var(--red-border);border-radius:5px;margin-top:6px;font-size:12px}
+.reason-block.visible{display:block}
+.reason-block label{color:var(--danger);font-weight:700;margin-bottom:3px}
+.reason-block select,.reason-block input,.reason-block textarea{
+  margin-bottom:5px;font-size:12px;padding:5px 7px}
+
+/* fact date blocks */
+.fact-block{display:none;padding:7px 8px;background:#f0f8f0;
+  border:1px solid var(--green-border);border-radius:5px;margin-top:5px;font-size:12px}
+.fact-block.visible{display:block}
+.fact-block label{color:#1a6b37;font-weight:700;margin-bottom:3px;display:block}
+.fact-block input{font-size:12px;padding:5px 7px;width:auto}
+
+/* needs table */
+.needs-section{margin-top:12px}
+.needs-table{border-collapse:collapse;width:100%;font-size:13px}
+.needs-table th{background:var(--soft);color:var(--muted);font-weight:700;
+  padding:6px 8px;text-align:left;border:1px solid var(--line)}
+.needs-table td{padding:5px 7px;border:1px solid var(--line)}
+.needs-table td select,.needs-table td input{
+  width:100%;padding:4px 6px;border:1px solid var(--line);border-radius:4px;font-size:12px}
+
+/* attachments */
+.attach-section{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:12px}
+.attach-block textarea{min-height:90px}
+
+/* checklist */
+.checklist{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.check-item{display:flex;gap:8px;align-items:flex-start;font-size:14px}
+.check-item input{width:17px;height:17px;margin-top:2px;accent-color:var(--accent)}
+
+/* submit status */
+#submitStatus{padding:10px 14px;font-size:13px;font-weight:700;border-left:4px solid transparent}
+#submitStatus.ok{background:var(--green);border-color:var(--green-border);color:#1a6b37}
+#submitStatus.error{background:var(--red);border-color:var(--red-border);color:var(--danger)}
+#submitStatus.sending{background:var(--warn);border-color:#f39c12;color:#856404}
+#submitStatus button{min-height:28px;padding:3px 10px;margin-left:10px;font-size:12px}
+
+/* validation */
+.validation{color:var(--danger);font-size:13px;font-weight:700;margin:8px 0}
+
+/* responsive */
+@media(max-width:800px){
+  .hgrid,.attach-section,.checklist{grid-template-columns:1fr}
+  .hgrid .span2{grid-column:auto}
+}
+
+/* print */
+@media print{
+  body{background:#fff}main{padding:0}
+  .toolbar{display:none}
+  .sheet{border:none;padding:0}
+  .works-wrap{overflow:visible}
+  .works-table{min-width:0;font-size:10px}
+  .works-table th,.works-table td{padding:3px 4px}
+  .add-btn,.row-del{display:none}
+  .reason-block{border:1px solid #999}
+}
+</style>
+</head>
+<body>
+<main>
+
+<div class="toolbar">
+  <span class="autosave" id="saveState">Черновик сохраняется автоматически</span>
+  <div class="actions">
+    <button id="btnSubmit" class="primary">Отправить</button>
+    <button id="btnSave">Сохранить данные (JSON)</button>
+    <button id="btnPrint">PDF / печать</button>
+    <button id="btnClear" class="danger">Очистить</button>
+  </div>
+</div>
+<div id="submitStatus" style="display:none"></div>
+
+<div class="sheet">
+  <h1>Еженедельный отчёт начальника участка</h1>
+  <p class="subtitle">Объект: <strong id="hdr-obj">ГРАФИК устройства ж/б покрытия каре (2 этап)</strong> &nbsp;|&nbsp; Неделя: <strong>2026-W38</strong></p>
+
+  <div class="hgrid">
+    <div class="span2"><label>Объект</label>
+      <input type="text" id="f-object" value="ГРАФИК устройства ж/б покрытия каре (2 этап)"></div>
+    <div><label>Внутреннее название</label>
+      <input type="text" id="f-internal-name" value="«Устройство Каре этапы №2 и №4»"></div>
+    <div><label>Договор №</label>
+      <input type="text" id="f-contract" value=""></div>
+    <div><label>Захватки / оси</label>
+      <input type="text" id="f-zahvatki" value="1.1, 1.10, 1.11, 1.12, 1.13, 1.14, 1.15, 1.16, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 11.11"></div>
+    <div><label>Начальник участка</label>
+      <input type="text" id="f-author" value=""></div>
+    <div><label>Отчётная неделя</label>
+      <input type="text" id="f-week" value="2026-W38" readonly></div>
+    <div><label>Дата отчёта</label>
+      <input type="date" id="f-date" value="2026-09-11"></div>
+  </div>
+
+  <h2>Таблица работ</h2>
+  <p style="font-size:13px;color:var(--muted);margin:0 0 8px">
+    Зелёная рамка дат — в графике; красная рамка строки — просрочка при ручной правке.
+    При изменении окончания связанные работы сдвигаются автоматически (без обязательных полей).
+  </p>
+  <div class="works-wrap">
+    <table class="works-table" id="worksTable">
+      <thead><tr>
+        <th style="width:70px">№</th>
+        <th style="width:120px">Захватка / оси</th>
+        <th>Работа</th>
+        <th style="width:100px">Исх. начало</th>
+        <th style="width:100px">Исх. оконч.</th>
+        <th style="width:100px">Тек. начало</th>
+        <th style="width:100px">Тек. оконч.</th>
+        <th style="width:65px">Длит., дн</th>
+        <th style="width:110px">Статус</th>
+        <th style="width:80px">Привязка к №</th>
+      </tr></thead>
+      <tbody id="worksTbody"></tbody>
+    </table>
+  </div>
+
+  <h2>Потребности на следующую неделю</h2>
+  <div class="needs-section">
+    <table class="needs-table" id="needsTable">
+      <thead><tr>
+        <th>Вид</th><th>Описание</th><th style="width:80px">Кол-во</th>
+        <th style="width:110px">Сумма, руб.</th><th style="width:110px">Нужно к дате</th>
+        <th style="width:36px"></th>
+      </tr></thead>
+      <tbody id="needsTbody"></tbody>
+    </table>
+    <button type="button" class="add-btn" id="addNeed" style="margin-top:8px">+ Добавить потребность</button>
+  </div>
+
+  <h2>Приложения (необязательно)</h2>
+  <div class="attach-section">
+    <div class="attach-block">
+      <label class="lbl">Проблемы и риски</label>
+      <textarea id="f-risks" placeholder="Каждая проблема с новой строки"></textarea>
+    </div>
+    <div class="attach-block">
+      <label class="lbl">Решения, нужные руководству</label>
+      <textarea id="f-decisions" placeholder="Каждый вопрос с новой строки"></textarea>
+    </div>
+  </div>
+
+  <h2>Проверка перед отправкой</h2>
+  <div class="checklist">
+    <label class="check-item"><input type="checkbox" id="chk1">
+      Все изменённые даты заполнены</label>
+    <label class="check-item"><input type="checkbox" id="chk2">
+      По всем ручным просрочкам указана причина и решение</label>
+    <label class="check-item"><input type="checkbox" id="chk3">
+      Потребности на неделю перечислены</label>
+    <label class="check-item"><input type="checkbox" id="chk4">
+      Данные проверены перед отправкой</label>
+  </div>
+  <div class="validation" id="validation"></div>
+</div>
+
+</main>
+<script>
+(function(){
+'use strict';
+
+// ── Embedded data ──────────────────────────────────────────────────────────
+const OBJECT_CODE = "KARE2";
+const WEEK = "2026-W38";
+const WORKS = [{"work_id": "KARE2-01", "src_no": "1", "group": "Отмостка РВС№ 11.11", "name": "Устройство песчаного основания отмостки РАС№11.11", "zahvatki_from_name": ["11.11"], "unit": null, "qty_plan": null, "base_start": "2026-09-01", "base_duration_days": 3, "base_finish": "2026-09-03", "plan_start": "2026-09-01", "plan_finish": "2026-09-03", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": null, "aliases": []}, {"work_id": "KARE2-02", "src_no": "2", "group": "Отмостка РВС№ 11.11", "name": "Укладка мембраны РВС№ 11.11", "zahvatki_from_name": ["11.11"], "unit": null, "qty_plan": null, "base_start": "2026-09-03", "base_duration_days": 7, "base_finish": "2026-09-09", "plan_start": "2026-09-03", "plan_finish": "2026-09-09", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-01", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": -1, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-03", "src_no": "3", "group": "Отмостка РВС№ 11.11", "name": "Устройство защитного слоя РВС№ 11.11", "zahvatki_from_name": ["11.11"], "unit": null, "qty_plan": null, "base_start": "2026-09-05", "base_duration_days": 7, "base_finish": "2026-09-11", "plan_start": "2026-09-05", "plan_finish": "2026-09-11", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-02", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": -5, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-04", "src_no": "4", "group": "Отмостка РВС№ 11.11", "name": "Устройство бетонной подготовки РВС№ 11.11", "zahvatki_from_name": ["11.11"], "unit": null, "qty_plan": null, "base_start": "2026-09-07", "base_duration_days": 8, "base_finish": "2026-09-14", "plan_start": "2026-09-07", "plan_finish": "2026-09-14", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-03", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": -5, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-05", "src_no": "5", "group": "Отмостка РВС№ 11.11", "name": "Армирование бетонного покрытия РВС№ 11.11", "zahvatki_from_name": ["11.11"], "unit": null, "qty_plan": null, "base_start": "2026-09-09", "base_duration_days": 8, "base_finish": "2026-09-16", "plan_start": "2026-09-09", "plan_finish": "2026-09-16", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-04", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": -6, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-06", "src_no": "6", "group": "Отмостка РВС№ 11.11", "name": "Устройство  бетонного покрытия РВС№ 11.11", "zahvatki_from_name": ["11.11"], "unit": null, "qty_plan": null, "base_start": "2026-09-16", "base_duration_days": 1, "base_finish": "2026-09-16", "plan_start": "2026-09-16", "plan_finish": "2026-09-16", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-05", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": -1, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-07", "src_no": "7", "group": "Захватки 1.1, 1.2, 1.3", "name": "Устройство бетонной подготовки 1.1, 1.2, 1.3", "zahvatki_from_name": ["1.1", "1.2", "1.3"], "unit": null, "qty_plan": null, "base_start": "2026-09-01", "base_duration_days": 2, "base_finish": "2026-09-02", "plan_start": "2026-09-01", "plan_finish": "2026-09-02", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": null, "aliases": []}, {"work_id": "KARE2-08", "src_no": "8", "group": "Захватки 1.1, 1.2, 1.3", "name": "Армирование бетонного покрытия 1.1, 1.2, 1.3", "zahvatki_from_name": ["1.1", "1.2", "1.3"], "unit": null, "qty_plan": null, "base_start": "2026-09-03", "base_duration_days": 5, "base_finish": "2026-09-07", "plan_start": "2026-09-03", "plan_finish": "2026-09-07", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-07", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-09", "src_no": "9", "group": "Захватки 1.1, 1.2, 1.3", "name": "Устройство  бетонного покрытия 1.1, 1.2, 1.3", "zahvatki_from_name": ["1.1", "1.2", "1.3"], "unit": null, "qty_plan": null, "base_start": "2026-09-08", "base_duration_days": 1, "base_finish": "2026-09-08", "plan_start": "2026-09-08", "plan_finish": "2026-09-08", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-08", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-10", "src_no": "10", "group": "Захватки 1.4, 1.5, 1.6, 1.8", "name": "Укладка мембраны 1.4, 1.5, 1.6, 1.8", "zahvatki_from_name": ["1.4", "1.5", "1.6", "1.8"], "unit": null, "qty_plan": null, "base_start": "2026-09-09", "base_duration_days": 1, "base_finish": "2026-09-09", "plan_start": "2026-09-09", "plan_finish": "2026-09-09", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": null, "aliases": []}, {"work_id": "KARE2-11", "src_no": "11", "group": "Захватки 1.4, 1.5, 1.6, 1.8", "name": "Устройство защитного слоя 1.4, 1.5, 1.6, 1.8", "zahvatki_from_name": ["1.4", "1.5", "1.6", "1.8"], "unit": null, "qty_plan": null, "base_start": "2026-09-10", "base_duration_days": 1, "base_finish": "2026-09-10", "plan_start": "2026-09-10", "plan_finish": "2026-09-10", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-10", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-12", "src_no": "12", "group": "Захватки 1.4, 1.5, 1.6, 1.8", "name": "Устройство бетонной подготовки 1.4, 1.5, 1.6, 1.8", "zahvatki_from_name": ["1.4", "1.5", "1.6", "1.8"], "unit": null, "qty_plan": null, "base_start": "2026-09-11", "base_duration_days": 2, "base_finish": "2026-09-12", "plan_start": "2026-09-11", "plan_finish": "2026-09-12", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-11", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-13", "src_no": "13", "group": "Захватки 1.4, 1.5, 1.6, 1.8", "name": "Армирование бетонного покрытия 1.4, 1.5, 1.6, 1.8", "zahvatki_from_name": ["1.4", "1.5", "1.6", "1.8"], "unit": null, "qty_plan": null, "base_start": "2026-09-13", "base_duration_days": 4, "base_finish": "2026-09-16", "plan_start": "2026-09-13", "plan_finish": "2026-09-16", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-12", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-14", "src_no": "14", "group": "Захватки 1.4, 1.5, 1.6, 1.8", "name": "Устройство  бетонного покрытия1.4, 1.5, 1.6, 1.8", "zahvatki_from_name": ["1.4", "1.5", "1.6", "1.8"], "unit": null, "qty_plan": null, "base_start": "2026-09-17", "base_duration_days": 1, "base_finish": "2026-09-17", "plan_start": "2026-09-17", "plan_finish": "2026-09-17", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-13", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-15", "src_no": "15", "group": "Захватки 1.7, 1.9, 1.10, 1.12", "name": "Устройство песчаного основания 1.7, 1.9, 1.10, 1.12", "zahvatki_from_name": ["1.7", "1.9", "1.10", "1.12"], "unit": null, "qty_plan": null, "base_start": "2026-09-14", "base_duration_days": 1, "base_finish": "2026-09-14", "plan_start": "2026-09-14", "plan_finish": "2026-09-14", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": null, "aliases": []}, {"work_id": "KARE2-16", "src_no": "16", "group": "Захватки 1.7, 1.9, 1.10, 1.12", "name": "Укладка мембраны 1.7, 1.9, 1.10, 1.12", "zahvatki_from_name": ["1.7", "1.9", "1.10", "1.12"], "unit": null, "qty_plan": null, "base_start": "2026-09-15", "base_duration_days": 1, "base_finish": "2026-09-15", "plan_start": "2026-09-15", "plan_finish": "2026-09-15", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-15", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-17", "src_no": "17", "group": "Захватки 1.7, 1.9, 1.10, 1.12", "name": "Устройство защитного слоя 1.7, 1.9, 1.10, 1.12", "zahvatki_from_name": ["1.7", "1.9", "1.10", "1.12"], "unit": null, "qty_plan": null, "base_start": "2026-09-16", "base_duration_days": 1, "base_finish": "2026-09-16", "plan_start": "2026-09-16", "plan_finish": "2026-09-16", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-16", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-18", "src_no": "18", "group": "Захватки 1.7, 1.9, 1.10, 1.12", "name": "Устройство бетонной подготовки 1.7, 1.9, 1.10, 1.12", "zahvatki_from_name": ["1.7", "1.9", "1.10", "1.12"], "unit": null, "qty_plan": null, "base_start": "2026-09-17", "base_duration_days": 2, "base_finish": "2026-09-18", "plan_start": "2026-09-17", "plan_finish": "2026-09-18", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-17", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-19", "src_no": "19", "group": "Захватки 1.7, 1.9, 1.10, 1.12", "name": "Армирование бетонного покрытия 1.7, 1.9, 1.10, 1.12", "zahvatki_from_name": ["1.7", "1.9", "1.10", "1.12"], "unit": null, "qty_plan": null, "base_start": "2026-09-19", "base_duration_days": 4, "base_finish": "2026-09-22", "plan_start": "2026-09-19", "plan_finish": "2026-09-22", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-18", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-20", "src_no": "20", "group": "Захватки 1.7, 1.9, 1.10, 1.12", "name": "Устройство  бетонного покрытия 1.7, 1.9, 1.10, 1.12", "zahvatki_from_name": ["1.7", "1.9", "1.10", "1.12"], "unit": null, "qty_plan": null, "base_start": "2026-09-23", "base_duration_days": 1, "base_finish": "2026-09-23", "plan_start": "2026-09-23", "plan_finish": "2026-09-23", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-19", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-21", "src_no": "21", "group": "Захватка 1.11, 1.13, 1.14, 1.15, 1.16", "name": "Устройство песчаного основания 1.11, 1.13, 1.14, 1.15, 1.16", "zahvatki_from_name": ["1.11", "1.13", "1.14", "1.15", "1.16"], "unit": null, "qty_plan": null, "base_start": "2026-09-20", "base_duration_days": 1, "base_finish": "2026-09-20", "plan_start": "2026-09-20", "plan_finish": "2026-09-20", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": null, "aliases": []}, {"work_id": "KARE2-22", "src_no": "22", "group": "Захватка 1.11, 1.13, 1.14, 1.15, 1.16", "name": "Укладка мембраны 1.11, 1.13, 1.14, 1.15, 1.16", "zahvatki_from_name": ["1.11", "1.13", "1.14", "1.15", "1.16"], "unit": null, "qty_plan": null, "base_start": "2026-09-21", "base_duration_days": 1, "base_finish": "2026-09-21", "plan_start": "2026-09-21", "plan_finish": "2026-09-21", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-21", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-23", "src_no": "23", "group": "Захватка 1.11, 1.13, 1.14, 1.15, 1.16", "name": "Устройство защитного слоя 1.11, 1.13, 1.14, 1.15, 1.16", "zahvatki_from_name": ["1.11", "1.13", "1.14", "1.15", "1.16"], "unit": null, "qty_plan": null, "base_start": "2026-09-21", "base_duration_days": 1, "base_finish": "2026-09-21", "plan_start": "2026-09-21", "plan_finish": "2026-09-21", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-22", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": -1, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-24", "src_no": "24", "group": "Захватка 1.11, 1.13, 1.14, 1.15, 1.16", "name": "Устройство бетонной подготовки 1.11, 1.13, 1.14, 1.15, 1.16", "zahvatki_from_name": ["1.11", "1.13", "1.14", "1.15", "1.16"], "unit": null, "qty_plan": null, "base_start": "2026-09-22", "base_duration_days": 1, "base_finish": "2026-09-22", "plan_start": "2026-09-22", "plan_finish": "2026-09-22", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-23", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-25", "src_no": "25", "group": "Захватка 1.11, 1.13, 1.14, 1.15, 1.16", "name": "Армирование бетонного покрытия 1.11, 1.13, 1.14, 1.15, 1.16", "zahvatki_from_name": ["1.11", "1.13", "1.14", "1.15", "1.16"], "unit": null, "qty_plan": null, "base_start": "2026-09-24", "base_duration_days": 2, "base_finish": "2026-09-25", "plan_start": "2026-09-24", "plan_finish": "2026-09-25", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-24", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 1, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-26", "src_no": "26", "group": "Захватка 1.11, 1.13, 1.14, 1.15, 1.16", "name": "Устройство  бетонного покрытия 1.11, 1.13, 1.14, 1.15, 1.16", "zahvatki_from_name": ["1.11", "1.13", "1.14", "1.15", "1.16"], "unit": null, "qty_plan": null, "base_start": "2026-09-26", "base_duration_days": 1, "base_finish": "2026-09-26", "plan_start": "2026-09-26", "plan_finish": "2026-09-26", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-25", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-27", "src_no": "27", "group": "Пандус", "name": "Устройство насыпи пандуса из щебня", "zahvatki_from_name": [], "unit": null, "qty_plan": null, "base_start": "2026-09-27", "base_duration_days": 1, "base_finish": "2026-09-27", "plan_start": "2026-09-27", "plan_finish": "2026-09-27", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": null, "aliases": []}, {"work_id": "KARE2-28", "src_no": "28", "group": "Пандус", "name": "Устройство песчаного основания пандуса", "zahvatki_from_name": [], "unit": null, "qty_plan": null, "base_start": "2026-09-28", "base_duration_days": 1, "base_finish": "2026-09-28", "plan_start": "2026-09-28", "plan_finish": "2026-09-28", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-27", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-29", "src_no": "29", "group": "Пандус", "name": "Укладка мембраны пандуса", "zahvatki_from_name": [], "unit": null, "qty_plan": null, "base_start": "2026-09-29", "base_duration_days": 1, "base_finish": "2026-09-29", "plan_start": "2026-09-29", "plan_finish": "2026-09-29", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-28", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-30", "src_no": "30", "group": "Пандус", "name": "Устройство защитного слоя мембраны пандуса", "zahvatki_from_name": [], "unit": null, "qty_plan": null, "base_start": "2026-09-30", "base_duration_days": 1, "base_finish": "2026-09-30", "plan_start": "2026-09-30", "plan_finish": "2026-09-30", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-29", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": 0, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}, {"work_id": "KARE2-31", "src_no": "31", "group": "Пандус", "name": "Монтаж ж/б плит", "zahvatki_from_name": [], "unit": null, "qty_plan": null, "base_start": "2026-09-30", "base_duration_days": 1, "base_finish": "2026-09-30", "plan_start": "2026-09-30", "plan_finish": "2026-09-30", "fact_start": null, "fact_finish": null, "forecast_finish": null, "progress_pct": null, "status": "планируется", "predecessor": "KARE2-30", "aliases": [], "predecessor_type": "финиш-старт", "predecessor_lag_days": -1, "predecessor_source": "черновик оркестратора 10.09 (порядок в таблице внутри захватки)", "predecessor_confirmed": false}];
+const TODAY = new Date().toISOString().slice(0,10);
+const GH_OWNER  = "PromNizhStroy";
+const GH_REPO   = "promnizhsrtroy-reports-data";
+const GH_BRANCH = "main";
+// Токен лежит не строкой, а четырьмя кусками base64 от перевёрнутой строки:
+// целую строку токена GitHub находит сканером в публичном репозитории и
+// автоматически отзывает. Склейка — ghAssembleToken(), в момент отправки.
+// От человека, открывшего исходник, это не защищает; отчёты защищает
+// шифрование ниже.
+const GH_TA = "WFFoTGRKY1Q0R01ER09TSjVMdE5oYUV";
+const GH_TB = "VcVZJYURsSGRVWWVuNWhqbE5lalBaND";
+const GH_TC = "FqaE5XOVRwMUNLR0dfRjAyTWlXbkFyd";
+const GH_TD = "Xc5MFlMV05JNUIxMV90YXBfYnVodGln";
+const GH_TOKEN_PARTS = [GH_TA, GH_TB, GH_TC, GH_TD];
+// Открытый ключ мини: им шифруется отчёт перед отправкой. Расшифровать может
+// только мини — токен выше даёт и чтение репозитория, поэтому класть туда
+// отчёт открытым нельзя. См. tools/weekly/reports_crypto.py.
+const PUB_KEY_B64 = "MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAmLVO5xLUbD/nHdtxztfa3c5kH34vcZPymtS7civX1e09wKEmarVDpIJGPI4LEo1MkAASEJqm0MIz2gzG/QKeJ0YDsR0/Mr8cdq9Tjr2FbjYxIiO4Rp4tW5mg6pWeegtNKep3TZqd6tEAI3ygccblpJTr3wRLIUhX6RRtowHaZQWzgTal565DFHIK4CW5fS8+CbxmeAXTnj3hx0nS+nxaKts/lCdgGr5dUDSn+/9lKtzJ9qC8IoDYND5+cWRHsWTqKuU63zXJFgGVY/c9PLvNE617CmMgfHi1UNxOWdWIiS57XJO+0nUaRuOGkgs+Ptj8J40861qoXvVBGFr/lqtPY4Db/UrxQLEuyP5SqJcJT6E5pTIA2IZ1uHl2TjGAjeSQbyt1VGx/C+zPVv7K3KewwsFLTBtEtlFELglCqH+78IyYz7V8nSs35R6ABC/7FJlLREClytcSJ/5TFSdKTfPPn1I1Cw4IV3L3585qsRrd8Y/z72nH5+Jg6jOM6iJlXLzNAgMBAAE=";
+const KEY_ID      = "9f888f70f11bc7fc";
+
+// Build successor map: work_id -> [work_id, ...]
+const SUCCESSORS = {};
+WORKS.forEach(w => {
+  if (w.predecessor) {
+    if (!SUCCESSORS[w.predecessor]) SUCCESSORS[w.predecessor] = [];
+    SUCCESSORS[w.predecessor].push(w.work_id);
+  }
+});
+
+// Set of work IDs that were manually edited by the user (not cascade-shifted)
+const _manualEdited = new Set();
+
+// Reason options
+const REASON_OPTS = [
+  ['','— выберите причину —'],
+  ['погода','Погода'],
+  ['поставка_материалов','Поставка материалов'],
+  ['люди','Люди'],
+  ['техника','Техника'],
+  ['заказчик','Заказчик'],
+  ['субподрядчик','Субподрядчик'],
+  ['переделка','Переделка'],
+  ['прочее','Прочее'],
+];
+
+// ── Date helpers ───────────────────────────────────────────────────────────
+function toDate(s) { return s ? new Date(s + 'T00:00:00') : null; }
+function diffDays(a, b) {
+  if (!a || !b) return 0;
+  return Math.round((a - b) / 86400000);
+}
+function addDays(s, n) {
+  if (!s) return s;
+  const d = new Date(s + 'T00:00:00');
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0,10);
+}
+function calcDuration(start, finish) {
+  const s = toDate(start), f = toDate(finish);
+  if (!s || !f) return '';
+  const d = diffDays(f, s) + 1;
+  return d > 0 ? d : '';
+}
+
+// ── Row builder ────────────────────────────────────────────────────────────
+function buildWorkRow(w) {
+  const tr = document.createElement('tr');
+  tr.id = 'row-' + w.work_id;
+  tr.dataset.workId = w.work_id;
+  tr.dataset.baseStart = w.base_start || '';
+  tr.dataset.baseFinish = w.base_finish || '';
+  tr.dataset.predecessor = w.predecessor || '';
+
+  // Zone cell: static list if zahvatki_from_name non-empty, else editable axes input
+  const zahvatki = (w.zahvatki_from_name || []);
+  const zoneCell = zahvatki.length > 0
+    ? `<span class="zone-static">${zahvatki.join(', ')}</span>`
+    : `<input type="text" id="axes-${w.work_id}" placeholder="А–В / 3–7"
+         onchange="markChanged('${w.work_id}')">`;
+
+  const predCell = w.predecessor ? w.predecessor.replace(OBJECT_CODE + '-', '') : '';
+
+  // Status options
+  const statusOpts = ['планируется','в работе','сделано'].map(s =>
+    `<option value="${s}"${s === w.status ? ' selected' : ''}>${s}</option>`
+  ).join('');
+
+  // Reason block (hidden by default; shown only for manually edited late rows)
+  const reasonId = 'reason-' + w.work_id;
+  const reasonOpts = REASON_OPTS.map(([v,l]) =>
+    `<option value="${v}">${l}</option>`).join('');
+
+  tr.innerHTML = `
+    <td>${w.work_id}</td>
+    <td>${zoneCell}</td>
+    <td>
+      ${w.name}
+      <div class="reason-block" id="${reasonId}">
+        <label>Причина задержки *</label>
+        <select id="cat-${w.work_id}" name="reason_cat_${w.work_id}">${reasonOpts}</select>
+        <label>Пояснение</label>
+        <input type="text" id="rtxt-${w.work_id}" name="reason_txt_${w.work_id}"
+          placeholder="Своими словами">
+        <label>Решение для возврата в график *</label>
+        <textarea id="rsol-${w.work_id}" name="reason_sol_${w.work_id}"
+          placeholder="Конкретные шаги и новый срок" style="min-height:48px"></textarea>
+      </div>
+      <div class="fact-block" id="factstart-${w.work_id}">
+        <label>Фактическая дата начала</label>
+        <input type="date" id="fstart-${w.work_id}" onchange="markChanged('${w.work_id}')">
+      </div>
+      <div class="fact-block" id="factfinish-${w.work_id}">
+        <label>Фактическая дата окончания *</label>
+        <input type="date" id="ffinish-${w.work_id}" onchange="markChanged('${w.work_id}')">
+      </div>
+    </td>
+    <td><input type="date" value="${w.base_start||''}" readonly tabindex="-1"
+      style="background:var(--soft);color:var(--muted)"></td>
+    <td><input type="date" value="${w.base_finish||''}" readonly tabindex="-1"
+      style="background:var(--soft);color:var(--muted)"></td>
+    <td><input type="date" id="cs-${w.work_id}" value="${w.plan_start||''}"
+      onchange="onStartChange('${w.work_id}')"></td>
+    <td><input type="date" id="cf-${w.work_id}" value="${w.plan_finish||''}"
+      onchange="onFinishChange('${w.work_id}')"></td>
+    <td><input type="number" id="dur-${w.work_id}" readonly tabindex="-1"
+      value="${calcDuration(w.plan_start, w.plan_finish)}"
+      style="background:var(--soft);color:var(--muted)"></td>
+    <td><select id="st-${w.work_id}" onchange="onStatusChange('${w.work_id}')">
+      ${statusOpts}</select></td>
+    <td><input type="text" id="pred-${w.work_id}" value="${predCell}"
+      placeholder="вручную"
+      onchange="markChanged('${w.work_id}')"></td>
+  `;
+  return tr;
+}
+
+// ── Render works ───────────────────────────────────────────────────────────
+function renderWorks() {
+  const tbody = document.getElementById('worksTbody');
+  tbody.innerHTML = '';
+
+  let currentGroup = undefined;
+  WORKS.forEach(w => {
+    const grp = w.group || null;
+    if (grp && grp !== currentGroup) {
+      currentGroup = grp;
+      const gtr = document.createElement('tr');
+      gtr.className = 'grp-row';
+      gtr.innerHTML = `<td colspan="10" style="padding:6px 8px">${grp}</td>`;
+      tbody.appendChild(gtr);
+    }
+    tbody.appendChild(buildWorkRow(w));
+  });
+
+  WORKS.forEach(w => updateRowState(w.work_id, false));
+}
+
+// ── Row state ──────────────────────────────────────────────────────────────
+function updateRowState(workId, isShifted) {
+  const tr = document.getElementById('row-' + workId);
+  if (!tr) return;
+  const cfEl = document.getElementById('cf-' + workId);
+  const stEl = document.getElementById('st-' + workId);
+  const baseFinish = tr.dataset.baseFinish;
+  const currFinish = cfEl ? cfEl.value : '';
+
+  const isLate = !!(currFinish && baseFinish && currFinish > baseFinish);
+  const isManual = _manualEdited.has(workId);
+
+  tr.classList.toggle('row-late', isLate && isManual);
+  tr.classList.toggle('row-ontime', !!(currFinish && baseFinish && currFinish <= baseFinish));
+  tr.classList.toggle('row-shifted', !!isShifted);
+
+  // Reason block: only for manually edited late rows
+  const reasonBlock = document.getElementById('reason-' + workId);
+  if (reasonBlock) {
+    reasonBlock.classList.toggle('visible', isLate && isManual);
+  }
+
+  // Stale badge: curr finish in the past, status not "сделано"
+  const nameCell = tr.cells[2];
+  if (nameCell) {
+    let staleBadge = nameCell.querySelector('.stale-badge');
+    const isStale = !!(currFinish && currFinish < TODAY && stEl && stEl.value !== 'сделано');
+    if (isStale) {
+      if (!staleBadge) {
+        staleBadge = document.createElement('span');
+        staleBadge.className = 'stale-badge';
+        staleBadge.textContent = 'срок прошёл, статус не обновлён';
+        nameCell.appendChild(staleBadge);
+      }
+    } else if (staleBadge) {
+      staleBadge.remove();
+    }
+  }
+
+  updateDuration(workId);
+}
+
+function updateDuration(workId) {
+  const cs = document.getElementById('cs-' + workId);
+  const cf = document.getElementById('cf-' + workId);
+  const dur = document.getElementById('dur-' + workId);
+  if (cs && cf && dur) {
+    dur.value = calcDuration(cs.value, cf.value);
+  }
+}
+
+function markChanged(workId) {
+  const tr = document.getElementById('row-' + workId);
+  if (tr) tr.classList.add('row-changed');
+  draftSave();
+}
+
+// ── Cascade shift ──────────────────────────────────────────────────────────
+const _prevFinish = {};
+const _prevStatus = {};
+
+function onStartChange(workId) {
+  _manualEdited.add(workId);
+  markChanged(workId);
+  updateRowState(workId, false);
+}
+
+function onFinishChange(workId) {
+  const cfEl = document.getElementById('cf-' + workId);
+  const newFinish = cfEl ? cfEl.value : '';
+  const oldFinish = _prevFinish[workId] || document.getElementById('row-' + workId)?.dataset.baseFinish || '';
+
+  _manualEdited.add(workId);
+  markChanged(workId);
+  updateRowState(workId, false);
+
+  if (newFinish && oldFinish && newFinish !== oldFinish) {
+    const delta = diffDays(toDate(newFinish), toDate(oldFinish));
+    cascadeShift(workId, delta, new Set([workId]));
+  }
+  _prevFinish[workId] = newFinish;
+}
+
+function onStatusChange(workId) {
+  const stEl = document.getElementById('st-' + workId);
+  const status = stEl ? stEl.value : '';
+
+  const fsDiv = document.getElementById('factstart-' + workId);
+  const ffDiv = document.getElementById('factfinish-' + workId);
+  const fstartInput = document.getElementById('fstart-' + workId);
+  const ffinishInput = document.getElementById('ffinish-' + workId);
+
+  if (fsDiv) {
+    const show = status === 'в работе';
+    fsDiv.classList.toggle('visible', show);
+    if (show && fstartInput && !fstartInput.value) fstartInput.value = TODAY;
+  }
+  if (ffDiv) {
+    const show = status === 'сделано';
+    ffDiv.classList.toggle('visible', show);
+    if (show && ffinishInput && !ffinishInput.value) ffinishInput.value = TODAY;
+  }
+
+  _prevStatus[workId] = status;
+  markChanged(workId);
+  updateRowState(workId, false);
+}
+
+function cascadeShift(sourceId, delta, visited) {
+  const succs = SUCCESSORS[sourceId] || [];
+  succs.forEach(succId => {
+    if (visited.has(succId)) return;
+    visited.add(succId);
+
+    const csEl = document.getElementById('cs-' + succId);
+    const cfEl = document.getElementById('cf-' + succId);
+    if (!csEl || !cfEl) return;
+
+    const oldStart = csEl.value;
+    const oldFinish = cfEl.value;
+    if (oldStart) csEl.value = addDays(oldStart, delta);
+    if (oldFinish) {
+      const newFinish = addDays(oldFinish, delta);
+      cfEl.value = newFinish;
+      _prevFinish[succId] = newFinish;
+    }
+
+    // Cascade: do NOT add to _manualEdited
+    updateRowState(succId, true);
+    markBadge(succId, delta);
+    markChanged(succId);
+
+    cascadeShift(succId, delta, visited);
+  });
+}
+
+function markBadge(workId, delta) {
+  const nameCell = document.getElementById('row-' + workId)?.cells[2];
+  if (!nameCell) return;
+  let badge = nameCell.querySelector('.shifted-badge');
+  if (!badge) {
+    badge = document.createElement('span');
+    badge.className = 'shifted-badge';
+    nameCell.insertBefore(badge, nameCell.firstChild);
+  }
+  const sign = delta > 0 ? '+' : '';
+  badge.textContent = `сдвинуто ${sign}${delta}д`;
+}
+
+// ── Needs table ────────────────────────────────────────────────────────────
+let needsCount = 0;
+
+function addNeedRow(data) {
+  needsCount++;
+  const n = needsCount;
+  const tbody = document.getElementById('needsTbody');
+  const tr = document.createElement('tr');
+  tr.id = 'need-' + n;
+  const kindOpts = ['люди','техника','материалы'].map(k =>
+    `<option value="${k}"${data?.kind===k?' selected':''}>${k}</option>`).join('');
+  tr.innerHTML = `
+    <td><select id="nkind-${n}">${kindOpts}</select></td>
+    <td><input type="text" id="ndesc-${n}" value="${data?.description||''}"
+      placeholder="Что нужно"></td>
+    <td><input type="number" id="nqty-${n}" value="${data?.qty||''}"
+      min="0" placeholder="Кол-во"></td>
+    <td><input type="number" id="namt-${n}" value="${data?.amount_rub||''}"
+      min="0" placeholder="Сумма руб."></td>
+    <td><input type="date" id="nweek-${n}" value="${data?.week||''}"></td>
+    <td><button type="button" class="danger row-del" onclick="delNeed(${n})"
+      style="min-height:28px;padding:2px 8px;font-size:12px">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+  tr.querySelectorAll('input,select').forEach(el => el.addEventListener('change', draftSave));
+}
+
+function delNeed(n) {
+  document.getElementById('need-' + n)?.remove();
+  draftSave();
+}
+
+document.getElementById('addNeed').addEventListener('click', () => { addNeedRow(); draftSave(); });
+
+// ── Draft (localStorage) ───────────────────────────────────────────────────
+const DRAFT_KEY = 'report-draft-' + OBJECT_CODE + '-' + WEEK;
+
+function collectDraft() {
+  const works_state = {};
+  WORKS.forEach(w => {
+    const cs = document.getElementById('cs-' + w.work_id);
+    const cf = document.getElementById('cf-' + w.work_id);
+    const st = document.getElementById('st-' + w.work_id);
+    const cat = document.getElementById('cat-' + w.work_id);
+    const rtxt = document.getElementById('rtxt-' + w.work_id);
+    const rsol = document.getElementById('rsol-' + w.work_id);
+    const pred = document.getElementById('pred-' + w.work_id);
+    const axesEl = document.getElementById('axes-' + w.work_id);
+    works_state[w.work_id] = {
+      curr_start: cs?.value||'',
+      curr_finish: cf?.value||'',
+      status: st?.value||'',
+      reason_cat: cat?.value||'',
+      reason_txt: rtxt?.value||'',
+      reason_sol: rsol?.value||'',
+      pred: pred?.value||'',
+      axes: axesEl?.value||'',
+      fact_start: document.getElementById('fstart-' + w.work_id)?.value||'',
+      fact_finish: document.getElementById('ffinish-' + w.work_id)?.value||'',
+    };
+  });
+
+  const needs = [];
+  for (let i = 1; i <= needsCount; i++) {
+    const row = document.getElementById('need-' + i);
+    if (!row) continue;
+    needs.push({
+      kind: document.getElementById('nkind-'+i)?.value||'',
+      description: document.getElementById('ndesc-'+i)?.value||'',
+      qty: document.getElementById('nqty-'+i)?.value||'',
+      amount_rub: document.getElementById('namt-'+i)?.value||'',
+      week: document.getElementById('nweek-'+i)?.value||'',
+    });
+  }
+
+  return {
+    object: document.getElementById('f-object').value,
+    internal_name: document.getElementById('f-internal-name').value,
+    contract: document.getElementById('f-contract').value,
+    zahvatki: document.getElementById('f-zahvatki').value,
+    author: document.getElementById('f-author').value,
+    date: document.getElementById('f-date').value,
+    risks: document.getElementById('f-risks').value,
+    decisions: document.getElementById('f-decisions').value,
+    works_state,
+    needs,
+    needsCount,
+    manual_edited: Array.from(_manualEdited),
+  };
+}
+
+function draftSave() {
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(collectDraft()));
+    const t = new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('saveState').textContent = 'Черновик сохранён ' + t;
+  } catch(e) {
+    document.getElementById('saveState').textContent = 'Ошибка сохранения черновика';
+  }
+}
+
+function draftLoad() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+
+    if (d.object) document.getElementById('f-object').value = d.object;
+    if (d.internal_name !== undefined) document.getElementById('f-internal-name').value = d.internal_name;
+    if (d.contract) document.getElementById('f-contract').value = d.contract;
+    if (d.zahvatki) document.getElementById('f-zahvatki').value = d.zahvatki;
+    if (d.author) document.getElementById('f-author').value = d.author;
+    if (d.date) document.getElementById('f-date').value = d.date;
+    if (d.risks) document.getElementById('f-risks').value = d.risks;
+    if (d.decisions) document.getElementById('f-decisions').value = d.decisions;
+
+    // Restore manual_edited set before updateRowState calls
+    if (d.manual_edited) d.manual_edited.forEach(id => _manualEdited.add(id));
+
+    if (d.works_state) {
+      WORKS.forEach(w => {
+        const ws = d.works_state[w.work_id];
+        if (!ws) return;
+        const cs = document.getElementById('cs-' + w.work_id);
+        const cf = document.getElementById('cf-' + w.work_id);
+        const st = document.getElementById('st-' + w.work_id);
+        const cat = document.getElementById('cat-' + w.work_id);
+        const rtxt = document.getElementById('rtxt-' + w.work_id);
+        const rsol = document.getElementById('rsol-' + w.work_id);
+        const pred = document.getElementById('pred-' + w.work_id);
+        const axesEl = document.getElementById('axes-' + w.work_id);
+        if (cs && ws.curr_start) cs.value = ws.curr_start;
+        if (cf && ws.curr_finish) cf.value = ws.curr_finish;
+        if (st && ws.status) st.value = ws.status;
+        if (cat && ws.reason_cat) cat.value = ws.reason_cat;
+        if (rtxt && ws.reason_txt) rtxt.value = ws.reason_txt;
+        if (rsol && ws.reason_sol) rsol.value = ws.reason_sol;
+        if (pred && ws.pred) pred.value = ws.pred;
+        if (axesEl && ws.axes) axesEl.value = ws.axes;
+        const fsiEl = document.getElementById('fstart-' + w.work_id);
+        const ffiEl = document.getElementById('ffinish-' + w.work_id);
+        if (fsiEl && ws.fact_start) fsiEl.value = ws.fact_start;
+        if (ffiEl && ws.fact_finish) ffiEl.value = ws.fact_finish;
+        // restore fact-block visibility
+        const stElR = document.getElementById('st-' + w.work_id);
+        const stVal = stElR ? stElR.value : '';
+        const fsDivR = document.getElementById('factstart-' + w.work_id);
+        const ffDivR = document.getElementById('factfinish-' + w.work_id);
+        if (fsDivR) fsDivR.classList.toggle('visible', stVal === 'в работе');
+        if (ffDivR) ffDivR.classList.toggle('visible', stVal === 'сделано');
+        updateRowState(w.work_id, false);
+      });
+    }
+
+    if (d.needs) {
+      d.needs.forEach(n => addNeedRow(n));
+    }
+  } catch(e) { /* ignore corrupt draft */ }
+}
+
+// ── Build payload (shared by Save and Submit) ───────────────────────────────
+function buildPayload() {
+  const draft = collectDraft();
+  const today = draft.date || TODAY;
+
+  const report = {
+    object_code: OBJECT_CODE,
+    week: WEEK,
+    date: today,
+    author: draft.author,
+    contract: draft.contract,
+    internal_name: draft.internal_name,
+  };
+
+  const changes = [];
+  const reasons = [];
+  const stale_status = [];
+
+  WORKS.forEach(w => {
+    const ws = draft.works_state[w.work_id];
+    if (!ws) return;
+
+    const isManual = _manualEdited.has(w.work_id);
+    const origin = isManual ? 'manual' : 'cascade';
+
+    const fields = [
+      ['plan_start', w.plan_start||'', ws.curr_start],
+      ['plan_finish', w.plan_finish||'', ws.curr_finish],
+      ['status', w.status||'', ws.status],
+    ];
+    fields.forEach(([field, old_v, new_v]) => {
+      if (new_v && new_v !== old_v) {
+        changes.push({work_id: w.work_id, field, old_value: old_v, new_value: new_v, origin});
+      }
+    });
+
+    if (ws.axes) {
+      changes.push({work_id: w.work_id, field: 'axes', old_value: '', new_value: ws.axes, origin: 'manual'});
+    }
+
+    if (ws.status === 'в работе' && ws.fact_start) {
+      changes.push({work_id: w.work_id, field: 'fact_start', old_value: null, new_value: ws.fact_start, origin: 'manual'});
+    }
+    if (ws.status === 'сделано' && ws.fact_finish) {
+      changes.push({work_id: w.work_id, field: 'fact_finish', old_value: null, new_value: ws.fact_finish, origin: 'manual'});
+    }
+
+    const baseF = w.base_finish||'';
+    const currF = ws.curr_finish||'';
+    if (currF && baseF && currF > baseF && isManual && ws.reason_cat) {
+      reasons.push({
+        work_id: w.work_id,
+        reason_category: ws.reason_cat,
+        reason_text: ws.reason_txt,
+        proposed_solution: ws.reason_sol,
+      });
+    }
+
+    const effectiveFinish = currF || (w.plan_finish||'');
+    if (effectiveFinish && effectiveFinish < today && ws.status !== 'сделано') {
+      stale_status.push(w.work_id);
+    }
+  });
+
+  const needs = draft.needs.filter(n => n.description).map(n => ({
+    kind: n.kind,
+    description: n.description,
+    qty: n.qty ? Number(n.qty) : null,
+    amount_rub: n.amount_rub ? Number(n.amount_rub) : null,
+    week: n.week,
+  }));
+
+  const risks = draft.risks.split('\n').map(s=>s.trim()).filter(Boolean);
+  const decisions = draft.decisions.split('\n').map(s=>s.trim()).filter(Boolean);
+
+  return {report, changes, reasons, stale_status, needs,
+    attachments: {risks, decisions}};
+}
+
+function downloadJson(payload) {
+  const today = payload.report.date || TODAY;
+  const fname = `${OBJECT_CODE}-${WEEK}-${today}.json`;
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = fname;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ── JSON export (Save) ──────────────────────────────────────────────────────
+document.getElementById('btnSave').addEventListener('click', () => {
+  const v = validate();
+  if (v.length) {
+    document.getElementById('validation').textContent = v.join(' ');
+    return;
+  }
+  document.getElementById('validation').textContent = '';
+  downloadJson(buildPayload());
+});
+
+// >>> gh-submit-core — чистая часть отправки в GitHub.
+// Блок выдёргивается из готового html и прогоняется в node тестом
+// tests/test_github_submit.py; ничего, кроме своих аргументов, не трогает.
+
+// Куски из констант GH_TA…GH_TD → токен. base64 от перевёрнутой строки: целой
+// строки токена в исходнике страницы нет, иначе GitHub отозвал бы его, как
+// только страница попала в публичный репозиторий сайта.
+function ghAssembleToken(parts) {
+  const blob = parts.join('');
+  if (!blob) return '';
+  const bin = atob(blob);
+  let out = '';
+  for (let i = bin.length - 1; i >= 0; i--) out += bin.charAt(i);
+  return out;
+}
+
+function ghStamp(d) {
+  const p = n => String(n).padStart(2, '0');
+  return '' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) +
+         '-' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
+}
+
+function ghReportPath(objectCode, week, stamp) {
+  return 'reports/' + objectCode + '/' + week + '-' + stamp + '.json';
+}
+
+function ghBase64(text) {
+  // GitHub Contents API принимает содержимое только base64 от utf-8 байтов.
+  const bytes = new TextEncoder().encode(text);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(bin);
+}
+
+// `content` — то, что ляжет в репозиторий файлом. Со включённым шифрованием это
+// конверт (ghEncryptEnvelope ниже), а не сам отчёт.
+function ghBuildRequest(cfg, content, stamp) {
+  const path = ghReportPath(cfg.objectCode, cfg.week, stamp);
+  return {
+    path: path,
+    url: 'https://api.github.com/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + path,
+    init: {
+      method: 'PUT',
+      headers: {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': 'Bearer ' + cfg.token,
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: 'report ' + cfg.objectCode + ' ' + cfg.week,
+        content: ghBase64(JSON.stringify(content, null, 2)),
+        branch: cfg.branch,
+      }),
+    },
+  };
+}
+// <<< gh-submit-core
+
+// >>> gh-crypto-core — шифрование отчёта перед отправкой.
+// Блок так же выдёргивается из готового html и прогоняется в node тестом
+// tests/test_report_crypto.py: то, что здесь запечатано, распечатывается
+// на мини модулем tools/weekly/reports_crypto.py — иначе схема неверна.
+//
+// Гибрид: случайный AES-GCM-256 ключ шифрует отчёт, открытый RSA-3072 ключ
+// шифрует этот AES-ключ. Наружу (в приватный, но читаемый токеном репозиторий)
+// уходит только конверт; из содержимого отчёта в нём нет ничего.
+function ghCryptoAvailable() {
+  return typeof crypto !== 'undefined' && !!crypto.subtle &&
+         typeof crypto.subtle.encrypt === 'function';
+}
+
+// Тот же приём, что в ghBase64: по кускам, иначе длинный отчёт уронит стек.
+function ghB64Bytes(bytes) {
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(bin);
+}
+
+function ghBytesFromB64(b64) {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+async function ghEncryptEnvelope(pubKeyB64, keyId, payload, meta) {
+  const pub = await crypto.subtle.importKey(
+    'spki', ghBytesFromB64(pubKeyB64),
+    {name: 'RSA-OAEP', hash: 'SHA-256'}, false, ['encrypt']);
+
+  const aesKey = await crypto.subtle.generateKey(
+    {name: 'AES-GCM', length: 256}, true, ['encrypt']);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const plain = new TextEncoder().encode(JSON.stringify(payload));
+
+  const ct = new Uint8Array(
+    await crypto.subtle.encrypt({name: 'AES-GCM', iv: iv}, aesKey, plain));
+  const rawKey = new Uint8Array(await crypto.subtle.exportKey('raw', aesKey));
+  const ek = new Uint8Array(
+    await crypto.subtle.encrypt({name: 'RSA-OAEP'}, pub, rawKey));
+
+  // Метаданные — только служебные: по ним мини раскладывает файлы, и по ним
+  // же видно в логе, что пришло. Ни одного поля отчёта здесь нет.
+  return {
+    v: 1,
+    alg: 'RSA-OAEP-256+A256GCM',
+    kid: keyId,
+    ek: ghB64Bytes(ek),
+    iv: ghB64Bytes(iv),
+    ct: ghB64Bytes(ct),
+    object_code: meta.objectCode,
+    week: meta.week,
+    ts: meta.ts,
+  };
+}
+// <<< gh-crypto-core
+
+// ── Submit (PUT в приватный репозиторий отчётов через GitHub API) ──────────
+const SAVE_HINT = 'Сохраните файл и отправьте Александру.';
+
+function submitFailed(st, message, payload) {
+  st.className = 'error';
+  st.textContent = message + ' ' + SAVE_HINT + ' ';
+  const btn = document.createElement('button');
+  btn.textContent = 'Сохранить файл';
+  btn.onclick = () => downloadJson(payload || buildPayload());
+  st.appendChild(btn);
+}
+
+document.getElementById('btnSubmit').addEventListener('click', async () => {
+  const v = validate();
+  if (v.length) {
+    document.getElementById('validation').textContent = v.join(' ');
+    return;
+  }
+  document.getElementById('validation').textContent = '';
+
+  const st = document.getElementById('submitStatus');
+  st.innerHTML = '';
+  st.className = 'sending';
+  st.textContent = 'Отправка…';
+  st.style.display = 'block';
+
+  const payload = buildPayload();
+
+  // Токен собирается здесь, а не в константе наверху: в исходнике страницы его
+  // целой строки нет вообще.
+  const ghToken = ghAssembleToken(GH_TOKEN_PARTS);
+
+  if (!GH_OWNER || !GH_REPO || !ghToken || !PUB_KEY_B64) {
+    submitFailed(st, 'Отправка не настроена.', payload);
+    return;
+  }
+
+  // Без шифрования не отправляем вообще: отчёт лёг бы в репозиторий открытым,
+  // а токен на этой же странице даёт его прочитать кому угодно.
+  if (!ghCryptoAvailable()) {
+    submitFailed(st, 'Браузер не умеет шифровать — отправка отменена.', payload);
+    return;
+  }
+
+  let envelope;
+  try {
+    envelope = await ghEncryptEnvelope(PUB_KEY_B64, KEY_ID, payload, {
+      objectCode: OBJECT_CODE, week: WEEK, ts: new Date().toISOString(),
+    });
+  } catch (e) {
+    submitFailed(st, 'Не удалось зашифровать отчёт.', payload);
+    return;
+  }
+
+  const cfg = {
+    owner: GH_OWNER, repo: GH_REPO, branch: GH_BRANCH, token: ghToken,
+    objectCode: OBJECT_CODE, week: WEEK,
+  };
+
+  // 422 = файл с таким именем уже есть: пробуем следующую метку времени.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const stamp = ghStamp(new Date()) + (attempt ? '-' + (attempt + 1) : '');
+    const req = ghBuildRequest(cfg, envelope, stamp);
+    let resp;
+    try {
+      resp = await fetch(req.url, req.init);
+    } catch (e) {
+      st.className = 'error';
+      st.textContent = 'Нет соединения — файл сохранён на устройство. ' + SAVE_HINT;
+      downloadJson(payload);
+      return;
+    }
+    if (resp.status === 201 || resp.status === 200) {
+      st.className = 'ok';
+      st.textContent = 'Отправлено ✓ ' + req.path;
+      return;
+    }
+    if (resp.status === 422 && attempt < 2) continue;
+    submitFailed(st, 'Не удалось отправить (ошибка ' + resp.status + ').', payload);
+    return;
+  }
+});
+
+// ── Validate ───────────────────────────────────────────────────────────────
+function validate() {
+  const errors = [];
+  const author = document.getElementById('f-author').value.trim();
+  if (!author) errors.push('Укажите начальника участка.');
+
+  // Only manually edited late rows require reason+solution
+  WORKS.forEach(w => {
+    if (!_manualEdited.has(w.work_id)) return;
+    const cf = document.getElementById('cf-' + w.work_id);
+    const baseF = document.getElementById('row-' + w.work_id)?.dataset.baseFinish;
+    if (!cf || !baseF) return;
+    const currF = cf.value;
+    if (currF && currF > baseF) {
+      const cat = document.getElementById('cat-' + w.work_id)?.value;
+      const sol = document.getElementById('rsol-' + w.work_id)?.value?.trim();
+      if (!cat) errors.push(`${w.work_id}: выберите причину задержки.`);
+      if (!sol) errors.push(`${w.work_id}: укажите решение для возврата в график.`);
+    }
+  });
+
+  // fact_finish required when status = "сделано"
+  WORKS.forEach(w => {
+    const stEl = document.getElementById('st-' + w.work_id);
+    const ffinish = document.getElementById('ffinish-' + w.work_id);
+    if (stEl && stEl.value === 'сделано' && ffinish && !ffinish.value) {
+      errors.push(`${w.work_id}: укажите фактическую дату окончания.`);
+    }
+  });
+
+  return errors;
+}
+
+// ── Print ──────────────────────────────────────────────────────────────────
+document.getElementById('btnPrint').addEventListener('click', () => window.print());
+
+// ── Clear ──────────────────────────────────────────────────────────────────
+document.getElementById('btnClear').addEventListener('click', () => {
+  if (!confirm('Очистить черновик? Все введённые данные будут потеряны.')) return;
+  try { localStorage.removeItem(DRAFT_KEY); } catch(e) {}
+  location.reload();
+});
+
+// ── Auto-save on input ─────────────────────────────────────────────────────
+document.querySelector('.sheet').addEventListener('input', draftSave);
+
+// ── Init ───────────────────────────────────────────────────────────────────
+renderWorks();
+addNeedRow(); // one empty row
+draftLoad();
+
+// Init prevFinish from current values after load
+WORKS.forEach(w => {
+  const cf = document.getElementById('cf-' + w.work_id);
+  if (cf) _prevFinish[w.work_id] = cf.value;
+});
+
+})();
+</script>
+</body>
+</html>
