@@ -131,6 +131,13 @@ tr.row-shifted{background:var(--shifted)}
 .reason-block label{color:var(--danger);font-weight:700;margin-bottom:3px}
 .reason-block select,.reason-block input,.reason-block textarea{
   margin-bottom:5px;font-size:12px;padding:5px 7px}
+/* Объяснённое отклонение: все три поля заполнены → строка и блок зеленеют. */
+.reason-block.explained{background:#f0fff4;border-color:var(--green-border)}
+.reason-status{display:none;font-weight:700;font-size:12px;margin-bottom:6px;
+  padding:3px 8px;background:#c8f0d0;border-radius:3px;color:#16502c}
+.reason-status.visible{display:block}
+tr.row-explained{background:var(--green);outline:2px solid var(--green-border);outline-offset:-2px}
+tr.row-explained td{border-color:var(--green-border)}
 
 /* fact date blocks */
 .fact-block{display:none;padding:7px 8px;background:#f0f8f0;
@@ -490,6 +497,17 @@ function plural(n, one, few, many) {
   return many;
 }
 
+// Строка считается «объяснённой», когда заполнены все три поля: категория,
+// пояснение и решение. Только тогда красная рамка уходит и появляется зелёная.
+function isExplained(workId) {
+  const cat  = document.getElementById('cat-'  + workId);
+  const rtxt = document.getElementById('rtxt-' + workId);
+  const rsol = document.getElementById('rsol-' + workId);
+  return !!(cat  && cat.value &&
+            rtxt && rtxt.value.trim() &&
+            rsol && rsol.value.trim());
+}
+
 // ── Row builder ────────────────────────────────────────────────────────────
 function buildWorkRow(w) {
   const tr = document.createElement('tr');
@@ -524,6 +542,7 @@ function buildWorkRow(w) {
     <td class="col-name">
       ${w.name}
       <div class="reason-block" id="${reasonId}">
+        <div class="reason-status" id="reason-status-${w.work_id}">Отклонение объяснено ✓</div>
         <label>Причина задержки *</label>
         <select id="cat-${w.work_id}" name="reason_cat_${w.work_id}">${reasonOpts}</select>
         <label>Пояснение</label>
@@ -597,16 +616,21 @@ function updateRowState(workId, isShifted) {
 
   const isLate = !!(currFinish && baseFinish && currFinish > baseFinish);
   const isManual = _manualEdited.has(workId);
+  const explained = isLate && isManual && isExplained(workId);
 
-  tr.classList.toggle('row-late', isLate && isManual);
+  tr.classList.toggle('row-late', isLate && isManual && !explained);
+  tr.classList.toggle('row-explained', explained);
   tr.classList.toggle('row-ontime', !!(currFinish && baseFinish && currFinish <= baseFinish));
   tr.classList.toggle('row-shifted', !!isShifted);
 
-  // Reason block: only for manually edited late rows
+  // Reason block: only for manually edited late rows; green when explained
   const reasonBlock = document.getElementById('reason-' + workId);
   if (reasonBlock) {
     reasonBlock.classList.toggle('visible', isLate && isManual);
+    reasonBlock.classList.toggle('explained', explained);
   }
+  const statusBadge = document.getElementById('reason-status-' + workId);
+  if (statusBadge) statusBadge.classList.toggle('visible', explained);
 
   // Stale badge: curr finish in the past, status not "сделано"
   const nameCell = tr.cells[2];
@@ -1230,10 +1254,11 @@ function validate() {
 
     // Причина и решение спрашиваются только там, где срок сдвинул человек:
     // каскадные сдвиги обязательных полей не требуют.
+    // Если все три поля заполнены (строка зелёная), ошибок не добавляем.
     if (_manualEdited.has(w.work_id)) {
       const cf = document.getElementById('cf-' + w.work_id);
       const baseF = document.getElementById('row-' + w.work_id)?.dataset.baseFinish;
-      if (cf && baseF && cf.value && cf.value > baseF) {
+      if (cf && baseF && cf.value && cf.value > baseF && !isExplained(w.work_id)) {
         if (!document.getElementById('cat-' + w.work_id)?.value) {
           problems.push({focus: 'cat-' + w.work_id,
             text: label + ' — причина задержки не выбрана.'});
@@ -1295,7 +1320,12 @@ function wireWorksTable() {
   const tbody = document.getElementById('worksTbody');
   tbody.addEventListener('change', guard(e => {
     const el = e.target.closest('[data-act]');
-    if (!el) { draftSave(); return; }   // причина, пояснение, решение
+    if (!el) {
+      // Поля причины (cat-*, rtxt-*, rsol-*): обновляем зелёный/красный сразу.
+      const m = e.target.id && e.target.id.match(/^(?:cat|rtxt|rsol)-(.+)$/);
+      if (m) updateRowState(m[1], false);
+      draftSave(); return;
+    }
     const id = el.dataset.work;
     switch (el.dataset.act) {
       case 'start':  onStartChange(id); break;
@@ -1303,6 +1333,11 @@ function wireWorksTable() {
       case 'status': onStatusChange(id); break;
       default:       markChanged(id);
     }
+  }));
+  // input: текстовые поля причины обновляют цвет при каждом нажатии клавиши.
+  tbody.addEventListener('input', guard(e => {
+    const m = e.target.id && e.target.id.match(/^(?:rtxt|rsol)-(.+)$/);
+    if (m) updateRowState(m[1], false);
   }));
 }
 
