@@ -277,6 +277,15 @@ tr.row-explained td{border-color:var(--green-border)}
     </table>
   </div>
 
+  <h2>Замечания к списку работ (необязательно)</h2>
+  <p style="font-size:13px;color:var(--muted);margin:0 0 8px">
+    Если в списке чего-то не хватает, работа названа не так, как её называют на
+    объекте, или работы в нём уже нет — напишите здесь своими словами. Сам список
+    правят Александр и ПТО; отсюда ничего не меняется автоматически — замечание
+    попадает в сводку и в повестку планёрки.
+  </p>
+  <textarea id="f-plan-notes" placeholder="Каждое замечание с новой строки"></textarea>
+
   <h2>Потребности на следующую неделю (<span id="needs-week-range"></span>)</h2>
   <div class="needs-section">
     <table class="needs-table" id="needsTable">
@@ -915,6 +924,7 @@ function collectDraft() {
     date: document.getElementById('f-date').value,
     risks: document.getElementById('f-risks').value,
     decisions: document.getElementById('f-decisions').value,
+    plan_notes: document.getElementById('f-plan-notes').value,
     works_state,
     needs,
     needsCount,
@@ -946,6 +956,7 @@ function draftLoad() {
     if (d.date) document.getElementById('f-date').value = d.date;
     if (d.risks) document.getElementById('f-risks').value = d.risks;
     if (d.decisions) document.getElementById('f-decisions').value = d.decisions;
+    if (d.plan_notes) document.getElementById('f-plan-notes').value = d.plan_notes;
 
     // Restore manual_edited set before updateRowState calls
     if (d.manual_edited) d.manual_edited.forEach(id => _manualEdited.add(id));
@@ -1065,8 +1076,12 @@ function buildPayload() {
 
   const risks = draft.risks.split('\n').map(s=>s.trim()).filter(Boolean);
   const decisions = draft.decisions.split('\n').map(s=>s.trim()).filter(Boolean);
+  // Замечания к списку работ — предложение, а не правка: план они не меняют,
+  // их читает человек. Применяет план только редактор (plan/ в репозитории
+  // данных) или импорт из графика ПТО.
+  const plan_notes = draft.plan_notes.split('\n').map(s=>s.trim()).filter(Boolean);
 
-  return {report, changes, reasons, stale_status, needs,
+  return {report, changes, reasons, stale_status, needs, plan_notes,
     attachments: {risks, decisions}};
 }
 
@@ -1119,8 +1134,15 @@ function ghBase64(text) {
 
 // `content` — то, что ляжет в репозиторий файлом. Со включённым шифрованием это
 // конверт (ghEncryptEnvelope ниже), а не сам отчёт.
+// Путь и сообщение коммита берутся из cfg: этим же блоком уходят и отчёты
+// начальника участка (reports/<код>/<неделя>-<метка>.json), и пачки изменений
+// плана из редактора (plan/<код>/<метка>.json). Значения по умолчанию —
+// отчётные, чтобы форма отчёта ничего про это не знала.
 function ghBuildRequest(cfg, content, stamp) {
-  const path = ghReportPath(cfg.objectCode, cfg.week, stamp);
+  const prefix = cfg.pathPrefix || 'reports';
+  const slug = cfg.slug || ((cfg.week ? cfg.week + '-' : '') + stamp);
+  const path = prefix + '/' + cfg.objectCode + '/' + slug + '.json';
+  const message = cfg.message || ('report ' + cfg.objectCode + ' ' + cfg.week);
   return {
     path: path,
     url: 'https://api.github.com/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + path,
@@ -1133,7 +1155,7 @@ function ghBuildRequest(cfg, content, stamp) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        message: 'report ' + cfg.objectCode + ' ' + cfg.week,
+        message: message,
         content: ghBase64(JSON.stringify(content, null, 2)),
         branch: cfg.branch,
       }),
@@ -1189,17 +1211,24 @@ async function ghEncryptEnvelope(pubKeyB64, keyId, payload, meta) {
 
   // Метаданные — только служебные: по ним мини раскладывает файлы, и по ним
   // же видно в логе, что пришло. Ни одного поля отчёта здесь нет.
-  return {
+  //
+  // Переносятся все ключи meta, а не три заранее известных: у отчёта это код
+  // объекта, неделя и отметка времени, у пачки изменений плана недели нет, зато
+  // есть kind. Единственное переименование — objectCode → object_code, потому
+  // что снаружи конверт читает python.
+  const envelope = {
     v: 1,
     alg: 'RSA-OAEP-256+A256GCM',
     kid: keyId,
     ek: ghB64Bytes(ek),
     iv: ghB64Bytes(iv),
     ct: ghB64Bytes(ct),
-    object_code: meta.objectCode,
-    week: meta.week,
-    ts: meta.ts,
   };
+  Object.keys(meta || {}).forEach(key => {
+    const name = key === 'objectCode' ? 'object_code' : key;
+    if (meta[key] !== undefined) envelope[name] = meta[key];
+  });
+  return envelope;
 }
 // <<< gh-crypto-core
 
