@@ -63,15 +63,15 @@ textarea{min-height:64px;resize:vertical}
 /* works table.
    Обёртки со своей горизонтальной прокруткой здесь нет намеренно: любой
    overflow на ней делает её областью прокрутки, и sticky-шапка перестаёт
-   следить за прокруткой страницы. Сумма ширин колонок — 1160px, на экране
-   1280px и шире таблица умещается целиком без прокрутки вбок. Если окно уже,
+   следить за прокруткой страницы. Сумма ширин колонок — 1296px, на экране
+   1400px и шире таблица умещается целиком без прокрутки вбок. Если окно уже,
    вбок едет вся страница, а липкие колонки остаются на месте относительно окна.
    Рамки — border-collapse:separate: при collapse рамки липких ячеек в Chrome
    уезжают вместе с содержимым. Двойных линий нет, потому что у ячеек убраны
    левая и верхняя рамки, кроме первой колонки и шапки. */
 .works-wrap{margin:8px 0}
 .works-table{border-collapse:separate;border-spacing:0;width:100%;
-  min-width:1160px;font-size:13px}
+  min-width:1296px;font-size:13px}
 .works-table th{background:var(--soft);color:var(--muted);font-weight:700;
   padding:7px 6px;text-align:left;border:1px solid var(--line);border-left:0;
   white-space:nowrap}
@@ -307,7 +307,7 @@ tr.row-explained td{border-color:var(--green-border)}
         <div class="wk-hint" id="f-week-hint"></div>
       </div></div>
     <div><label>Дата отчёта</label>
-      <input type="date" id="f-date" value="2026-09-11"></div>
+      <input type="date" id="f-date" value="2026-09-12"></div>
   </div>
 
   <!-- Всё ниже шапки блокируется, пока не выбрана отчётная неделя. -->
@@ -319,20 +319,24 @@ tr.row-explained td{border-color:var(--green-border)}
     При изменении окончания связанные работы сдвигаются автоматически (без обязательных полей).
     Номер, захватка и название работы закреплены слева, шапка — сверху: при прокрутке
     вбок всегда видно, о какой работе идёт речь.
+    Статус «в работе» — процент выполнения обязателен; «планируется» и «сделано»
+    проставляют 0 и 100 сами. «Начинается после» — работа, после которой эта
+    начинается: сдвинули её окончание — эта поедет следом.
   </p>
   <div class="works-wrap">
     <table class="works-table" id="worksTable">
       <thead><tr>
         <th class="col-no" style="width:84px">№</th>
         <th class="col-zone" style="width:110px">Захватка / оси</th>
-        <th class="col-name" style="width:318px">Работа</th>
+        <th class="col-name" style="width:300px">Работа</th>
         <th style="width:96px">Исх. начало</th>
         <th style="width:96px">Исх. оконч.</th>
         <th class="col-cs" style="width:100px">Тек. начало</th>
         <th class="col-cf" style="width:100px">Тек. оконч.</th>
         <th style="width:58px">Длит., дн</th>
         <th style="width:128px;min-width:120px">Статус</th>
-        <th style="width:70px">Привязка к №</th>
+        <th style="width:72px">% выполнения</th>
+        <th style="width:152px">Начинается после</th>
       </tr></thead>
       <tbody id="worksTbody"></tbody>
     </table>
@@ -427,14 +431,80 @@ const GH_TOKEN_PARTS = [GH_TA, GH_TB, GH_TC, GH_TD];
 const PUB_KEY_B64 = "MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAmLVO5xLUbD/nHdtxztfa3c5kH34vcZPymtS7civX1e09wKEmarVDpIJGPI4LEo1MkAASEJqm0MIz2gzG/QKeJ0YDsR0/Mr8cdq9Tjr2FbjYxIiO4Rp4tW5mg6pWeegtNKep3TZqd6tEAI3ygccblpJTr3wRLIUhX6RRtowHaZQWzgTal565DFHIK4CW5fS8+CbxmeAXTnj3hx0nS+nxaKts/lCdgGr5dUDSn+/9lKtzJ9qC8IoDYND5+cWRHsWTqKuU63zXJFgGVY/c9PLvNE617CmMgfHi1UNxOWdWIiS57XJO+0nUaRuOGkgs+Ptj8J40861qoXvVBGFr/lqtPY4Db/UrxQLEuyP5SqJcJT6E5pTIA2IZ1uHl2TjGAjeSQbyt1VGx/C+zPVv7K3KewwsFLTBtEtlFELglCqH+78IyYz7V8nSs35R6ABC/7FJlLREClytcSJ/5TFSdKTfPPn1I1Cw4IV3L3585qsRrd8Y/z72nH5+Jg6jOM6iJlXLzNAgMBAAE=";
 const KEY_ID      = "9f888f70f11bc7fc";
 
-// Build successor map: work_id -> [work_id, ...]
-const SUCCESSORS = {};
-WORKS.forEach(w => {
-  if (w.predecessor) {
-    if (!SUCCESSORS[w.predecessor]) SUCCESSORS[w.predecessor] = [];
-    SUCCESSORS[w.predecessor].push(w.work_id);
+// Преемники считаются не один раз при загрузке, а по текущим значениям полей
+// «Начинается после»: предшественника можно поменять прямо в форме, и каскад
+// обязан идти по новой цепочке, а не по той, с которой страница собрана.
+function successorsOf(workId) {
+  if (!workId) return [];
+  const out = [];
+  WORKS.forEach(w => {
+    const el = document.getElementById('pred-' + w.work_id);
+    if (el && el.value === workId) out.push(w.work_id);
+  });
+  return out;
+}
+
+// Есть ли в плане группы захваток. Правило «первая работа группы начинается
+// вручную» применимо только к сгруппированному плану; там, где групп нет
+// (KZH5 — один сплошной список), предшественник берётся ровно из хранилища:
+// пустое значение там означает начало самостоятельной цепочки, а не пропуск.
+const HAS_GROUPS = WORKS.some(w => (w.group || '').trim());
+
+function isFirstInGroup(idx) {
+  if (idx <= 0) return true;
+  return (WORKS[idx].group || '') !== (WORKS[idx - 1].group || '');
+}
+
+// Что стоит в поле «Начинается после» при открытии формы. Хранилище главнее
+// умолчания: если предшественник записан, показываем его.
+function defaultPredecessor(w, idx) {
+  if (w.predecessor) return w.predecessor;
+  if (!HAS_GROUPS || isFirstInGroup(idx)) return '';    // «вручную»
+  return WORKS[idx - 1].work_id;
+}
+
+// Список для выпадающего меню: работы выше по таблице, сверху вниз по всем
+// группам. Работа ниже не предлагается — так цикл почти невозможно собрать
+// мышкой; если она всё же записана предшественником в хранилище, её добавляем
+// последней, иначе выбор молча потерялся бы.
+function predOptionsHtml(w, idx) {
+  const current = defaultPredecessor(w, idx);
+  const offered = WORKS.slice(0, idx).filter(x => x.work_id !== w.work_id);
+  if (current && !offered.some(x => x.work_id === current)) {
+    const below = WORKS.filter(x => x.work_id === current)[0];
+    if (below) offered.push(below);
   }
-});
+  let html = `<option value=""${current ? '' : ' selected'}>вручную</option>`;
+  offered.forEach(x => {
+    html += `<option value="${x.work_id}"${x.work_id === current ? ' selected' : ''}>`
+          + `${x.work_id} — ${x.name || ''}</option>`;
+  });
+  return html;
+}
+
+// Цепочка предшественников, замкнувшаяся сама на себя. Возвращает список
+// work_id от работы до повтора или null. Проверяется перед отправкой: цикл
+// означает, что каскад некуда вести, и такой отчёт принимать нельзя.
+function predecessorCycle() {
+  const pred = {};
+  WORKS.forEach(w => {
+    const el = document.getElementById('pred-' + w.work_id);
+    pred[w.work_id] = el ? el.value : (w.predecessor || '');
+  });
+  for (let i = 0; i < WORKS.length; i++) {
+    const startId = WORKS[i].work_id;
+    const seen = new Set([startId]);
+    const chain = [startId];
+    let cur = pred[startId];
+    while (cur) {
+      chain.push(cur);
+      if (seen.has(cur)) return chain;
+      seen.add(cur);
+      cur = pred[cur];
+    }
+  }
+  return null;
+}
 
 // Set of work IDs that were manually edited by the user (not cascade-shifted)
 const _manualEdited = new Set();
@@ -595,7 +665,7 @@ function isExplained(workId) {
 }
 
 // ── Row builder ────────────────────────────────────────────────────────────
-function buildWorkRow(w) {
+function buildWorkRow(w, idx) {
   const tr = document.createElement('tr');
   tr.id = 'row-' + w.work_id;
   tr.dataset.workId = w.work_id;
@@ -610,12 +680,17 @@ function buildWorkRow(w) {
     : `<input type="text" id="axes-${w.work_id}" placeholder="А–В / 3–7"
          data-act="changed" data-work="${w.work_id}">`;
 
-  const predCell = w.predecessor ? w.predecessor.replace(OBJECT_CODE + '-', '') : '';
+  const predOpts = predOptionsHtml(w, idx);
 
   // Status options
   const statusOpts = ['планируется','в работе','сделано'].map(s =>
     `<option value="${s}"${s === w.status ? ' selected' : ''}>${s}</option>`
   ).join('');
+
+  // Процент выполнения: у «планируется» и «сделано» он не спрашивается, а
+  // проставляется сам (0 и 100) и не правится; у «в работе» — обязателен.
+  const pctValue = progressForStatus(w.status, w.progress_pct);
+  const pctLocked = w.status !== 'в работе';
 
   // Reason block (hidden by default; shown only for manually edited late rows)
   const reasonId = 'reason-' + w.work_id;
@@ -662,11 +737,47 @@ function buildWorkRow(w) {
       style="background:var(--soft);color:var(--muted)"></td>
     <td><select id="st-${w.work_id}" data-act="status" data-work="${w.work_id}">
       ${statusOpts}</select></td>
-    <td><input type="text" id="pred-${w.work_id}" value="${predCell}"
-      placeholder="вручную"
-      data-act="changed" data-work="${w.work_id}"></td>
+    <td><input type="number" id="pct-${w.work_id}" min="0" max="100" step="1"
+      value="${pctValue}"${pctLocked ? ' readonly tabindex="-1"' : ''}
+      placeholder="0–100"
+      data-act="pct" data-work="${w.work_id}"></td>
+    <td><select id="pred-${w.work_id}" title="Работа, после которой начинается эта"
+      data-act="pred" data-work="${w.work_id}">${predOpts}</select></td>
   `;
   return tr;
+}
+
+// Значение поля «% выполнения» при данном статусе. Единственное место, где
+// это правило записано: им пользуются и сборка строки, и смена статуса.
+function progressForStatus(status, stored) {
+  if (status === 'планируется') return '0';
+  if (status === 'сделано') return '100';
+  return (stored === null || stored === undefined || stored === '') ? '' : String(stored);
+}
+
+// Процент, вписанный руками: если статус увели в «сделано» и вернули обратно
+// в «в работе», возвращаем то, что человек уже напечатал, а не пустое поле.
+const _pctTyped = {};
+
+// Приводит поле процента в соответствие статусу.
+// fromStatusChange: статус только что переключили — значение пересчитывается;
+// иначе (загрузка черновика) значение оставляем, правим только доступность.
+function syncProgress(workId, fromStatusChange) {
+  const stEl = document.getElementById('st-' + workId);
+  const pctEl = document.getElementById('pct-' + workId);
+  if (!stEl || !pctEl) return;
+  const status = stEl.value;
+  const locked = status !== 'в работе';
+  if (fromStatusChange) {
+    pctEl.value = status === 'в работе'
+      ? (_pctTyped[workId] || '')
+      : progressForStatus(status, '');
+  }
+  // readonly ставится атрибутом, а не свойством: по атрибуту красит css
+  // (.works-table td input[readonly]), по свойству — нет.
+  if (locked) pctEl.setAttribute('readonly', '');
+  else pctEl.removeAttribute('readonly');
+  pctEl.tabIndex = locked ? -1 : 0;
 }
 
 // ── Render works ───────────────────────────────────────────────────────────
@@ -675,17 +786,17 @@ function renderWorks() {
   tbody.innerHTML = '';
 
   let currentGroup = undefined;
-  WORKS.forEach(w => {
+  WORKS.forEach((w, idx) => {
     const grp = w.group || null;
     if (grp && grp !== currentGroup) {
       currentGroup = grp;
       const gtr = document.createElement('tr');
       gtr.className = 'grp-row';
-      gtr.innerHTML = `<td colspan="10" style="padding:6px 8px">` +
+      gtr.innerHTML = `<td colspan="11" style="padding:6px 8px">` +
         `<span class="grp-label">${grp}</span></td>`;
       tbody.appendChild(gtr);
     }
-    tbody.appendChild(buildWorkRow(w));
+    tbody.appendChild(buildWorkRow(w, idx));
   });
 
   WORKS.forEach(w => updateRowState(w.work_id, false));
@@ -799,13 +910,28 @@ function onStatusChange(workId) {
     if (show && ffinishInput && !ffinishInput.value) ffinishInput.value = TODAY;
   }
 
+  syncProgress(workId, true);
+
   _prevStatus[workId] = status;
   markChanged(workId);
   updateRowState(workId, false);
 }
 
+function onProgressChange(workId) {
+  const pctEl = document.getElementById('pct-' + workId);
+  if (pctEl) _pctTyped[workId] = pctEl.value;
+  markChanged(workId);
+}
+
+// Смена предшественника — обычная правка: каскад с этого момента идёт по новой
+// цепочке (её читает successorsOf), а уже проставленные даты не пересчитываются
+// задним числом — сдвигать их без ведома человека мы не имеем права.
+function onPredecessorChange(workId) {
+  markChanged(workId);
+}
+
 function cascadeShift(sourceId, delta, visited) {
-  const succs = SUCCESSORS[sourceId] || [];
+  const succs = successorsOf(sourceId);
   succs.forEach(succId => {
     if (visited.has(succId)) return;
     visited.add(succId);
@@ -1087,6 +1213,7 @@ function resetForm() {
   _manualEdited.clear();
   Object.keys(_prevFinish).forEach(k => { delete _prevFinish[k]; });
   Object.keys(_prevStatus).forEach(k => { delete _prevStatus[k]; });
+  Object.keys(_pctTyped).forEach(k => { delete _pctTyped[k]; });
 
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
   set('f-object', DEFAULTS.object);
@@ -1148,11 +1275,13 @@ function collectDraft() {
     const rtxt = document.getElementById('rtxt-' + w.work_id);
     const rsol = document.getElementById('rsol-' + w.work_id);
     const pred = document.getElementById('pred-' + w.work_id);
+    const pct = document.getElementById('pct-' + w.work_id);
     const axesEl = document.getElementById('axes-' + w.work_id);
     works_state[w.work_id] = {
       curr_start: cs?.value||'',
       curr_finish: cf?.value||'',
       status: st?.value||'',
+      progress_pct: pct?.value||'',
       reason_cat: cat?.value||'',
       reason_txt: rtxt?.value||'',
       reason_sol: rsol?.value||'',
@@ -1236,6 +1365,7 @@ function draftLoad() {
         const rtxt = document.getElementById('rtxt-' + w.work_id);
         const rsol = document.getElementById('rsol-' + w.work_id);
         const pred = document.getElementById('pred-' + w.work_id);
+        const pct = document.getElementById('pct-' + w.work_id);
         const axesEl = document.getElementById('axes-' + w.work_id);
         if (cs && ws.curr_start) cs.value = ws.curr_start;
         if (cf && ws.curr_finish) cf.value = ws.curr_finish;
@@ -1243,7 +1373,14 @@ function draftLoad() {
         if (cat && ws.reason_cat) cat.value = ws.reason_cat;
         if (rtxt && ws.reason_txt) rtxt.value = ws.reason_txt;
         if (rsol && ws.reason_sol) rsol.value = ws.reason_sol;
-        if (pred && ws.pred) pred.value = ws.pred;
+        // Предшественник и процент восстанавливаются и пустыми: «вручную» и
+        // «процент ещё не назван» — это выбор человека, а не отсутствие данных.
+        if (pred && ws.pred !== undefined) pred.value = ws.pred;
+        if (pct && ws.progress_pct !== undefined) {
+          pct.value = ws.progress_pct;
+          if (ws.progress_pct) _pctTyped[w.work_id] = ws.progress_pct;
+        }
+        syncProgress(w.work_id, false);
         if (axesEl && ws.axes) axesEl.value = ws.axes;
         const fsiEl = document.getElementById('fstart-' + w.work_id);
         const ffiEl = document.getElementById('ffinish-' + w.work_id);
@@ -1304,6 +1441,27 @@ function buildPayload() {
 
     if (ws.axes) {
       changes.push({work_id: w.work_id, field: 'axes', old_value: '', new_value: ws.axes, origin: 'manual'});
+    }
+
+    // Процент выполнения. Каскадом он не бывает — это всегда слова человека.
+    // Ноль у «планируется», которого в хранилище ещё нет, изменением не
+    // считается: иначе первый же отчёт вписал бы нули во все строки графика.
+    const oldPct = (w.progress_pct === null || w.progress_pct === undefined)
+      ? '' : String(w.progress_pct);
+    const newPct = String(ws.progress_pct === undefined ? '' : ws.progress_pct).trim();
+    if (newPct !== '' && newPct !== oldPct && !(newPct === '0' && oldPct === '')) {
+      changes.push({work_id: w.work_id, field: 'progress_pct',
+        old_value: oldPct === '' ? null : Number(oldPct),
+        new_value: Number(newPct), origin: 'manual'});
+    }
+
+    // Предшественник. Пустое значение («вручную») — тоже изменение: связь
+    // могли снять сознательно, и в хранилище она должна пропасть.
+    const oldPred = w.predecessor || '';
+    const newPred = ws.pred === undefined ? oldPred : (ws.pred || '');
+    if (newPred !== oldPred) {
+      changes.push({work_id: w.work_id, field: 'predecessor',
+        old_value: oldPred || null, new_value: newPred, origin: 'manual'});
     }
 
     if (ws.status === 'в работе' && ws.fact_start) {
@@ -1658,7 +1816,31 @@ function validate() {
       problems.push({focus: 'ffinish-' + w.work_id,
         text: label + ' — статус «сделано», но нет фактической даты окончания.'});
     }
+
+    // «В работе» без процента — неполный отчёт (модель данных, §2): именно по
+    // проценту видно, идёт работа или стои́т вторую неделю на одном месте.
+    const pctEl = document.getElementById('pct-' + w.work_id);
+    if (stEl && stEl.value === 'в работе' && pctEl) {
+      const raw = (pctEl.value || '').trim();
+      const num = Number(raw);
+      if (!raw) {
+        problems.push({focus: 'pct-' + w.work_id,
+          text: label + ' — статус «в работе», не указан процент выполнения.'});
+      } else if (!Number.isInteger(num) || num < 0 || num > 100) {
+        problems.push({focus: 'pct-' + w.work_id,
+          text: label + ' — процент выполнения должен быть целым числом от 0 до 100.'});
+      }
+    }
   });
+
+  // Цепочка «начинается после», замкнувшаяся в кольцо: каскад по ней вести
+  // некуда, и дальше такой отчёт пускать нельзя.
+  const cycle = predecessorCycle();
+  if (cycle) {
+    problems.push({focus: 'pred-' + cycle[0],
+      text: 'Работы ссылаются друг на друга по кругу: ' + cycle.join(' → ') +
+            '. В поле «Начинается после» выберите работу выше по таблице или «вручную».'});
+  }
 
   return problems;
 }
@@ -1713,13 +1895,18 @@ function wireWorksTable() {
       case 'start':  onStartChange(id); break;
       case 'finish': onFinishChange(id); break;
       case 'status': onStatusChange(id); break;
+      case 'pct':    onProgressChange(id); break;
+      case 'pred':   onPredecessorChange(id); break;
       default:       markChanged(id);
     }
   }));
-  // input: текстовые поля причины обновляют цвет при каждом нажатии клавиши.
+  // input: текстовые поля причины обновляют цвет при каждом нажатии клавиши,
+  // процент запоминается по ходу набора — чтобы вернуться после смены статуса.
   tbody.addEventListener('input', guard(e => {
     const m = e.target.id && e.target.id.match(/^(?:rtxt|rsol)-(.+)$/);
     if (m) updateRowState(m[1], false);
+    const p = e.target.id && e.target.id.match(/^pct-(.+)$/);
+    if (p) _pctTyped[p[1]] = e.target.value;
   }));
 }
 

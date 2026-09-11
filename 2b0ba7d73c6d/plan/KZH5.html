@@ -427,14 +427,16 @@ function visibleRows() {
   return ROWS.filter(r => showArchived || !r.archived);
 }
 
+// Список для поля «Начинается после». Пункт показывается с названием работы —
+// по одному номеру «KARE2-07» ни Александр, ни ПТО не вспомнят, что это.
+// Добавленные только что работы попадают сюда сразу: список строится по ROWS.
 function predOptions(row) {
-  let html = '<option value="">—</option>';
+  let html = '<option value="">вручную</option>';
   ROWS.forEach(r => {
     if (r.work_id === row.work_id || r.archived) return;
-    const sel = r.predecessor === undefined ? '' : '';
     html += '<option value="' + esc(r.work_id) + '"' +
             (row.predecessor === r.work_id ? ' selected' : '') + '>' +
-            esc(r.work_id) + '</option>' + sel;
+            esc(r.work_id) + (r.name ? ' — ' + esc(r.name) : '') + '</option>';
   });
   return html;
 }
@@ -568,12 +570,19 @@ function addWork(group) {
   const wid = OBJECT_CODE + '-' + String(NEXT_SEQ).padStart(2, '0');
   NEXT_SEQ += 1;
   const last = ROWS.filter(r => !r.archived).slice(-1)[0];
+  const newGroup = group !== undefined && group !== null
+    ? group : (last ? last.group : '');
+  // Правило то же, что в форме отчёта: работа продолжает предыдущую, а первая
+  // работа новой группы захваток начинается вручную — предшественника у неё
+  // нет, потому что предыдущая группа идёт своим чередом.
+  const startsGroup = !last || (last.group || '') !== (newGroup || '');
   const row = {
     work_id: wid,
-    group: group !== undefined && group !== null ? group : (last ? last.group : ''),
+    group: newGroup,
     name: '', zahvatki: '', axes: '',
     base_start: '', base_finish: '', base_duration_days: '',
-    predecessor: '', plan_finish: '', archived: false, isNew: true,
+    predecessor: startsGroup ? '' : last.work_id,
+    plan_finish: '', archived: false, isNew: true,
   };
   ROWS.push(row);
   draftSave();
