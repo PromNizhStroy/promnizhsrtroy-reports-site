@@ -158,10 +158,14 @@ async function bootstrap() {
   if (!allowed.length) { authShowDenied(); return; }
   authMountPage();
 
+  // «Все объекты» — про роль, а не про число строк: начальник участка, у
+  // которого сейчас оба объекта, ведёт именно эти два, а не «все».
+  const scope = authMayEditPlan(who)
+    ? 'все объекты'
+    : (allowed.length > 1 ? 'объекты ' : 'объект ') +
+      allowed.map(o => o.code).join(', ');
   document.getElementById('whoami').textContent =
-    (who.name || '') + (who.name ? ' — ' : '') +
-    (allowed.length === OBJECTS.length && OBJECTS.length > 1
-      ? 'все объекты' : 'объект ' + allowed.map(o => o.code).join(', '));
+    (who.name || '') + (who.name ? ' — ' : '') + scope;
 
   document.getElementById('objList').innerHTML = allowed.map(o =>
     '<li><a href="' + esc(authLink(o.file, who)) + '">' +
