@@ -506,7 +506,7 @@ const OBJECT_CODE = "KZH5";
 // их от даты в браузере, иначе зашитая неделя врала бы всякий раз, когда сайт
 // не перевыкладывали. Нужна она только как метка сборки и имя файла на случай,
 // если неделю почему-то не выбрали.
-const WEEK_BAKED = "2026-W37";
+const WEEK_BAKED = "2026-W38";
 // Пустая, пока начальник участка не выбрал неделю в списке. Пустая WEEK значит:
 // ключей черновика нет, отправлять нельзя, форма заблокирована.
 let WEEK = '';
@@ -1305,13 +1305,6 @@ function resetAssignments() {
   }));
 }
 
-// Своё поручение — то, которое завёл этот же человек. Текст, ответственного и
-// срок чужого поручения начальник участка не правит: их ставил не он.
-function assignIsOwn(a) {
-  if (a.isNew) return true;
-  return !!(WHO && WHO.person_id && a.created_by && a.created_by === WHO.person_id);
-}
-
 function assignOverdue(a) {
   return !!(a.deadline && a.deadline < TODAY && (a.status || A_TODO) === A_TODO);
 }
@@ -1341,9 +1334,10 @@ function renderAssignments() {
 
   rows.forEach(a => {
     const k = assignKey(a);
-    const own = assignIsOwn(a);
     const accepted = (a.status || A_TODO) === A_ACCEPTED;
-    const ro = own ? '' : ' readonly';
+    // Сохранённое поручение: НУ меняет только статус и комментарий; deadline,
+    // text, responsible доступны только директору через редактор плана.
+    const savedRo = a.isNew ? '' : ' readonly';
     const tr = document.createElement('tr');
     tr.id = 'assign-' + k;
     tr.dataset.key = k;
@@ -1362,14 +1356,14 @@ function renderAssignments() {
     tr.innerHTML = `
       <td><input type="text" id="assign-field-text-${k}"
         data-af="text" data-akey="${k}"
-        value="${escAttr(a.text)}" placeholder="Что сделать"${ro}></td>
+        value="${escAttr(a.text)}" placeholder="Что сделать"${savedRo}></td>
       <td><input type="text" id="assign-field-responsible-${k}"
         data-af="responsible" data-akey="${k}"
-        value="${escAttr(a.responsible)}" placeholder="Фамилия"${ro}></td>
+        value="${escAttr(a.responsible)}" placeholder="Фамилия"${savedRo}></td>
       <td class="${assignOverdue(a) ? 'a-overdue' : ''}" id="adl-${k}">
         <input type="date" id="assign-field-deadline-${k}"
           data-af="deadline" data-akey="${k}"
-          value="${escAttr(a.deadline)}"${ro}></td>
+          value="${escAttr(a.deadline)}"${savedRo}${a.isNew ? '' : ' title="дедлайн меняет директор"'}></td>
       <td>${statusCell}</td>
       <td><input type="text" id="assign-field-comment-${k}"
         data-af="comment" data-akey="${k}"
@@ -1452,6 +1446,8 @@ function assignmentChanges() {
     const fields = {};
     [['text', 'text'], ['responsible', 'responsible'], ['deadline', 'deadline'],
      ['status', 'status'], ['comment', 'comment']].forEach(([f]) => {
+      // НУ не может менять эти поля в сохранённом поручении — не отправляем
+      if (['text', 'responsible', 'deadline'].indexOf(f) >= 0) return;
       const now = String(a[f] === null || a[f] === undefined ? '' : a[f]).trim();
       const was = String(b[f] === null || b[f] === undefined ? '' : b[f]).trim();
       if (now !== was) fields[f] = now;
