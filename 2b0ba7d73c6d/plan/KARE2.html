@@ -107,6 +107,24 @@ tr.row-archived td input,tr.row-archived td select{
 #banner.b-sending{background:#e6f2f5;border-bottom-color:var(--accent);color:#10545e}
 
 .field-problem{outline:2px solid var(--red-border);outline-offset:1px}
+
+/* Поручения — тот же список, что видит начальник участка в своей форме.
+   Разница одна: здесь доступен статус «принято директором». */
+.assign-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 8px}
+.assign-bar select{width:auto;min-width:210px;font-size:13px;padding:5px 8px}
+.assign-bar .lbl{margin:0}
+.assign-table{border-collapse:collapse;width:100%;font-size:13px}
+.assign-table th{background:var(--soft);color:var(--muted);font-weight:700;
+  padding:6px 8px;text-align:left;border:1px solid var(--line)}
+.assign-table td{padding:5px 7px;border:1px solid var(--line);vertical-align:top}
+.assign-table td input,.assign-table td select{
+  width:100%;padding:4px 6px;border:1px solid var(--line);border-radius:4px;font-size:12px}
+.assign-table tr.a-new{background:var(--added)}
+.assign-table tr.a-changed{background:var(--changed)}
+.assign-table td.a-overdue{background:#ff3b30}
+.assign-table td.a-overdue input{background:#ff3b30;color:#fff;font-weight:700;
+  border-color:#ff3b30}
+.a-empty{color:var(--muted);font-size:13px;padding:8px 0}
 .changes-box{margin-top:10px;padding:10px 14px;background:var(--soft);
   border:1px solid var(--line);border-radius:6px;font-size:13px}
 .changes-box ul{margin:6px 0 0;padding-left:20px}
@@ -208,6 +226,38 @@ tr.row-archived td input,tr.row-archived td select{
     <button type="button" class="add-btn" id="toggleArchive">Показать архив</button>
   </div>
 
+  <h2>Поручения</h2>
+  <p class="hint">
+    Кто что делает по объекту и к какому сроку. Начальник участка видит этот же
+    список в своей форме отчёта и переключает «сделать» ↔ «готово»;
+    <strong>«принято директором» ставится только здесь</strong>. Красная ячейка даты — срок прошёл, а
+    поручение всё ещё «сделать». Поручения уходят тем же «Сохранить план», что и
+    правки графика.
+  </p>
+  <div class="assign-bar">
+    <label class="lbl" for="assign-filter">Показывать</label>
+    <select id="assign-filter">
+      <option value="open" selected>«сделать» и «готово»</option>
+      <option value="сделать">только «сделать»</option>
+      <option value="готово">только «готово»</option>
+      <option value="принято директором">принятые директором</option>
+      <option value="all">все</option>
+    </select>
+    <button type="button" class="add-btn" id="addAssign">+ Поручение</button>
+  </div>
+  <table class="assign-table" id="assignTable">
+    <thead><tr>
+      <th>Поручение</th>
+      <th style="width:160px">Ответственный</th>
+      <th style="width:130px">Дедлайн</th>
+      <th style="width:175px">Статус</th>
+      <th style="width:240px">Комментарий</th>
+      <th style="width:34px"></th>
+    </tr></thead>
+    <tbody id="assignTbody"></tbody>
+  </table>
+  <p class="a-empty" id="assignEmpty" hidden>Поручений по этому объекту пока нет.</p>
+
   <h2>Что уйдёт при сохранении</h2>
   <div class="changes-box" id="changesBox">Пока ничего не изменено.</div>
 </div>
@@ -244,6 +294,14 @@ const KEY_ID      = "9f888f70f11bc7fc";
 const AUTH_ENTRIES = [{"p": "p-001", "n": "Мажоров А.В.", "r": "site_head", "o": ["KARE2", "KZH5"], "h": "8f53e2cbcc1f2b99d1a1d77738aded237790a9c29363ed541c69d33a06d5487a"}, {"p": "p-002", "n": "Медведев А.А.", "r": "director", "o": [], "h": "1472176cf0c5ddeaf1a5df30f6a1f075d48f82191878c2242ded07d296ba4274"}, {"p": "p-003", "n": "Инженер ПТО (имя уточняется)", "r": "pto", "o": [], "h": "3c2b05bc8ae4896d025ab2b1bb6003e096909ae478a33c94e62990c2b683bab1"}];
 // Запись реестра, по чьей ссылке открыт редактор. До проверки — null.
 let WHO = null;
+
+// Поручения объекта: с чем страница собрана. ASG_ROWS — то, что правят.
+const ASG_BASELINE = [];
+const SITE_HEAD = "\u041c\u0430\u0436\u043e\u0440\u043e\u0432.\u0410.\u0412";
+const A_TODO = 'сделать', A_DONE = 'готово', A_ACCEPTED = 'принято директором';
+const A_STATUSES = [A_TODO, A_DONE, A_ACCEPTED];
+let ASG_ROWS = [];
+let _asgNew = 0;
 
 const DRAFT_KEY = 'pnstroy-plan-' + OBJECT_CODE;
 
@@ -599,6 +657,166 @@ function addWork(group) {
   return row;
 }
 
+// ── Поручения ──────────────────────────────────────────────────────────────
+// Устроены так же, как таблица плана: состояние в массиве, разметка — его
+// отражение, операции считаются диффом от baseline.
+function asgKey(a) { return a.assignment_id || a.tmp_id; }
+
+function asgBaseById() {
+  const m = {};
+  ASG_BASELINE.forEach(a => { m[a.assignment_id] = a; });
+  return m;
+}
+
+function resetAssignments() {
+  _asgNew = 0;
+  ASG_ROWS = ASG_BASELINE.map(a => ({
+    assignment_id: a.assignment_id,
+    text: a.text || '', responsible: a.responsible || '',
+    deadline: a.deadline || '', status: a.status || A_TODO,
+    comment: a.comment || '', isNew: false,
+  }));
+}
+
+function asgOverdue(a) {
+  return !!(a.deadline && a.deadline < isoLocal(new Date()) &&
+            (a.status || A_TODO) === A_TODO);
+}
+
+function asgVisible(a) {
+  const filter = (document.getElementById('assign-filter') || {}).value || 'open';
+  const status = a.status || A_TODO;
+  if (filter === 'all') return true;
+  if (filter === 'open') return status !== A_ACCEPTED;
+  return status === filter;
+}
+
+function asgSorted(list) {
+  return list.slice().sort((a, b) => {
+    const da = a.deadline || '9999-99-99', db = b.deadline || '9999-99-99';
+    if (da !== db) return da < db ? -1 : 1;
+    return String(asgKey(a)) < String(asgKey(b)) ? -1 : 1;
+  });
+}
+
+function asgChangedFields(row, base) {
+  const out = {};
+  ['text', 'responsible', 'deadline', 'status', 'comment'].forEach(f => {
+    const now = String(row[f] === null || row[f] === undefined ? '' : row[f]).trim();
+    const was = String(base[f] === null || base[f] === undefined ? '' : base[f]).trim();
+    if (now !== was) out[f] = now;
+  });
+  return out;
+}
+
+function asgState(row) {
+  if (row.isNew) return 'new';
+  const b = asgBaseById()[row.assignment_id];
+  if (!b) return 'new';
+  return Object.keys(asgChangedFields(row, b)).length ? 'changed' : '';
+}
+
+function renderAssignments() {
+  const tbody = document.getElementById('assignTbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  const rows = asgSorted(ASG_ROWS.filter(asgVisible));
+
+  rows.forEach(a => {
+    const k = asgKey(a);
+    const tr = document.createElement('tr');
+    tr.id = 'assign-' + k;
+    const state = asgState(a);
+    if (state) tr.className = 'a-' + state;
+    const statusOpts = A_STATUSES.map(st =>
+      '<option value="' + esc(st) + '"' +
+      ((a.status || A_TODO) === st ? ' selected' : '') + '>' + esc(st) + '</option>'
+    ).join('');
+    tr.innerHTML =
+      '<td><input type="text" id="asg-text-' + esc(k) + '" data-ag="text" data-ak="' +
+        esc(k) + '" value="' + esc(a.text) + '" placeholder="Что сделать"></td>' +
+      '<td><input type="text" id="asg-responsible-' + esc(k) + '" data-ag="responsible" ' +
+        'data-ak="' + esc(k) + '" value="' + esc(a.responsible) + '" placeholder="Фамилия"></td>' +
+      '<td class="' + (asgOverdue(a) ? 'a-overdue' : '') + '" id="asg-dl-' + esc(k) + '">' +
+        '<input type="date" id="asg-deadline-' + esc(k) + '" data-ag="deadline" data-ak="' +
+        esc(k) + '" value="' + esc(a.deadline) + '"></td>' +
+      '<td><select data-ag="status" data-ak="' + esc(k) + '">' + statusOpts + '</select></td>' +
+      '<td><input type="text" id="asg-comment-' + esc(k) + '" data-ag="comment" data-ak="' +
+        esc(k) + '" value="' + esc(a.comment) + '" placeholder="Необязательно"></td>' +
+      '<td>' + (a.isNew
+        ? '<button type="button" class="mini danger" data-act="del-assign" data-ak="' +
+          esc(k) + '">✕</button>'
+        : '') + '</td>';
+    tbody.appendChild(tr);
+  });
+
+  const empty = document.getElementById('assignEmpty');
+  if (empty) empty.hidden = rows.length > 0;
+  const table = document.getElementById('assignTable');
+  if (table) table.style.display = rows.length ? '' : 'none';
+}
+
+function asgByKey(k) {
+  return ASG_ROWS.filter(a => asgKey(a) === k)[0] || null;
+}
+
+function onAsgField(k, field, value) {
+  const a = asgByKey(k);
+  if (!a) return;
+  a[field] = value;
+  if (field === 'deadline' || field === 'status') {
+    const cell = document.getElementById('asg-dl-' + k);
+    if (cell) cell.classList.toggle('a-overdue', asgOverdue(a));
+    const tr = document.getElementById('assign-' + k);
+    if (tr) { const st = asgState(a); tr.className = st ? 'a-' + st : ''; }
+  }
+  draftSave();
+}
+
+function addAssignment() {
+  _asgNew += 1;
+  ASG_ROWS.push({
+    assignment_id: null, tmp_id: 'new-' + _asgNew,
+    text: '', responsible: SITE_HEAD || '', deadline: '',
+    status: A_TODO, comment: '', isNew: true,
+  });
+  renderAssignments();
+  draftSave();
+  const input = document.getElementById('asg-text-new-' + _asgNew);
+  if (input) { input.focus(); input.scrollIntoView({block: 'center'}); }
+}
+
+function delAssignment(k) {
+  ASG_ROWS = ASG_ROWS.filter(a => asgKey(a) !== k);
+  renderAssignments();
+  draftSave();
+}
+
+function assignmentOps() {
+  const base = asgBaseById();
+  const ops = [];
+  ASG_ROWS.forEach(a => {
+    if (a.isNew) {
+      const filled = [a.text, a.responsible, a.deadline, a.comment]
+        .some(v => String(v || '').trim());
+      if (!filled) return;
+      ops.push({op: 'assignment_add', fields: {
+        text: (a.text || '').trim(), responsible: (a.responsible || '').trim(),
+        deadline: a.deadline || '', status: a.status || A_TODO,
+        comment: (a.comment || '').trim(),
+      }});
+      return;
+    }
+    const b = base[a.assignment_id];
+    if (!b) return;
+    const fields = asgChangedFields(a, b);
+    if (Object.keys(fields).length) {
+      ops.push({op: 'assignment_update', assignment_id: a.assignment_id, fields: fields});
+    }
+  });
+  return ops;
+}
+
 // ── Операции ───────────────────────────────────────────────────────────────
 // Диффом, а не по ходу правки: «поправил и вернул» не должно ехать в репозиторий.
 function buildOps() {
@@ -660,6 +878,10 @@ function buildOps() {
     }
   });
 
+  // Поручения — тем же списком операций и тем же конвертом: Александр правит
+  // график и раздаёт поручения в одном разговоре.
+  assignmentOps().forEach(o => ops.push(o));
+
   // Порядок — одна операция на всю таблицу, и только если он правда другой.
   const order = ROWS.filter(r => !r.isNew).map(r => r.work_id);
   const baseOrder = BASELINE.map(w => w.work_id);
@@ -678,6 +900,19 @@ function describeOp(op) {
       return (labels[f] || f) + ': ' + (op.fields[f] || '—');
     });
     return 'Шапка объекта — ' + parts.join('; ');
+  }
+  if (op.op === 'assignment_add') {
+    return 'Новое поручение: ' + (op.fields.text || '(без текста)') +
+           ' — ' + (op.fields.responsible || 'без ответственного') +
+           ', до ' + (op.fields.deadline || '—');
+  }
+  if (op.op === 'assignment_update') {
+    const labels = {text: 'текст', responsible: 'ответственный', deadline: 'дедлайн',
+                    status: 'статус', comment: 'комментарий'};
+    const parts = Object.keys(op.fields).map(function(f) {
+      return (labels[f] || f) + ': ' + (op.fields[f] || '—');
+    });
+    return 'Поручение ' + op.assignment_id + ' — ' + parts.join('; ');
   }
   const row = rowById(op.work_id);
   const nameOf = id => {
@@ -724,6 +959,26 @@ function validate() {
   const problems = [];
   const author = document.getElementById('f-author').value.trim();
   if (!author) problems.push({focus: 'f-author', text: 'Не указано, кто правит план.'});
+  ASG_ROWS.forEach(a => {
+    const filled = [a.text, a.responsible, a.deadline, a.comment]
+      .some(v => String(v || '').trim());
+    if (!filled) return;                 // пустую строку просто не отправим
+    const k = asgKey(a);
+    if (!String(a.text || '').trim()) {
+      problems.push({focus: 'asg-text-' + k, text: 'Поручение без текста.'});
+    }
+    if (!String(a.responsible || '').trim()) {
+      problems.push({focus: 'asg-responsible-' + k,
+        text: 'Поручение «' + String(a.text || '').slice(0, 40) +
+              '» — не указан ответственный.'});
+    }
+    if (!a.deadline) {
+      problems.push({focus: 'asg-deadline-' + k,
+        text: 'Поручение «' + String(a.text || '').slice(0, 40) +
+              '» — не указан дедлайн.'});
+    }
+  });
+
   ROWS.forEach(row => {
     if (row.archived) return;
     if (!String(row.name || '').trim()) {
@@ -783,6 +1038,7 @@ function draftSave() {
       author: document.getElementById('f-author').value,
       rows: ROWS, next_seq: NEXT_SEQ,
       hdr_state: HDR_STATE,
+      assignments: ASG_ROWS,
     }));
     const t = new Date().toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'});
     document.getElementById('saveState').textContent = 'Черновик сохранён ' + t;
@@ -801,6 +1057,14 @@ function draftLoad() {
     // ключ, а не то, что лежало в браузере с прошлого раза.
     if (Array.isArray(d.rows) && d.rows.length) ROWS = d.rows;
     if (d.next_seq) NEXT_SEQ = Math.max(NEXT_SEQ, d.next_seq);
+    if (Array.isArray(d.assignments)) {
+      // Состояние заменяется целиком, а не дополняется: иначе черновик плодил
+      // бы строки при каждой загрузке.
+      ASG_ROWS = d.assignments;
+      _asgNew = ASG_ROWS.reduce(function(max, a) {
+        return Math.max(max, Number(String(a.tmp_id || '').replace('new-', '')) || 0);
+      }, 0);
+    }
     if (d.hdr_state && typeof d.hdr_state === 'object') {
       Object.assign(HDR_STATE, d.hdr_state);
       ['internal_name', 'contract_no', 'site_head'].forEach(function(f) {
@@ -1190,6 +1454,28 @@ function wire() {
     else if (btn.dataset.act === 'restore') restoreRow(id);
   }));
 
+  const asgBody = document.getElementById('assignTbody');
+  asgBody.addEventListener('input', guard(e => {
+    const t = e.target;
+    if (!t || !t.dataset || !t.dataset.ag) return;
+    t.classList.remove('field-problem');
+    onAsgField(t.dataset.ak, t.dataset.ag, t.value);
+  }));
+  asgBody.addEventListener('change', guard(e => {
+    const t = e.target;
+    if (!t || !t.dataset || !t.dataset.ag) return;
+    onAsgField(t.dataset.ak, t.dataset.ag, t.value);
+    if (t.dataset.ag === 'status') renderAssignments();   // фильтр мог его убрать
+  }));
+  asgBody.addEventListener('click', guard(e => {
+    const btn = e.target.closest ? e.target.closest('[data-act="del-assign"]') : null;
+    if (btn) delAssignment(btn.dataset.ak);
+  }));
+  document.getElementById('addAssign').addEventListener('click',
+    guard(() => addAssignment()));
+  document.getElementById('assign-filter').addEventListener('change',
+    guard(() => renderAssignments()));
+
   document.getElementById('addWork').addEventListener('click', guard(() => addWork()));
   document.getElementById('addGroup').addEventListener('click', guard(() => {
     const name = prompt('Название новой группы (этапа):', '');
@@ -1228,7 +1514,9 @@ function wire() {
     draftClear();
     resetRows();
     resetHeader();
+    resetAssignments();
     renderTable();
+    renderAssignments();
     hideBanner();
     const btn = document.getElementById('btnSave');
     if (btn) { btn.disabled = false; btn.textContent = 'Сохранить план'; }
@@ -1282,8 +1570,10 @@ function syncRowAfterInput(id, field) {
 function start() {
   resetRows();
   resetHeader();
+  resetAssignments();
   draftLoad();
   renderTable();
+  renderAssignments();
   wire();
   syncToolbarHeight();
 }
