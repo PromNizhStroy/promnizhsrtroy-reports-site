@@ -47,17 +47,17 @@ input[type=text],input[type=date],input[type=number],select,textarea{
 input:focus,select:focus,textarea:focus{
   border-color:var(--accent);box-shadow:0 0 0 3px var(--focus);outline:none}
 
-/* Замок — первое, что видно: до ввода фразы редактора на странице нет. */
-#gate{max-width:520px;margin:80px auto;background:var(--paper);
-  border:1px solid var(--line);border-radius:8px;padding:28px}
-#gate h1{font-size:22px}
-#gate p{font-size:13px;color:var(--muted)}
-#gate .row{display:flex;gap:8px;margin-top:14px}
-#gate input{flex:1}
-#gateError{display:none;margin-top:10px;color:var(--danger);font-size:13px;font-weight:700}
-#gateError.show{display:block}
-#editor{display:none}
-#editor.show{display:block}
+
+/* Экран отказа — единственное, что на странице есть до проверки ключа.
+   Содержимое лежит в <template> (см. authMountPage) и в документ попадает
+   только после совпадения: скрывать нечего, потому что ничего не отрисовано. */
+#noaccess{display:none;max-width:560px;margin:80px auto;padding:28px;
+  background:#fff;border:1px solid #d8dee6;border-radius:8px;
+  font:16px/1.6 Arial,Helvetica,sans-serif;color:#202832}
+#noaccess.show{display:block}
+#noaccess h1{margin:0 0 10px;font-size:22px;color:#143b42}
+#noaccess p{margin:0;color:#667281;font-size:14px}
+
 
 /* Таблица плана. Как в форме отчёта: отдельные рамки и липкие колонки, без
    обёртки с overflow — иначе sticky-шапка перестаёт следить за прокруткой. */
@@ -120,23 +120,16 @@ tr.row-archived td input,tr.row-archived td select{
 <body>
 <main>
 
-<!-- Замок. Разметка редактора лежит в странице всегда, но до верной фразы
-     скрыта: перерисовывать её после входа незачем, а прятать — честнее, чем
-     делать вид, что страницы нет. -->
-<div id="gate">
-  <h1>Редактор плана — KARE2</h1>
-  <p>Страница для Александра и инженера ПТО. Здесь правится сам список работ:
-     что делаем, какими захватками и в какие исходные сроки.</p>
-  <p>Начальникам участков сюда не нужно — их форма отчёта отдельная,
-     а замечания к списку работ они пишут в ней.</p>
-  <div class="row">
-    <input type="text" id="gatePhrase" placeholder="Фраза-пароль" autocomplete="off">
-    <button class="primary" id="gateBtn">Войти</button>
-  </div>
-  <div id="gateError">Фраза не подходит. Её знают Александр и Артём.</div>
+<!-- До проверки персонального ключа редактора в документе нет: разметка лежит
+     в <template>, и браузер её не строит. Не сошёлся ключ — остаётся только
+     «Нет доступа». -->
+<div id="noaccess">
+  <h1>Нет доступа</h1>
+  <p>Ссылка персональная — запросите у Александра Медведева.</p>
 </div>
+<div id="app"></div>
 
-<div id="editor">
+<template id="pageTpl">
 
 <div class="topbar">
   <div class="toolbar">
@@ -158,8 +151,9 @@ tr.row-archived td input,tr.row-archived td select{
      <strong><span id="hdr-count"></span></strong></p>
 
   <div style="max-width:340px;margin-bottom:16px">
-    <label for="f-author">Кто правит (фамилия)</label>
-    <input type="text" id="f-author" placeholder="Медведев" autocomplete="off">
+    <label for="f-author">Кто правит</label>
+    <input type="text" id="f-author" value="" readonly autocomplete="off"
+      title="Подставлено по вашей персональной ссылке">
   </div>
 
   <p class="hint">
@@ -198,8 +192,8 @@ tr.row-archived td input,tr.row-archived td select{
   <h2>Что уйдёт при сохранении</h2>
   <div class="changes-box" id="changesBox">Пока ничего не изменено.</div>
 </div>
+</template>
 
-</div>
 </main>
 <script>
 (function(){
@@ -223,12 +217,13 @@ const GH_TD = "Xc5MFlMV05JNUIxMV90YXBfYnVodGln";
 const GH_TOKEN_PARTS = [GH_TA, GH_TB, GH_TC, GH_TD];
 const PUB_KEY_B64 = "MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAmLVO5xLUbD/nHdtxztfa3c5kH34vcZPymtS7civX1e09wKEmarVDpIJGPI4LEo1MkAASEJqm0MIz2gzG/QKeJ0YDsR0/Mr8cdq9Tjr2FbjYxIiO4Rp4tW5mg6pWeegtNKep3TZqd6tEAI3ygccblpJTr3wRLIUhX6RRtowHaZQWzgTal565DFHIK4CW5fS8+CbxmeAXTnj3hx0nS+nxaKts/lCdgGr5dUDSn+/9lKtzJ9qC8IoDYND5+cWRHsWTqKuU63zXJFgGVY/c9PLvNE617CmMgfHi1UNxOWdWIiS57XJO+0nUaRuOGkgs+Ptj8J40861qoXvVBGFr/lqtPY4Db/UrxQLEuyP5SqJcJT6E5pTIA2IZ1uHl2TjGAjeSQbyt1VGx/C+zPVv7K3KewwsFLTBtEtlFELglCqH+78IyYz7V8nSs35R6ABC/7FJlLREClytcSJ/5TFSdKTfPPn1I1Cw4IV3L3585qsRrd8Y/z72nH5+Jg6jOM6iJlXLzNAgMBAAE=";
 const KEY_ID      = "9f888f70f11bc7fc";
-// sha-256 фразы-пароля. Самой фразы в странице нет — печатать её в публичном
-// репозитории незачем, даже когда она всего лишь предохранитель.
-const PASS_HASH = "1aec2531e87fcd4114ee27ec8ca60ecdc78aaccec0e1bd56cef0ebd44d9567d0";
+// Таблица проверки персонального ключа: sha-256, роль и объекты. Самих ключей
+// в странице нет — см. tools/weekly/people.py (auth_entries).
+const AUTH_ENTRIES = [{"p": "p-001", "n": "Мажоров А.В.", "r": "site_head", "o": ["KARE2", "KZH5"], "h": "8f53e2cbcc1f2b99d1a1d77738aded237790a9c29363ed541c69d33a06d5487a"}, {"p": "p-002", "n": "Медведев А.А.", "r": "director", "o": [], "h": "1472176cf0c5ddeaf1a5df30f6a1f075d48f82191878c2242ded07d296ba4274"}, {"p": "p-003", "n": "Инженер ПТО (имя уточняется)", "r": "pto", "o": [], "h": "3c2b05bc8ae4896d025ab2b1bb6003e096909ae478a33c94e62990c2b683bab1"}];
+// Запись реестра, по чьей ссылке открыт редактор. До проверки — null.
+let WHO = null;
 
 const DRAFT_KEY = 'pnstroy-plan-' + OBJECT_CODE;
-const GATE_KEY = 'pnstroy-plan-gate-' + OBJECT_CODE;
 
 const EDIT_FIELDS = ['group','name','zahvatki','axes','base_start','base_finish',
                      'base_duration_days','predecessor'];
@@ -337,35 +332,6 @@ function guard(fn) {
     try { return fn(ev); }
     catch (e) { showError('Ошибка на странице.', e); }
   };
-}
-
-// ── Замок ──────────────────────────────────────────────────────────────────
-// Предохранитель, а не защита: проверка идёт здесь же, в браузере. Смысл в том,
-// чтобы начальник участка, которому дали ссылку на папку с формами, не начал
-// править план, случайно нажав не на ту ссылку.
-async function sha256Hex(text) {
-  const bytes = new TextEncoder().encode(text);
-  const digest = await crypto.subtle.digest('SHA-256', bytes);
-  return Array.from(new Uint8Array(digest))
-    .map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-function normalizePhrase(s) {
-  return String(s || '').trim().toLowerCase().split(/\s+/).filter(Boolean).join(' ');
-}
-
-function openEditor() {
-  document.getElementById('gate').style.display = 'none';
-  document.getElementById('editor').classList.add('show');
-  syncToolbarHeight();
-}
-
-async function tryPhrase(phrase) {
-  if (!PASS_HASH) return true;          // фраза не задана — замка нет
-  const norm = normalizePhrase(phrase);
-  if (!norm) return false;
-  if (!(typeof crypto !== 'undefined' && crypto.subtle)) return false;
-  return (await sha256Hex(norm)) === PASS_HASH;
 }
 
 // ── Состояние таблицы ──────────────────────────────────────────────────────
@@ -779,7 +745,8 @@ function draftLoad() {
     const raw = localStorage.getItem(DRAFT_KEY);
     if (!raw) return;
     const d = JSON.parse(raw);
-    if (d.author) document.getElementById('f-author').value = d.author;
+    // Фамилия в черновике не восстанавливается: её подставляет персональный
+    // ключ, а не то, что лежало в браузере с прошлого раза.
     if (Array.isArray(d.rows) && d.rows.length) ROWS = d.rows;
     if (d.next_seq) NEXT_SEQ = Math.max(NEXT_SEQ, d.next_seq);
   } catch (e) { /* испорченный черновик — работаем с чистого плана */ }
@@ -797,7 +764,10 @@ function buildBatch() {
     v: 1,
     object_code: OBJECT_CODE,
     object_name: OBJECT_NAME,
-    author: document.getElementById('f-author').value.trim(),
+    // Ключ внутри пачки, то есть внутри шифртекста. Снаружи конверта видны
+    // только код объекта и время. Роль проверяет apply_plan.py на мини.
+    reporter_key: (WHO && WHO.key) || '',
+    author: (WHO && WHO.name) || '',
     date: isoLocal(new Date()),
     source: 'редактор плана',
     ops: ops,
@@ -813,6 +783,88 @@ function downloadJson(batch) {
   a.click();
   URL.revokeObjectURL(a.href);
 }
+
+// >>> auth-core — проверка персонального ключа из ссылки.
+// Ключ во фрагменте (#k=…) имеет приоритет над запомненным: перевыпустили ключ
+// и прислали новую ссылку — она обязана сработать сразу, а не после чистки
+// хранилища браузера.
+const AUTH_STORE = 'pnstroy-key';
+
+async function authSha256Hex(text) {
+  const bytes = new TextEncoder().encode(text);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest))
+    .map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function authKeyFromHash(hash) {
+  const m = /(?:^|[#&?])k=([^&]+)/.exec(String(hash || ''));
+  if (!m) return '';
+  try { return decodeURIComponent(m[1]).trim(); } catch (e) { return m[1].trim(); }
+}
+
+function authRememberedKey() {
+  try { return (localStorage.getItem(AUTH_STORE) || '').trim(); } catch (e) { return ''; }
+}
+
+function authRemember(key) {
+  try { localStorage.setItem(AUTH_STORE, key); } catch (e) { /* приватный режим */ }
+}
+
+// → запись реестра {person_id, name, role, objects, key} либо null.
+// null во всех случаях: ключа нет, ключ неизвестен, ключ отозван (отозванных
+// в таблице просто нет), браузер без WebCrypto.
+async function authResolve(entries) {
+  const key = authKeyFromHash(location.hash) || authRememberedKey();
+  if (!key) return null;
+  if (!(typeof crypto !== 'undefined' && crypto.subtle)) return null;
+  let digest;
+  try { digest = await authSha256Hex(key); } catch (e) { return null; }
+  const found = (entries || []).filter(e => e && e.h === digest)[0];
+  if (!found) return null;
+  authRemember(key);
+  return {key: key, person_id: found.p, name: found.n || '',
+          role: found.r || '', objects: found.o || []};
+}
+
+// Директор и ПТО ведут стройку целиком и видят все объекты; начальник участка —
+// только те, что записаны за ним в реестре.
+function authAllows(who, objectCode) {
+  if (!who) return false;
+  if (who.role === 'director' || who.role === 'pto') return true;
+  if (!objectCode) return false;
+  return (who.objects || []).indexOf(objectCode) >= 0;
+}
+
+function authMayEditPlan(who) {
+  return !!who && (who.role === 'pto' || who.role === 'director');
+}
+
+// Содержимое страницы лежит в <template> и в документ не попадает, пока ключ
+// не проверен. Это не «скрыли отрисованное»: содержимое <template> браузер не
+// строит и не показывает вовсе — ни таблицы работ, ни списка объектов в
+// документе до этого момента нет.
+function authMountPage() {
+  const tpl = document.getElementById('pageTpl');
+  const app = document.getElementById('app');
+  if (!tpl || !app) return false;
+  app.appendChild(tpl.content.cloneNode(true));
+  return true;
+}
+
+function authShowDenied() {
+  const box = document.getElementById('noaccess');
+  if (box) box.classList.add('show');
+}
+
+// Ссылка на соседнюю страницу того же сайта — с тем же ключом во фрагменте.
+// Без этого переход из списка объектов в форму терял бы ключ, и работала бы
+// только память браузера.
+function authLink(href, who) {
+  if (!who || !who.key) return href;
+  return href + '#k=' + encodeURIComponent(who.key);
+}
+// <<< auth-core
 
 // >>> gh-submit-core — чистая часть отправки в GitHub.
 // Блок выдёргивается из готового html и прогоняется в node тестом
@@ -1167,37 +1219,25 @@ function start() {
   syncToolbarHeight();
 }
 
-function wireGate() {
-  const btn = document.getElementById('gateBtn');
-  const input = document.getElementById('gatePhrase');
-  const err = document.getElementById('gateError');
-
-  async function attempt() {
-    err.classList.remove('show');
-    let ok = false;
-    try { ok = await tryPhrase(input.value); } catch (e) { ok = false; }
-    if (!ok) { err.classList.add('show'); input.select(); return; }
-    try { sessionStorage.setItem(GATE_KEY, '1'); } catch (e) {}
-    openEditor();
-    start();
+// Ключ проверяется до того, как редактор появится в документе. Роль важнее
+// объекта: план правят ПТО и Александр, и начальник участка сюда не попадёт,
+// даже если откроет ссылку на свой объект.
+async function bootstrap() {
+  WHO = await authResolve(AUTH_ENTRIES);
+  if (!authMayEditPlan(WHO) || !authAllows(WHO, OBJECT_CODE)) {
+    authShowDenied();
+    return;
   }
-
-  btn.addEventListener('click', () => { attempt(); });
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') attempt(); });
-
-  // На время вкладки фраза не спрашивается повторно: править план — занятие на
-  // полчаса, и перезагрузка страницы не должна начинаться с пароля.
-  let remembered = false;
-  try { remembered = sessionStorage.getItem(GATE_KEY) === '1'; } catch (e) {}
-  if (!PASS_HASH || remembered) {
-    openEditor();
-    start();
-  } else {
-    input.focus();
-  }
+  authMountPage();
+  const authorEl = document.getElementById('f-author');
+  if (authorEl) { authorEl.value = WHO.name || ''; authorEl.readOnly = true; }
+  start();
 }
 
-wireGate();
+bootstrap().catch(e => {
+  authShowDenied();
+  if (window.console) console.error(e);
+});
 
 })();
 </script>

@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="data:,">
 <title>Еженедельный отчёт</title>
 <style>
 body{font:16px/1.6 Arial,sans-serif;max-width:600px;margin:40px auto;padding:0 16px;color:#202832}
@@ -13,29 +14,176 @@ li{margin:8px 0}
 a{color:#176f7d;text-decoration:none}
 a:hover{text-decoration:underline}
 .hint{font-size:13px;color:#667281;margin-top:20px}
+.whoami{font-size:13px;color:#667281;margin:0 0 14px}
 .plan-block{margin-top:34px;padding-top:18px;border-top:1px solid #d8dee6}
 .plan-block h2{font-size:16px;color:#143b42;margin:0 0 8px}
+
+/* Экран отказа — единственное, что на странице есть до проверки ключа.
+   Содержимое лежит в <template> (см. authMountPage) и в документ попадает
+   только после совпадения: скрывать нечего, потому что ничего не отрисовано. */
+#noaccess{display:none;max-width:560px;margin:80px auto;padding:28px;
+  background:#fff;border:1px solid #d8dee6;border-radius:8px;
+  font:16px/1.6 Arial,Helvetica,sans-serif;color:#202832}
+#noaccess.show{display:block}
+#noaccess h1{margin:0 0 10px;font-size:22px;color:#143b42}
+#noaccess p{margin:0;color:#667281;font-size:14px}
+
 </style>
 </head>
 <body>
+<div id="noaccess">
+  <h1>Нет доступа</h1>
+  <p>Ссылка персональная — запросите у Александра Медведева.</p>
+</div>
+<div id="app"></div>
+
+<template id="pageTpl">
 <h1>Еженедельный отчёт</h1>
-<ul>
-    <li><a href="KARE2.html">Устройство каре этап №2 (KARE2)</a></li>
-    <li><a href="KZH5.html">Тепляк этап №5 (KZH5)</a></li>
-</ul>
+<p class="whoami" id="whoami"></p>
+<ul id="objList"></ul>
 <p class="hint">Нажмите на название объекта, чтобы открыть форму отчёта.<br>
 Заполните форму и нажмите «Отправить» (или «Сохранить данные», если нет интернета).</p>
 
-<div class="plan-block">
+<div class="plan-block" id="planBlock" hidden>
 <h2>Редактор плана — для Александра и ПТО</h2>
-<ul>
-    <li><a href="plan/KARE2.html">Устройство каре этап №2 (KARE2)</a></li>
-    <li><a href="plan/KZH5.html">Тепляк этап №5 (KZH5)</a></li>
-</ul>
+<ul id="planList"></ul>
 <p class="hint">Здесь правится сам список работ: добавить, переименовать, уточнить
-захватки и сроки, убрать в архив. Открывается по фразе-паролю.<br>
+захватки и сроки, убрать в архив.<br>
 <strong>Начальникам участков сюда не нужно.</strong> Если в списке работ чего-то не
 хватает — напишите об этом в форме отчёта, в поле «Замечания к списку работ».</p>
 </div>
+</template>
+
+<script>
+(function(){
+'use strict';
+
+const OBJECTS = [{"code": "KARE2", "name": "Устройство каре этап №2", "file": "KARE2.html", "plan": "plan/KARE2.html"}, {"code": "KZH5", "name": "Тепляк этап №5", "file": "KZH5.html", "plan": "plan/KZH5.html"}];
+const AUTH_ENTRIES = [{"p": "p-001", "n": "Мажоров А.В.", "r": "site_head", "o": ["KARE2", "KZH5"], "h": "8f53e2cbcc1f2b99d1a1d77738aded237790a9c29363ed541c69d33a06d5487a"}, {"p": "p-002", "n": "Медведев А.А.", "r": "director", "o": [], "h": "1472176cf0c5ddeaf1a5df30f6a1f075d48f82191878c2242ded07d296ba4274"}, {"p": "p-003", "n": "Инженер ПТО (имя уточняется)", "r": "pto", "o": [], "h": "3c2b05bc8ae4896d025ab2b1bb6003e096909ae478a33c94e62990c2b683bab1"}];
+
+// >>> auth-core — проверка персонального ключа из ссылки.
+// Ключ во фрагменте (#k=…) имеет приоритет над запомненным: перевыпустили ключ
+// и прислали новую ссылку — она обязана сработать сразу, а не после чистки
+// хранилища браузера.
+const AUTH_STORE = 'pnstroy-key';
+
+async function authSha256Hex(text) {
+  const bytes = new TextEncoder().encode(text);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest))
+    .map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function authKeyFromHash(hash) {
+  const m = /(?:^|[#&?])k=([^&]+)/.exec(String(hash || ''));
+  if (!m) return '';
+  try { return decodeURIComponent(m[1]).trim(); } catch (e) { return m[1].trim(); }
+}
+
+function authRememberedKey() {
+  try { return (localStorage.getItem(AUTH_STORE) || '').trim(); } catch (e) { return ''; }
+}
+
+function authRemember(key) {
+  try { localStorage.setItem(AUTH_STORE, key); } catch (e) { /* приватный режим */ }
+}
+
+// → запись реестра {person_id, name, role, objects, key} либо null.
+// null во всех случаях: ключа нет, ключ неизвестен, ключ отозван (отозванных
+// в таблице просто нет), браузер без WebCrypto.
+async function authResolve(entries) {
+  const key = authKeyFromHash(location.hash) || authRememberedKey();
+  if (!key) return null;
+  if (!(typeof crypto !== 'undefined' && crypto.subtle)) return null;
+  let digest;
+  try { digest = await authSha256Hex(key); } catch (e) { return null; }
+  const found = (entries || []).filter(e => e && e.h === digest)[0];
+  if (!found) return null;
+  authRemember(key);
+  return {key: key, person_id: found.p, name: found.n || '',
+          role: found.r || '', objects: found.o || []};
+}
+
+// Директор и ПТО ведут стройку целиком и видят все объекты; начальник участка —
+// только те, что записаны за ним в реестре.
+function authAllows(who, objectCode) {
+  if (!who) return false;
+  if (who.role === 'director' || who.role === 'pto') return true;
+  if (!objectCode) return false;
+  return (who.objects || []).indexOf(objectCode) >= 0;
+}
+
+function authMayEditPlan(who) {
+  return !!who && (who.role === 'pto' || who.role === 'director');
+}
+
+// Содержимое страницы лежит в <template> и в документ не попадает, пока ключ
+// не проверен. Это не «скрыли отрисованное»: содержимое <template> браузер не
+// строит и не показывает вовсе — ни таблицы работ, ни списка объектов в
+// документе до этого момента нет.
+function authMountPage() {
+  const tpl = document.getElementById('pageTpl');
+  const app = document.getElementById('app');
+  if (!tpl || !app) return false;
+  app.appendChild(tpl.content.cloneNode(true));
+  return true;
+}
+
+function authShowDenied() {
+  const box = document.getElementById('noaccess');
+  if (box) box.classList.add('show');
+}
+
+// Ссылка на соседнюю страницу того же сайта — с тем же ключом во фрагменте.
+// Без этого переход из списка объектов в форму терял бы ключ, и работала бы
+// только память браузера.
+function authLink(href, who) {
+  if (!who || !who.key) return href;
+  return href + '#k=' + encodeURIComponent(who.key);
+}
+// <<< auth-core
+
+function esc(s) {
+  return String(s === null || s === undefined ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+async function bootstrap() {
+  const who = await authResolve(AUTH_ENTRIES);
+  // Список объектов не отрисовывается вовсе, пока ключ не сошёлся: разметка
+  // лежит в <template>, и в документ её кладёт только эта ветка.
+  if (!who) { authShowDenied(); return; }
+  const allowed = OBJECTS.filter(o => authAllows(who, o.code));
+  if (!allowed.length) { authShowDenied(); return; }
+  authMountPage();
+
+  document.getElementById('whoami').textContent =
+    (who.name || '') + (who.name ? ' — ' : '') +
+    (allowed.length === OBJECTS.length && OBJECTS.length > 1
+      ? 'все объекты' : 'объект ' + allowed.map(o => o.code).join(', '));
+
+  document.getElementById('objList').innerHTML = allowed.map(o =>
+    '<li><a href="' + esc(authLink(o.file, who)) + '">' +
+    esc(o.name) + ' (' + esc(o.code) + ')</a></li>').join('');
+
+  // Редактор плана — только ПТО и Александру: начальнику участка ссылка на
+  // него не показывается вовсе, а страница его всё равно не пустит.
+  if (authMayEditPlan(who)) {
+    document.getElementById('planBlock').hidden = false;
+    document.getElementById('planList').innerHTML = allowed
+      .filter(o => o.plan).map(o =>
+        '<li><a href="' + esc(authLink(o.plan, who)) + '">' +
+        esc(o.name) + ' (' + esc(o.code) + ')</a></li>').join('');
+  }
+}
+
+bootstrap().catch(e => {
+  authShowDenied();
+  if (window.console) console.error(e);
+});
+
+})();
+</script>
 </body>
 </html>
