@@ -681,7 +681,9 @@ async function ppAdd() {
     '<span class="pp-link" id="ppNewLink">' + ppEsc(ppLink(key)) + '</span>' +
     '<button type="button" class="pp-act" id="ppCopyNew">Скопировать</button>' +
     '<p class="pp-hint">Ссылка заработает через 5–10 минут — столько нужно, ' +
-    'чтобы запись дошла до хранилища и сайт обновился.</p>');
+    'чтобы запись дошла до хранилища и сайт обновился.<br>' +
+    'Закрыли страницу, не скопировав? Ничего страшного: через те же 5–10 минут ' +
+    'этот человек появится в таблице выше, и ссылку можно будет взять оттуда.</p>');
   document.getElementById('ppCopyNew').addEventListener('click', function () {
     ppCopy(ppLink(key), this);
   });
@@ -767,7 +769,20 @@ function ppWire() {
 async function ppSetup(section, who) {
   if (!authMayManagePeople(who)) return;
   PP_DATA = await secOpen(section, who && who.key);
-  if (!PP_DATA) return;
+  if (!PP_DATA) {
+    // Уровень доступа директорский, а раздел не открылся: либо страница
+    // собрана до того, как выдали доступ, либо браузер не умеет HKDF. Молча
+    // не показывать раздел нельзя — Александр не поймёт, куда он делся.
+    const box = document.getElementById('peopleBlock');
+    box.classList.add('show');
+    box.querySelector('#ppTable').hidden = true;
+    box.querySelector('.pp-toolbar').hidden = true;
+    box.querySelector('.pp-log').hidden = true;
+    box.querySelector('.pp-note').textContent =
+      'Этот раздел сейчас не открывается. Обновите страницу через 10 минут; ' +
+      'если не поможет — напишите Артёму.';
+    return;
+  }
   document.getElementById('peopleBlock').classList.add('show');
   ppWire();
   ppRender();
