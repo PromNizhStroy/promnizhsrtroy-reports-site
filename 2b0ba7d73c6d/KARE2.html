@@ -40,6 +40,13 @@ button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 button.danger{color:var(--danger)}
 button.add-btn{min-height:32px;padding:5px 12px;color:var(--accent);
   border-color:var(--accent);font-weight:700;font-size:13px}
+/* Кнопка «Скачать график (Excel)» — это ссылка на файл рядом со страницей:
+   скачивание не требует ни JS, ни доступа к репозиторию данных. Чтобы в ряду
+   кнопок она не выглядела чужой, ей даны те же размеры и рамка. */
+a.btn{display:inline-flex;align-items:center;min-height:38px;padding:8px 14px;
+  border:1px solid var(--line);border-radius:6px;background:#fff;
+  color:var(--text);font:inherit;text-decoration:none;cursor:pointer}
+a.btn:hover{border-color:var(--accent)}
 
 /* sheet */
 .sheet{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:28px}
@@ -330,6 +337,7 @@ tr.row-explained td{border-color:var(--green-border)}
       <button id="btnSubmit" class="primary">Отправить</button>
       <button id="btnSave">Сохранить данные (JSON)</button>
       <button id="btnPrint">PDF / печать</button>
+      <a class="btn" id="btnExcel" href="KARE2-grafik-2026-09-23.xlsx" download="График Устройство каре этап №2 на 23.09.2026.xlsx" title="Тот же график, что ведёт ПТО, с актуальными датами — для печати на стену">Скачать график (Excel)</a>
       <button id="btnClear" class="danger">Очистить</button>
     </div>
   </div>
