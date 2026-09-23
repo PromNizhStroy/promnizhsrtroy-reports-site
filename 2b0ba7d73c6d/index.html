@@ -73,6 +73,26 @@ a:hover{text-decoration:underline}
 #peopleBlock .pp-log h3{font-size:15px;color:#143b42;margin:0 0 6px}
 #peopleBlock .pp-log li{font-size:12px;color:#667281;margin:3px 0}
 
+
+.np-block{margin-top:34px;padding-top:18px;border-top:1px solid #d8dee6}
+.np-block h2{font-size:16px;color:#143b42;margin:0 0 10px}
+.np-form label{display:block;font-size:13px;color:#495564;margin:10px 0 3px}
+.np-form input,.np-form select{
+  display:block;width:100%;box-sizing:border-box;
+  padding:7px 10px;border:1px solid #bcc5d0;border-radius:4px;
+  font-size:15px;color:#202832;background:#fff}
+.np-form input:focus,.np-form select:focus{
+  outline:none;border-color:#176f7d;box-shadow:0 0 0 2px rgba(23,111,125,.12)}
+.np-form .req{color:#c0392b}
+.np-form .np-hint{font-size:12px;color:#888;margin:2px 0 0}
+.np-btn{margin-top:16px;padding:9px 22px;background:#176f7d;color:#fff;
+  border:none;border-radius:4px;font-size:15px;cursor:pointer}
+.np-btn:hover{background:#12535e}
+.np-btn:disabled{opacity:.5;cursor:default}
+.np-result{margin-top:12px;padding:10px 14px;border-radius:4px;font-size:14px}
+.np-result.ok{background:#e8f7ef;color:#1a6638;border:1px solid #a8dbb5}
+.np-result.err{background:#fdf0f0;color:#9b1c1c;border:1px solid #f5b7b7}
+
 </style>
 </head>
 <body>
@@ -150,6 +170,35 @@ a:hover{text-decoration:underline}
     <ul id="ppLog"></ul>
   </div>
 </div>
+
+<div class="np-block" id="npBlock" hidden>
+<h2>Новый проект</h2>
+<form class="np-form" id="npForm" novalidate>
+  <label for="npName">Название проекта <span class="req">*</span></label>
+  <input id="npName" type="text" placeholder="Как в шапке графика ПТО" autocomplete="off">
+  <p class="np-hint">Введите название точно так, как оно написано в шапке графика ПТО</p>
+  <label for="npInternal">Внутреннее название</label>
+  <input id="npInternal" type="text" placeholder="Сокращение или пометка" autocomplete="off">
+  <label for="npContract">Номер договора</label>
+  <input id="npContract" type="text" autocomplete="off">
+  <label for="npSiteHeadSel">Начальник участка</label>
+  <select id="npSiteHeadSel">
+    <option value="">— не указан —</option>
+    <option value="p-001">Мажоров А.В.</option>
+    <option value="__new__">Другой — ввести ФИО</option>
+  </select>
+  <div id="npNewHead" hidden>
+    <label for="npHeadFio">ФИО нового начальника участка</label>
+    <input id="npHeadFio" type="text" autocomplete="off">
+  </div>
+  <label for="npFile">График работ (Excel, необязательно)</label>
+  <input id="npFile" type="file" accept=".xls,.xlsx">
+  <p class="np-hint">Файл должен быть в формате .xls или .xlsx, не более 5 МБ</p>
+  <button type="submit" class="np-btn" id="npSubmit">Создать проект</button>
+</form>
+<div id="npResult" class="np-result" hidden></div>
+</div>
+
 </template>
 
 <script>
@@ -789,6 +838,131 @@ async function ppSetup(section, who) {
 }
 // <<< people-core
 
+// >>> new-object-core — форма «Новый проект»: только директору и офису.
+const NP_KEY_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const NP_KEY_LENGTH = 26;
+const NP_MAX_FILE = 5 * 1024 * 1024;
+
+function npNewKey() {
+  const arr = new Uint8Array(NP_KEY_LENGTH);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map(b => NP_KEY_ALPHABET[b % NP_KEY_ALPHABET.length]).join('');
+}
+
+function npSetup(who) {
+  if (!who) return;
+  if (who.role !== 'director' && !authIsOffice(who)) return;
+  const block = document.getElementById('npBlock');
+  if (block) block.hidden = false;
+
+  const sel = document.getElementById('npSiteHeadSel');
+  const newDiv = document.getElementById('npNewHead');
+  if (sel && newDiv) {
+    sel.addEventListener('change', () => { newDiv.hidden = sel.value !== '__new__'; });
+  }
+
+  const form = document.getElementById('npForm');
+  if (form) form.addEventListener('submit', async e => { e.preventDefault(); await npSubmit(who); });
+}
+
+async function npReadFile(input) {
+  const file = input.files && input.files[0];
+  if (!file) return null;
+  if (file.size > NP_MAX_FILE) {
+    throw new Error('Файл слишком большой: ' + Math.round(file.size / 1024) + ' КБ (лимит 5 МБ)');
+  }
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const bytes = new Uint8Array(reader.result);
+      let bin = '';
+      for (let i = 0; i < bytes.length; i += 0x8000) {
+        bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+      }
+      resolve({b64: btoa(bin), name: file.name});
+    };
+    reader.onerror = () => reject(new Error('Не удалось прочитать файл'));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+async function npSubmit(who) {
+  const btn = document.getElementById('npSubmit');
+  const nameEl = document.getElementById('npName');
+  const name = (nameEl ? nameEl.value : '').trim();
+  if (!name) { npShowResult('Введите название проекта', false); return; }
+
+  const sel = document.getElementById('npSiteHeadSel');
+  const siteHeadId = sel ? sel.value : '';
+  let newHeadFio = '', newHeadKey = '';
+  if (siteHeadId === '__new__') {
+    const fioEl = document.getElementById('npHeadFio');
+    newHeadFio = (fioEl ? fioEl.value : '').trim();
+    if (!newHeadFio) { npShowResult('Введите ФИО нового начальника участка', false); return; }
+    newHeadKey = npNewKey();
+  }
+
+  let fileData = null;
+  const fileInput = document.getElementById('npFile');
+  try {
+    if (fileInput && fileInput.files && fileInput.files.length > 0) fileData = await npReadFile(fileInput);
+  } catch (e) { npShowResult(e.message, false); return; }
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Отправляю…'; }
+  npShowResult('', null);
+
+  const stamp = ghStamp(new Date());
+  const payload = {
+    kind: 'new_object', v: 1,
+    reporter_key: who.key,
+    author: who.name || '',
+    name: name,
+    internal_name: ((document.getElementById('npInternal') || {}).value || '').trim(),
+    contract_no: ((document.getElementById('npContract') || {}).value || '').trim(),
+    site_head_id: siteHeadId !== '__new__' ? siteHeadId : '',
+    new_site_head_fio: newHeadFio,
+    new_site_head_key: newHeadKey,
+    submitted_at: new Date().toISOString(),
+  };
+  if (fileData) { payload.file_base64 = fileData.b64; payload.filename = fileData.name; }
+
+  try {
+    const token = ghAssembleToken(GH_TOKEN_PARTS);
+    if (!GH_OWNER || !GH_REPO || !token || !PUB_KEY_B64)
+      throw new Error('Настройки сайта неполны — обратитесь к администратору');
+    let envelope;
+    try { envelope = await ghEncryptEnvelope(PUB_KEY_B64, KEY_ID, payload, {kind: payload.kind}); }
+    catch (e) { throw new Error('Шифрование не удалось: ' + e.message); }
+    const cfg = {owner: GH_OWNER, repo: GH_REPO, branch: GH_BRANCH, token: token,
+                 objectCode: 'requests', pathPrefix: 'new-object',
+                 message: 'new-object ' + stamp, slug: stamp};
+    const req = ghBuildRequest(cfg, envelope, stamp);
+    const resp = await fetch(req.url, req.init);
+    if (!resp.ok) {
+      const txt = await resp.text().catch(() => '');
+      throw new Error('Ошибка GitHub (' + resp.status + ')' + (txt ? ': ' + txt.slice(0, 120) : ''));
+    }
+    npShowResult('Проект отправлен. Появится в списке через 5–10 минут', true);
+    document.getElementById('npForm').reset();
+    const newDiv = document.getElementById('npNewHead');
+    if (newDiv) newDiv.hidden = true;
+  } catch (e) {
+    npShowResult('Ошибка отправки: ' + (e.message || String(e)), false);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Создать проект'; }
+  }
+}
+
+function npShowResult(msg, ok) {
+  const el = document.getElementById('npResult');
+  if (!el) return;
+  if (ok === null) { el.hidden = true; el.textContent = ''; return; }
+  el.textContent = msg;
+  el.className = 'np-result ' + (ok ? 'ok' : 'err');
+  el.hidden = false;
+}
+// <<< new-object-core
+
 function esc(s) {
   return String(s === null || s === undefined ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
@@ -832,6 +1006,9 @@ async function bootstrap() {
   // Раздел «Сотрудники». Не директору он не расшифруется, поэтому проверка
   // роли здесь — про то, что показывать, а не про то, что охранять.
   if (PEOPLE_SECTION) await ppSetup(PEOPLE_SECTION, who);
+
+  // Блок «Новый проект» — только директору и офису.
+  npSetup(who);
 }
 
 bootstrap().catch(e => {
