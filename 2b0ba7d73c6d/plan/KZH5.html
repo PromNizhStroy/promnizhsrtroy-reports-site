@@ -255,7 +255,7 @@ tr.row-archived td input,tr.row-archived td select{
       <button id="btnDownload">Сохранить файл (JSON)</button>
       <button id="btnReset" class="danger">Вернуть как было</button>
       <button type="button" id="btnJournal" title="Кто и что поправил в этом проекте руками">Журнал изменений</button>
-      <a class="btn" id="btnExcel" href="../KZH5-grafik-2026-09-23.xlsx" download="График Тепляк этап №5 на 23.09.2026.xlsx" title="Тот же график, что ведёт ПТО, с актуальными датами — для печати на стену">Скачать график (Excel)</a>
+      <a class="btn" id="btnExcel" href="../KZH5-grafik-2026-09-24.xlsx" download="График Устройство фундаментов - Этап №5 на 24.09.2026.xlsx" title="Тот же график, что ведёт ПТО, с актуальными датами — для печати на стену">Скачать график (Excel)</a>
       <button type="button" id="btnHelp" title="Инструкция по работе с этой страницей">?</button>
     </div>
   </div>
@@ -263,7 +263,7 @@ tr.row-archived td input,tr.row-archived td select{
 </div>
 
 <div class="sheet">
-  <h1>План работ — Тепляк этап №5</h1>
+  <h1>План работ — Устройство фундаментов - Этап №5</h1>
 <div id="journalBox">
   <h2>Журнал изменений</h2>
   <p class="jn-note">Что люди поправили в этом проекте руками: правки в
@@ -774,7 +774,10 @@ const LAST_UPDATE = null;
 // порог стои́т на мини (apply_schedule.py): эту проверку обойти нетрудно.
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
 // Шапка объекта — три поля, правимые отдельно от таблицы работ.
-const OBJECT_HEADER = {"internal_name": "Тепляк этап №5", "contract_no": "", "site_head": "Мажоров.А.В"};
+const OBJECT_HEADER = {"internal_name": "Устройство фундаментов - Этап №5", "contract_no": "", "site_head": "Мажоров.А.В"};
+// Поля, где хранилище расходится с Кайтеном и ручная правка защищена.
+// {"internal_name": "Тепляк этап №5"} → серая пометка под полем.
+const KAITEN_HINTS = {"internal_name": "Тепляк этап №5"};
 let HDR_STATE = {};
 const GH_OWNER  = "PromNizhStroy";
 const GH_REPO   = "promnizhsrtroy-reports-data";
@@ -943,6 +946,21 @@ function resetHeader() {
   ['internal_name', 'contract_no', 'site_head'].forEach(function(f) {
     var el = document.querySelector('[data-hdr="' + f + '"]');
     if (el) el.value = HDR_STATE[f] || '';
+    var hint = KAITEN_HINTS[f];
+    var noteId = 'kaiten-hint-' + f;
+    var existing = document.getElementById(noteId);
+    if (hint) {
+      if (!existing) {
+        var note = document.createElement('div');
+        note.id = noteId;
+        note.style.cssText = 'font-size:12px;color:var(--muted);margin-top:3px';
+        el && el.parentNode && el.parentNode.appendChild(note);
+        existing = note;
+      }
+      existing.textContent = 'в Кайтене: ' + hint;
+    } else if (existing) {
+      existing.remove();
+    }
   });
 }
 
