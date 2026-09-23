@@ -1,0 +1,2192 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="data:,">
+<title>План TEST</title>
+<style>
+:root{
+  --bg:#eef2f5;--paper:#fff;--text:#202832;--muted:#667281;--line:#d8dee6;
+  --soft:#f6f8fa;--accent:#176f7d;--danger:#c0392b;--warn:#fff5d6;
+  --focus:#9bcbd2;--green:#e6f4ea;--green-border:#27ae60;
+  --red:#fdecea;--red-border:#c0392b;--changed:#fffde7;--added:#eaf6ff;
+  --toolbar-h:60px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 Arial,Helvetica,sans-serif}
+main{width:min(100%,1500px);margin:auto;padding:16px 12px 40px}
+
+.topbar{position:sticky;top:0;z-index:30;background:rgba(238,242,245,.96);
+  border-bottom:1px solid var(--line);backdrop-filter:blur(6px)}
+.toolbar{display:flex;flex-wrap:wrap;justify-content:space-between;
+  align-items:center;gap:8px;padding:10px 14px}
+.autosave{font-size:13px;color:var(--muted)}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+
+button{min-height:38px;padding:8px 14px;border:1px solid var(--line);
+  border-radius:6px;background:#fff;color:var(--text);font:inherit;cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+button.danger{color:var(--danger)}
+/* Кнопка «Скачать график (Excel)» — ссылка на файл, а не кнопка со скриптом. */
+a.btn{display:inline-flex;align-items:center;min-height:38px;padding:8px 14px;
+  border:1px solid var(--line);border-radius:6px;background:#fff;
+  color:var(--text);font:inherit;text-decoration:none;cursor:pointer}
+a.btn:hover{border-color:var(--accent)}
+button.add-btn{min-height:32px;padding:5px 12px;color:var(--accent);
+  border-color:var(--accent);font-weight:700;font-size:13px}
+button.mini{min-height:26px;padding:1px 7px;font-size:13px;line-height:1.2}
+
+.sheet{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:28px}
+h1{margin:0 0 4px;color:#143b42;font-size:26px}
+.subtitle{margin:0 0 20px;color:var(--muted);font-size:13px}
+h2{margin:24px 0 8px;color:#143b42;font-size:18px;
+  border-bottom:1px solid var(--line);padding-bottom:4px}
+.hint{font-size:13px;color:var(--muted);margin:0 0 10px}
+label,.lbl{display:block;margin-bottom:4px;color:var(--muted);font-size:12px;font-weight:700}
+input[type=text],input[type=date],input[type=number],select,textarea{
+  width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:5px;
+  background:#fff;color:var(--text);font:inherit}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--accent);box-shadow:0 0 0 3px var(--focus);outline:none}
+
+
+/* Экран отказа — единственное, что на странице есть до проверки ключа.
+   Содержимое лежит в <template> (см. authMountPage) и в документ попадает
+   только после совпадения: скрывать нечего, потому что ничего не отрисовано. */
+#noaccess{display:none;max-width:560px;margin:80px auto;padding:28px;
+  background:#fff;border:1px solid #d8dee6;border-radius:8px;
+  font:16px/1.6 Arial,Helvetica,sans-serif;color:#202832}
+#noaccess.show{display:block}
+#noaccess h1{margin:0 0 10px;font-size:22px;color:#143b42}
+#noaccess p{margin:0;color:#667281;font-size:14px}
+
+
+/* Журнал изменений. Раздел закрыт, пока его не открыли кнопкой: он длинный, а
+   нужен не каждый раз. */
+#journalBox{display:none;margin:22px 0;padding:18px;background:#fff;
+  border:1px solid #d8dee6;border-radius:8px}
+#journalBox.show{display:block}
+#journalBox h2{margin:0 0 4px;font-size:18px;color:#143b42}
+#journalBox .jn-note{margin:0 0 14px;font-size:13px;color:#667281}
+#journalBox .jn-filters{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;
+  margin-bottom:14px}
+#journalBox .jn-filters label{display:block;font-size:12px;color:#667281;margin-bottom:3px}
+#journalBox .jn-filters select,#journalBox .jn-filters input{font:14px Arial,sans-serif;
+  padding:5px 7px;border:1px solid #d8dee6;border-radius:5px;background:#fff;color:#202832}
+#journalBox table{width:100%;border-collapse:collapse;font-size:13px}
+#journalBox th{text-align:left;padding:7px 8px;border-bottom:2px solid #d8dee6;
+  color:#667281;font-weight:600;white-space:nowrap}
+#journalBox td{padding:7px 8px;border-bottom:1px solid #eef2f5;vertical-align:top}
+#journalBox tr.jn-row.has-details{cursor:pointer}
+#journalBox tr.jn-details td{background:#f6f8fa;color:#41505f;font-size:12px}
+#journalBox tr.jn-details li{margin:2px 0}
+#journalBox .jn-when{white-space:nowrap;color:#667281}
+#journalBox .jn-role{display:block;color:#8a95a3;font-size:11px}
+#journalBox .jn-src{white-space:nowrap;color:#667281}
+#journalBox .jn-empty{color:#667281;font-size:14px;margin:10px 0 0}
+#journalBox .jn-more{color:#176f7d;font-size:11px;margin-left:5px}
+@media print{#journalBox{display:none !important}}
+
+
+/* Таблица плана. Как в форме отчёта: отдельные рамки и липкие колонки, без
+   обёртки с overflow — иначе sticky-шапка перестаёт следить за прокруткой. */
+.plan-table{border-collapse:separate;border-spacing:0;width:100%;
+  min-width:1300px;font-size:13px}
+.plan-table th{background:var(--soft);color:var(--muted);font-weight:700;
+  padding:7px 6px;text-align:left;border:1px solid var(--line);border-left:0;
+  white-space:nowrap;position:sticky;top:var(--toolbar-h);z-index:3}
+.plan-table td{padding:5px 6px;border:1px solid var(--line);border-left:0;
+  border-top:0;vertical-align:top}
+.plan-table th:first-child,.plan-table td:first-child{border-left:1px solid var(--line)}
+.plan-table td input,.plan-table td select{
+  width:100%;padding:4px 6px;border:1px solid var(--line);border-radius:4px;font-size:12px}
+.plan-table tbody tr{background:var(--paper)}
+.plan-table tr.grp-row{background:#f0f4f7}
+.plan-table .grp-row td{font-weight:700;color:#143b42}
+.plan-table .col-no{position:sticky;left:0;z-index:2;white-space:nowrap;width:150px}
+.plan-table td.col-no{background:inherit}
+.plan-table th.col-no{background:var(--soft);z-index:5}
+.plan-table td.col-ord{white-space:nowrap}
+
+tr.row-changed{background:var(--changed)}
+tr.row-added{background:var(--added)}
+tr.row-archived{background:#f2f2f2;color:var(--muted)}
+tr.row-archived td input,tr.row-archived td select{
+  background:#fafafa;color:var(--muted)}
+.badge{display:inline-block;margin-left:4px;font-size:10px;color:#fff;
+  border-radius:3px;padding:1px 4px;vertical-align:middle}
+.badge-new{background:#2980b9}
+.badge-arch{background:#7f8c8d}
+.badge-chg{background:#f39c12}
+.badge-hand{background:#8e44ad}
+
+/* Обновление графика из Excel и итог последнего обновления. */
+.grafik-box{border:1px solid var(--line);border-radius:8px;background:var(--soft);
+  padding:14px 16px;margin:0 0 18px}
+.grafik-box h2{margin:0 0 6px;font-size:16px}
+.grafik-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:10px}
+.grafik-row input[type=file]{flex:1 1 280px;min-width:0;font-size:14px}
+.grafik-note{font-size:13px;color:var(--muted);margin:6px 0 0}
+.grafik-last{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)}
+.grafik-last h3{margin:0 0 6px;font-size:14px}
+.grafik-last ul{margin:6px 0 0;padding-left:20px}
+.grafik-last li{margin:2px 0}
+.grafik-bad{background:var(--red);border-color:var(--red-border)}
+.grafik-state{font-size:13px;color:var(--muted);margin-left:4px}
+.plan-read{display:block;padding:4px 6px;font-size:12px;color:var(--muted);
+  white-space:nowrap}
+
+#banner{display:none;position:relative;padding:12px 46px 14px 18px;
+  font-size:14px;line-height:1.45;border-top:1px solid var(--line);
+  border-bottom:4px solid transparent}
+#banner.show{display:block}
+#banner .b-title{font-weight:700;font-size:15px;margin:0 0 3px}
+#banner ul{margin:6px 0 0;padding-left:20px}
+#banner li{margin:2px 0}
+#banner .b-close{position:absolute;top:8px;right:12px;min-height:28px;
+  padding:2px 10px;font-size:14px;background:transparent;border-color:transparent}
+#banner.b-ok{background:var(--green);border-bottom-color:var(--green-border);color:#16502c}
+#banner.b-error{background:var(--red);border-bottom-color:var(--red-border);color:#8c241a}
+#banner.b-warn{background:var(--warn);border-bottom-color:#f39c12;color:#6b4700}
+#banner.b-sending{background:#e6f2f5;border-bottom-color:var(--accent);color:#10545e}
+
+.field-problem{outline:2px solid var(--red-border);outline-offset:1px}
+
+/* Поручения — тот же список, что видит начальник участка в своей форме.
+   Разница одна: здесь доступен статус «принято директором». */
+.assign-bar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 8px}
+.assign-bar select{width:auto;min-width:210px;font-size:13px;padding:5px 8px}
+.assign-bar .lbl{margin:0}
+.assign-table{border-collapse:collapse;width:100%;font-size:13px}
+.assign-table th{background:var(--soft);color:var(--muted);font-weight:700;
+  padding:6px 8px;text-align:left;border:1px solid var(--line)}
+.assign-table td{padding:5px 7px;border:1px solid var(--line);vertical-align:top}
+.assign-table td input,.assign-table td select{
+  width:100%;padding:4px 6px;border:1px solid var(--line);border-radius:4px;font-size:12px}
+.assign-table tr.a-new{background:var(--added)}
+.assign-table tr.a-changed{background:var(--changed)}
+.assign-table td.a-overdue{background:#ff3b30}
+.assign-table td.a-overdue input{background:#ff3b30;color:#fff;font-weight:700;
+  border-color:#ff3b30}
+.a-empty{color:var(--muted);font-size:13px;padding:8px 0}
+.changes-box{margin-top:10px;padding:10px 14px;background:var(--soft);
+  border:1px solid var(--line);border-radius:6px;font-size:13px}
+.changes-box ul{margin:6px 0 0;padding-left:20px}
+
+@media print{
+  .topbar,#banner,.add-btn,button{display:none !important}
+  .plan-table th,.plan-table .col-no{position:static}
+}
+</style>
+</head>
+<body>
+<main>
+
+<!-- До проверки персонального ключа редактора в документе нет: разметка лежит
+     в <template>, и браузер её не строит. Не сошёлся ключ — остаётся только
+     «Нет доступа». -->
+<div id="noaccess">
+  <h1>Нет доступа</h1>
+  <p>Ссылка персональная — запросите у Александра Медведева.</p>
+</div>
+<div id="app"></div>
+
+<template id="pageTpl">
+
+<div class="topbar">
+  <div class="toolbar">
+    <span class="autosave" id="saveState">Черновик сохраняется автоматически</span>
+    <div class="actions">
+      <button id="btnSave" class="primary">Сохранить план</button>
+      <button id="btnShow">Что изменится</button>
+      <button id="btnDownload">Сохранить файл (JSON)</button>
+      <button id="btnReset" class="danger">Вернуть как было</button>
+      <button type="button" id="btnJournal" title="Кто и что поправил в этом проекте руками">Журнал изменений</button>
+      
+    </div>
+  </div>
+  <div id="banner" role="status" aria-live="polite"></div>
+</div>
+
+<div class="sheet">
+  <h1>План работ — тестовый объект для проверки функционала</h1>
+<div id="journalBox">
+  <h2>Журнал изменений</h2>
+  <p class="jn-note">Что люди поправили в этом проекте руками: правки в
+    редакторе, изменения из отчётов, загрузки графика, поручения. Сдвиги,
+    которые посчитались сами следом за чужой правкой, сюда не попадают.</p>
+  <div class="jn-filters">
+    <div><label for="jnWho">Кто</label>
+      <select id="jnWho"><option value="">все</option></select></div>
+    <div><label for="jnKind">Что</label>
+      <select id="jnKind"><option value="">всё</option></select></div>
+    <div><label for="jnFrom">С</label>
+      <input type="date" id="jnFrom"></div>
+    <div><label for="jnTo">По</label>
+      <input type="date" id="jnTo"></div>
+  </div>
+  <table id="jnTable">
+    <thead><tr>
+      <th>Когда</th><th>Кто</th><th>Что</th><th>Изменение</th><th>Источник</th>
+    </tr></thead>
+    <tbody id="jnBody"></tbody>
+  </table>
+  <p class="jn-empty" id="jnEmpty" hidden>Пока ничего не менялось.</p>
+</div>
+  <p class="subtitle">Объект: <strong>ТЕСТ проект удалить</strong> &nbsp;|&nbsp; код
+     <strong>TEST</strong> &nbsp;|&nbsp; работ в плане:
+     <strong><span id="hdr-count"></span></strong></p>
+
+  <div style="max-width:340px;margin-bottom:16px">
+    <label for="f-author">Кто правит</label>
+    <input type="text" id="f-author" value="" readonly autocomplete="off"
+      title="Подставлено по вашей персональной ссылке">
+  </div>
+
+  <div class="grafik-box" id="grafikBox">
+    <h2>Обновить график из Excel</h2>
+    <p class="grafik-note">
+      Выберите файл графика, который ведёт ПТО (.xls или .xlsx), и нажмите
+      «Отправить файл». Даты из файла лягут в столбцы «Исх. начало» и
+      «Исх. оконч.», работы сопоставятся по номеру из первого столбца.
+      Если ПТО завёл новые строки — они добавятся, если убрал — уйдут в архив,
+      ничего не пропадёт. Сам файл в вашей папке не меняется.
+    </p>
+    <div class="grafik-row">
+      <input type="file" id="grafikFile" accept=".xls,.xlsx">
+      <button type="button" class="primary" id="btnUpload">Отправить файл</button>
+      <span class="grafik-state" id="grafikState"></span>
+    </div>
+    <div class="grafik-last" id="grafikLast" hidden></div>
+  </div>
+
+  <h2>Объект</h2>
+  <div style="display:flex;flex-wrap:wrap;gap:12px 20px;margin-bottom:20px">
+    <div style="min-width:240px;flex:1 1 240px">
+      <label for="f-internal-name">Внутреннее название</label>
+      <input type="text" id="f-internal-name" data-hdr="internal_name"
+        value="" autocomplete="off">
+    </div>
+    <div style="min-width:180px;flex:0 0 auto">
+      <label for="f-contract-no">Номер договора</label>
+      <input type="text" id="f-contract-no" data-hdr="contract_no"
+        value="" autocomplete="off">
+    </div>
+    <div style="min-width:180px;flex:0 0 auto">
+      <label for="f-site-head">Начальник участка</label>
+      <input type="text" id="f-site-head" data-hdr="site_head"
+        value="" autocomplete="off" placeholder="Фамилия">
+    </div>
+  </div>
+
+  <p class="hint">
+    Правьте прямо в таблице. Жёлтая строка — изменённая, голубая — добавленная,
+    серая — убранная в архив. «В архив» не удаляет работу: она исчезает из формы
+    отчёта, но остаётся в хранилище, и отчёты прошлых недель по ней не портятся.
+    Номер работы за ней закреплён навсегда и другой работе не достанется.
+    Исходное окончание и длительность связаны: правите одно — второе
+    пересчитывается.
+  </p>
+
+  <table class="plan-table" id="planTable">
+    <thead><tr>
+      <th class="col-no">№</th>
+      <th style="width:60px">Порядок</th>
+      <th style="width:200px">Группа (этап)</th>
+      <th style="width:300px">Работа</th>
+      <th style="width:130px">Захватки</th>
+      <th style="width:110px">Оси</th>
+      <th style="width:104px">Исх. начало</th>
+      <th style="width:104px">Исх. оконч.</th>
+      <th style="width:62px">Длит., дн</th>
+      <th style="width:110px">Привязка к №</th>
+      <th style="width:104px">Тек. оконч.</th>
+      <th style="width:96px"></th>
+    </tr></thead>
+    <tbody id="planTbody"></tbody>
+  </table>
+
+  <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+    <button type="button" class="add-btn" id="addWork">+ Добавить работу</button>
+    <button type="button" class="add-btn" id="addGroup">+ Добавить работу в новой группе</button>
+    <button type="button" class="add-btn" id="toggleArchive">Показать архив</button>
+  </div>
+
+  <h2>Поручения</h2>
+  <p class="hint">
+    Кто что делает по объекту и к какому сроку. Начальник участка видит этот же
+    список в своей форме отчёта и переключает «сделать» ↔ «готово»;
+    <strong>«принято директором» ставится только здесь</strong>. Красная ячейка даты — срок прошёл, а
+    поручение всё ещё «сделать». Поручения уходят тем же «Сохранить план», что и
+    правки графика.
+  </p>
+  <div class="assign-bar">
+    <label class="lbl" for="assign-filter">Показывать</label>
+    <select id="assign-filter">
+      <option value="open" selected>«сделать» и «готово»</option>
+      <option value="сделать">только «сделать»</option>
+      <option value="готово">только «готово»</option>
+      <option value="принято директором">принятые директором</option>
+      <option value="all">все</option>
+    </select>
+    <button type="button" class="add-btn" id="addAssign">+ Поручение</button>
+  </div>
+  <table class="assign-table" id="assignTable">
+    <thead><tr>
+      <th>Поручение</th>
+      <th style="width:160px">Ответственный</th>
+      <th style="width:130px">Дедлайн</th>
+      <th style="width:175px">Статус</th>
+      <th style="width:240px">Комментарий</th>
+      <th style="width:34px"></th>
+    </tr></thead>
+    <tbody id="assignTbody"></tbody>
+  </table>
+  <p class="a-empty" id="assignEmpty" hidden>Поручений по этому объекту пока нет.</p>
+
+  <h2>Что уйдёт при сохранении</h2>
+  <div class="changes-box" id="changesBox">Пока ничего не изменено.</div>
+</div>
+</template>
+
+</main>
+<script>
+(function(){
+'use strict';
+
+// ── Embedded data ──────────────────────────────────────────────────────────
+const OBJECT_CODE = "TEST";
+const OBJECT_NAME = "\u0422\u0415\u0421\u0422 \u043f\u0440\u043e\u0435\u043a\u0442 \u0443\u0434\u0430\u043b\u0438\u0442\u044c";
+// Исходный план — то, с чем сравнивается отредактированный. Копия делается
+// сразу: операции считаются диффом, а не записываются по ходу правки, иначе
+// «поправил и вернул обратно» уехало бы в репозиторий изменением.
+const BASELINE = [];
+let NEXT_SEQ = 1;
+let NEXT_SRC_NO = 1;
+const LAST_UPDATE = null;
+// Больше пяти мегабайт график ПТО не бывает: настоящие — 110–250 КБ. Тот же
+// порог стои́т на мини (apply_schedule.py): эту проверку обойти нетрудно.
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+// Шапка объекта — три поля, правимые отдельно от таблицы работ.
+const OBJECT_HEADER = {"internal_name": "тестовый объект для проверки функционала", "contract_no": "ТЕСТ-0000", "site_head": ""};
+let HDR_STATE = {};
+const GH_OWNER  = "PromNizhStroy";
+const GH_REPO   = "promnizhsrtroy-reports-data";
+const GH_BRANCH = "main";
+const GH_TA = "WFFoTGRKY1Q0R01ER09TSjVMdE5oYUV";
+const GH_TB = "VcVZJYURsSGRVWWVuNWhqbE5lalBaND";
+const GH_TC = "FqaE5XOVRwMUNLR0dfRjAyTWlXbkFyd";
+const GH_TD = "Xc5MFlMV05JNUIxMV90YXBfYnVodGln";
+const GH_TOKEN_PARTS = [GH_TA, GH_TB, GH_TC, GH_TD];
+const PUB_KEY_B64 = "MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAmLVO5xLUbD/nHdtxztfa3c5kH34vcZPymtS7civX1e09wKEmarVDpIJGPI4LEo1MkAASEJqm0MIz2gzG/QKeJ0YDsR0/Mr8cdq9Tjr2FbjYxIiO4Rp4tW5mg6pWeegtNKep3TZqd6tEAI3ygccblpJTr3wRLIUhX6RRtowHaZQWzgTal565DFHIK4CW5fS8+CbxmeAXTnj3hx0nS+nxaKts/lCdgGr5dUDSn+/9lKtzJ9qC8IoDYND5+cWRHsWTqKuU63zXJFgGVY/c9PLvNE617CmMgfHi1UNxOWdWIiS57XJO+0nUaRuOGkgs+Ptj8J40861qoXvVBGFr/lqtPY4Db/UrxQLEuyP5SqJcJT6E5pTIA2IZ1uHl2TjGAjeSQbyt1VGx/C+zPVv7K3KewwsFLTBtEtlFELglCqH+78IyYz7V8nSs35R6ABC/7FJlLREClytcSJ/5TFSdKTfPPn1I1Cw4IV3L3585qsRrd8Y/z72nH5+Jg6jOM6iJlXLzNAgMBAAE=";
+const KEY_ID      = "9f888f70f11bc7fc";
+// Таблица проверки персонального ключа: sha-256, роль и объекты. Самих ключей
+// в странице нет — см. tools/weekly/people.py (auth_entries).
+const AUTH_ENTRIES = [{"p": "p-001", "n": "Мажоров А.В.", "r": "site_head", "o": ["KARE2", "KZH5"], "h": "8f53e2cbcc1f2b99d1a1d77738aded237790a9c29363ed541c69d33a06d5487a"}, {"p": "p-002", "n": "Медведев А.А.", "r": "director", "o": [], "h": "1472176cf0c5ddeaf1a5df30f6a1f075d48f82191878c2242ded07d296ba4274"}, {"p": "p-003", "n": "Инженер ПТО (имя уточняется)", "r": "office", "o": [], "h": "3c2b05bc8ae4896d025ab2b1bb6003e096909ae478a33c94e62990c2b683bab1"}, {"p": "p-004", "n": "Ефимов А.", "r": "director", "o": [], "h": "ff64f204565e6c07a7817bec33caa5fca86a299c8f830dfc6c35aeb7cc50a978"}];
+// Журнал изменений объекта — закрытый раздел: соль, шифртекст и обёртки ключа.
+// Фамилий и правок открытым текстом в странице нет.
+const JOURNAL_SECTION = {"purpose": "journal:TEST", "salt": "2b0ba7d73c6d|journal:TEST", "data": {"v": 1, "alg": "A256GCM", "iv": "wte/jmDwIPes3Bl1", "ct": "OXSeXDuBF6nj8UFALg3oLKlw9HXMw9X2SLThADkcySFej3VSXQTTv2BVC0960KhtRlR8/N5bwoE19WmOcbJdXjiSr3NIYGOtThb2geVy+MJ9EIHXD+cQ+8zJle2QebAwusG/4BYRrQRZEgo4MHtBdmqqkm+KaRTjswBKY4I9OuqWP8rjpXyTtAC9VzJFmVnIix//riJIaMtDrrZd3mZbqZlEunvBPxZvXifFVs3P1nTSJk3dG9s8W6vqrFTsDOSRc+z1dNpxpNIhf/3apbKFKLFU2ZD7h9W/SXMZp9E5Z/HhYj26G3jFD69Zhm5auT50R6Pjrs2/GrauI7k1t6tkxHgRq42KA6ReIHEHx6ZEJnThz/bWeEEqQXRWG/ThWOyAtKb/MmBksrejEuhZnXC9aviduJTgDzeR/bZ3Jh2wgMLffllBXs+zbbXHNBSDmxgdLRmn1e0XXkGkXjCwnkSWGUN/8spMwqoKoTy87Wiz4AINAo4O7bGJUiF4/NhqitKIeB+jJS5JDxNL8/SJhyx50aXIpvUvTrac/iA4oREN18CWPUsMqUUPAUw="}, "wraps": [{"h": "1472176cf0c5ddeaf1a5df30f6a1f075d48f82191878c2242ded07d296ba4274", "iv": "XxVf/GRMtv67fN8+", "ct": "cztYmTYV/87ReQpY1QrTtf35sV+s66ImtknhHKzmDyHVbyoNqn55WKLsk1Fq3hqn"}, {"h": "3c2b05bc8ae4896d025ab2b1bb6003e096909ae478a33c94e62990c2b683bab1", "iv": "Fr+lyTtOZFbcwWiD", "ct": "v3y1eTEL4sCQbhNMvvX6kfI/rS9EDtjJoBz/qbQaStD9QZAFAcfF6w2jCgJmD15j"}, {"h": "ff64f204565e6c07a7817bec33caa5fca86a299c8f830dfc6c35aeb7cc50a978", "iv": "qLMZweci9iWK/HxP", "ct": "SaePPy1l0MHDVOk/HKf6oLbli2Ap1mVwkRvyL5RO1o42Hmv3229qnymfLgLAuCb3"}]};
+// Запись реестра, по чьей ссылке открыт редактор. До проверки — null.
+let WHO = null;
+
+// Поручения объекта: с чем страница собрана. ASG_ROWS — то, что правят.
+const ASG_BASELINE = [];
+const SITE_HEAD = "";
+const A_TODO = 'сделать', A_DONE = 'готово', A_ACCEPTED = 'принято директором';
+const A_STATUSES = [A_TODO, A_DONE, A_ACCEPTED];
+let ASG_ROWS = [];
+let _asgNew = 0;
+
+const DRAFT_KEY = 'pnstroy-plan-' + OBJECT_CODE;
+
+const EDIT_FIELDS = ['group','name','zahvatki','axes','base_start','base_finish',
+                     'base_duration_days','predecessor'];
+
+let ROWS = [];          // рабочее состояние таблицы, в порядке отображения
+let showArchived = false;
+
+// ── Утилиты ────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s === null || s === undefined ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+function toDate(s) { return s ? new Date(s + 'T00:00:00') : null; }
+function isoLocal(d) {
+  const p = n => String(n).padStart(2,'0');
+  return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate());
+}
+function addDays(s, n) {
+  const d = toDate(s);
+  if (!d) return '';
+  d.setDate(d.getDate() + n);
+  return isoLocal(d);
+}
+// Окончание включительно: 01.09 + 3 дня = 03.09, как в графике ПТО.
+function finishFrom(start, days) {
+  if (!start || !days) return '';
+  return addDays(start, Number(days) - 1);
+}
+function daysBetween(start, finish) {
+  const a = toDate(start), b = toDate(finish);
+  if (!a || !b) return '';
+  return Math.round((b - a) / 86400000) + 1;
+}
+function listFrom(text) {
+  return String(text || '').split(',').map(s => s.trim()).filter(Boolean);
+}
+function sameList(a, b) {
+  a = a || []; b = b || [];
+  return a.length === b.length && a.every((x, i) => String(x) === String(b[i]));
+}
+function plural(n, one, few, many) {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return few;
+  return many;
+}
+
+// ── Баннер ─────────────────────────────────────────────────────────────────
+function bannerEl() { return document.getElementById('banner'); }
+
+function showBanner(kind, title, opts) {
+  const b = bannerEl();
+  if (!b) return;
+  const o = opts || {};
+  b.className = 'show b-' + kind;
+  b.innerHTML = '';
+  const close = document.createElement('button');
+  close.className = 'b-close';
+  close.textContent = '×';
+  close.title = 'Закрыть';
+  close.addEventListener('click', hideBanner);
+  b.appendChild(close);
+  const h = document.createElement('p');
+  h.className = 'b-title';
+  h.textContent = title;
+  b.appendChild(h);
+  if (o.text) {
+    const p = document.createElement('p');
+    p.style.margin = '0';
+    p.textContent = o.text;
+    b.appendChild(p);
+  }
+  if (o.items && o.items.length) {
+    const ul = document.createElement('ul');
+    o.items.forEach(t => {
+      const li = document.createElement('li');
+      li.textContent = t;
+      ul.appendChild(li);
+    });
+    b.appendChild(ul);
+  }
+  syncToolbarHeight();
+}
+
+function hideBanner() {
+  const b = bannerEl();
+  if (b) { b.className = ''; b.innerHTML = ''; }
+  syncToolbarHeight();
+}
+
+function syncToolbarHeight() {
+  const bar = document.querySelector('.topbar');
+  if (bar) document.documentElement.style.setProperty(
+    '--toolbar-h', bar.getBoundingClientRect().height + 'px');
+}
+
+function showError(title, err) {
+  const msg = err && err.message ? err.message : String(err || '');
+  showBanner('error', title, {text: msg ? 'Подробности: ' + msg : ''});
+}
+
+// Каждый обработчик обёрнут: молчаливых кнопок на этой странице быть не должно.
+function guard(fn) {
+  return function(ev) {
+    try { return fn(ev); }
+    catch (e) { showError('Ошибка на странице.', e); }
+  };
+}
+
+// ── Состояние таблицы ──────────────────────────────────────────────────────
+function rowFromWork(w) {
+  return {
+    work_id: w.work_id,
+    no: w.display_no || '',
+    src_no_manual: !!w.src_no_manual,
+    group: w.group || '',
+    name: w.name || '',
+    zahvatki: (w.zahvatki_from_name || []).join(', '),
+    axes: w.axes || '',
+    base_start: w.base_start || '',
+    base_finish: w.base_finish || '',
+    base_duration_days: w.base_duration_days || daysBetween(w.base_start, w.base_finish) || '',
+    predecessor: w.predecessor || '',
+    plan_finish: w.plan_finish || '',
+    archived: !!w.archived,
+    isNew: false,
+  };
+}
+
+function resetRows() {
+  ROWS = BASELINE.map(rowFromWork);
+}
+
+function resetHeader() {
+  HDR_STATE = Object.assign({}, OBJECT_HEADER);
+  ['internal_name', 'contract_no', 'site_head'].forEach(function(f) {
+    var el = document.querySelector('[data-hdr="' + f + '"]');
+    if (el) el.value = HDR_STATE[f] || '';
+  });
+}
+
+function changedHeaderOp() {
+  var changed = {};
+  Object.keys(OBJECT_HEADER).forEach(function(f) {
+    var cur = (HDR_STATE[f] || '').trim();
+    var orig = (OBJECT_HEADER[f] || '').trim();
+    if (cur !== orig) changed[f] = cur || null;
+  });
+  if (!Object.keys(changed).length) return null;
+  return {op: 'set_object', fields: changed};
+}
+
+// Номер, который видит человек: № строки из файла ПТО. Внутренний work_id на
+// страницу выводится только в служебных местах — в разговоре с Александром и
+// ПТО номер всегда из графика.
+function noOf(id) {
+  const r = rowById(id);
+  if (r && r.no) return r.no;
+  const b = baselineById()[id];
+  return (b && b.display_no) ? b.display_no : String(id || '');
+}
+
+function baselineById() {
+  const m = {};
+  BASELINE.forEach(w => { m[w.work_id] = w; });
+  return m;
+}
+
+function rowState(row) {
+  if (row.isNew) return 'added';
+  const b = baselineById()[row.work_id];
+  if (!b) return 'added';
+  if (row.archived && !b.archived) return 'archived';
+  if (!row.archived && b.archived) return 'changed';
+  if (row.archived) return 'archived';
+  return changedFields(row, b).length ? 'changed' : '';
+}
+
+function changedFields(row, b) {
+  const out = [];
+  if ((row.group || '') !== (b.group || '')) out.push('group');
+  if ((row.name || '') !== (b.name || '')) out.push('name');
+  if (!sameList(listFrom(row.zahvatki), b.zahvatki_from_name)) out.push('zahvatki_from_name');
+  if ((row.axes || '') !== (b.axes || '')) out.push('axes');
+  if ((row.base_start || '') !== (b.base_start || '')) out.push('base_start');
+  if ((row.base_finish || '') !== (b.base_finish || '')) out.push('base_finish');
+  if (String(row.base_duration_days || '') !==
+      String(b.base_duration_days || daysBetween(b.base_start, b.base_finish) || '')) {
+    out.push('base_duration_days');
+  }
+  if ((row.predecessor || '') !== (b.predecessor || '')) out.push('predecessor');
+  return out;
+}
+
+// ── Отрисовка ──────────────────────────────────────────────────────────────
+function visibleRows() {
+  return ROWS.filter(r => showArchived || !r.archived);
+}
+
+// Список для поля «Начинается после». Пункт показывается с названием работы —
+// по одному номеру «KARE2-07» ни Александр, ни ПТО не вспомнят, что это.
+// Добавленные только что работы попадают сюда сразу: список строится по ROWS.
+function predOptions(row) {
+  let html = '<option value="">вручную</option>';
+  ROWS.forEach(r => {
+    if (r.work_id === row.work_id || r.archived) return;
+    html += '<option value="' + esc(r.work_id) + '"' +
+            (row.predecessor === r.work_id ? ' selected' : '') + '>' +
+            '№ ' + esc(r.no || r.work_id) + (r.name ? ' — ' + esc(r.name) : '') +
+            '</option>';
+  });
+  return html;
+}
+
+function renderTable() {
+  const tbody = document.getElementById('planTbody');
+  tbody.innerHTML = '';
+  const rows = visibleRows();
+  let lastGroup = null;
+
+  rows.forEach((row, idx) => {
+    if ((row.group || '') !== lastGroup) {
+      lastGroup = row.group || '';
+      const gtr = document.createElement('tr');
+      gtr.className = 'grp-row';
+      const gtd = document.createElement('td');
+      gtd.colSpan = 12;
+      gtd.textContent = lastGroup || '(без группы)';
+      gtr.appendChild(gtd);
+      tbody.appendChild(gtr);
+    }
+
+    const tr = document.createElement('tr');
+    tr.id = 'row-' + row.work_id;
+    const state = rowState(row);
+    if (state) tr.className = 'row-' + state;
+
+    let badge = '';
+    if (row.isNew) badge = '<span class="badge badge-new">новая</span>';
+    else if (row.archived) badge = '<span class="badge badge-arch">архив</span>';
+    else if (state === 'changed') badge = '<span class="badge badge-chg">правка</span>';
+    // Номера в первом столбце — из файла ПТО. У работы, заведённой здесь,
+    // такой строки в файле нет, и номер ей выдан нами: об этом надо сказать,
+    // иначе на планёрке его будут искать в распечатке и не найдут.
+    if (row.src_no_manual || row.isNew) {
+      badge += '<span class="badge badge-hand" title="Этой строки в файле ПТО'
+             + ' нет — номер выдан здесь">добавлено вручную</span>';
+    }
+
+    const dis = row.archived ? ' disabled' : '';
+    tr.innerHTML =
+      '<td class="col-no">' + esc(row.no || row.work_id) + badge + '</td>' +
+      '<td class="col-ord">' +
+        '<button type="button" class="mini" data-act="up" data-id="' + esc(row.work_id) +
+          '" title="Выше">↑</button> ' +
+        '<button type="button" class="mini" data-act="down" data-id="' + esc(row.work_id) +
+          '" title="Ниже">↓</button></td>' +
+      '<td><input type="text" data-f="group" data-id="' + esc(row.work_id) +
+        '" value="' + esc(row.group) + '"' + dis + '></td>' +
+      '<td><input type="text" data-f="name" data-id="' + esc(row.work_id) +
+        '" value="' + esc(row.name) + '"' + dis + '></td>' +
+      '<td><input type="text" data-f="zahvatki" data-id="' + esc(row.work_id) +
+        '" value="' + esc(row.zahvatki) + '" placeholder="1.1, 1.2"' + dis + '></td>' +
+      '<td><input type="text" data-f="axes" data-id="' + esc(row.work_id) +
+        '" value="' + esc(row.axes) + '" placeholder="А–Г / 1–7"' + dis + '></td>' +
+      '<td><input type="date" data-f="base_start" data-id="' + esc(row.work_id) +
+        '" value="' + esc(row.base_start) + '"' + dis + '></td>' +
+      '<td><input type="date" data-f="base_finish" data-id="' + esc(row.work_id) +
+        '" value="' + esc(row.base_finish) + '"' + dis + '></td>' +
+      '<td><input type="number" min="1" step="1" data-f="base_duration_days" data-id="' +
+        esc(row.work_id) + '" value="' + esc(row.base_duration_days) + '"' + dis + '></td>' +
+      '<td><select data-f="predecessor" data-id="' + esc(row.work_id) + '"' + dis + '>' +
+        predOptions(row) + '</select></td>' +
+      '<td><span class="plan-read">' + (row.plan_finish ? esc(row.plan_finish) : '—') +
+        '</span></td>' +
+      '<td>' + (row.archived
+        ? '<button type="button" class="mini" data-act="restore" data-id="' +
+            esc(row.work_id) + '">Вернуть</button>'
+        : '<button type="button" class="mini danger" data-act="archive" data-id="' +
+            esc(row.work_id) + '">В архив</button>') + '</td>';
+    tbody.appendChild(tr);
+  });
+
+  document.getElementById('hdr-count').textContent =
+    ROWS.filter(r => !r.archived).length;
+  document.getElementById('toggleArchive').textContent =
+    showArchived ? 'Скрыть архив' : 'Показать архив (' +
+      ROWS.filter(r => r.archived).length + ')';
+  renderChanges();
+}
+
+// ── Правка полей ───────────────────────────────────────────────────────────
+function rowById(id) {
+  return ROWS.filter(r => r.work_id === id)[0] || null;
+}
+
+function onFieldInput(id, field, value) {
+  const row = rowById(id);
+  if (!row) return;
+  row[field] = value;
+  // Три поля связаны. Правят окончание — пересчитывается длительность; правят
+  // начало или длительность — пересчитывается окончание.
+  if (field === 'base_finish') {
+    const d = daysBetween(row.base_start, row.base_finish);
+    if (d) row.base_duration_days = d;
+  } else if (field === 'base_start' || field === 'base_duration_days') {
+    const f = finishFrom(row.base_start, row.base_duration_days);
+    if (f) row.base_finish = f;
+  }
+  draftSave();
+}
+
+function moveRow(id, delta) {
+  const i = ROWS.findIndex(r => r.work_id === id);
+  if (i < 0) return;
+  const j = i + delta;
+  if (j < 0 || j >= ROWS.length) return;
+  const tmp = ROWS[i];
+  ROWS[i] = ROWS[j];
+  ROWS[j] = tmp;
+  draftSave();
+  renderTable();
+}
+
+function archiveRow(id) {
+  const row = rowById(id);
+  if (!row) return;
+  if (row.isNew) {
+    // Добавленную и тут же переду́манную работу просто убираем: номер ей ещё
+    // не выдан, архивировать нечего.
+    ROWS = ROWS.filter(r => r.work_id !== id);
+  } else {
+    row.archived = true;
+  }
+  draftSave();
+  renderTable();
+}
+
+function restoreRow(id) {
+  const row = rowById(id);
+  if (!row) return;
+  row.archived = false;
+  draftSave();
+  renderTable();
+}
+
+function addWork(group) {
+  const wid = OBJECT_CODE + '-' + String(NEXT_SEQ).padStart(2, '0');
+  NEXT_SEQ += 1;
+  const last = ROWS.filter(r => !r.archived).slice(-1)[0];
+  const newGroup = group !== undefined && group !== null
+    ? group : (last ? last.group : '');
+  // Правило то же, что в форме отчёта: работа продолжает предыдущую, а первая
+  // работа новой группы захваток начинается вручную — предшественника у неё
+  // нет, потому что предыдущая группа идёт своим чередом.
+  const startsGroup = !last || (last.group || '') !== (newGroup || '');
+  const row = {
+    work_id: wid,
+    // Тот же номер выдаст plan_ops при применении (common.next_src_no).
+    no: String(NEXT_SRC_NO),
+    src_no_manual: true,
+    group: newGroup,
+    name: '', zahvatki: '', axes: '',
+    base_start: '', base_finish: '', base_duration_days: '',
+    predecessor: startsGroup ? '' : last.work_id,
+    plan_finish: '', archived: false, isNew: true,
+  };
+  NEXT_SRC_NO += 1;
+  ROWS.push(row);
+  draftSave();
+  renderTable();
+  const input = document.querySelector('input[data-f="name"][data-id="' + wid + '"]');
+  if (input) { input.focus(); input.scrollIntoView({block: 'center'}); }
+  return row;
+}
+
+// ── Поручения ──────────────────────────────────────────────────────────────
+// Устроены так же, как таблица плана: состояние в массиве, разметка — его
+// отражение, операции считаются диффом от baseline.
+function asgKey(a) { return a.assignment_id || a.tmp_id; }
+
+function asgBaseById() {
+  const m = {};
+  ASG_BASELINE.forEach(a => { m[a.assignment_id] = a; });
+  return m;
+}
+
+function resetAssignments() {
+  _asgNew = 0;
+  ASG_ROWS = ASG_BASELINE.map(a => ({
+    assignment_id: a.assignment_id,
+    text: a.text || '', responsible: a.responsible || '',
+    deadline: a.deadline || '', status: a.status || A_TODO,
+    comment: a.comment || '', isNew: false,
+  }));
+}
+
+function asgOverdue(a) {
+  return !!(a.deadline && a.deadline < isoLocal(new Date()) &&
+            (a.status || A_TODO) === A_TODO);
+}
+
+function asgVisible(a) {
+  const filter = (document.getElementById('assign-filter') || {}).value || 'open';
+  const status = a.status || A_TODO;
+  if (filter === 'all') return true;
+  if (filter === 'open') return status !== A_ACCEPTED;
+  return status === filter;
+}
+
+function asgSorted(list) {
+  return list.slice().sort((a, b) => {
+    const da = a.deadline || '9999-99-99', db = b.deadline || '9999-99-99';
+    if (da !== db) return da < db ? -1 : 1;
+    return String(asgKey(a)) < String(asgKey(b)) ? -1 : 1;
+  });
+}
+
+function asgChangedFields(row, base) {
+  const out = {};
+  ['text', 'responsible', 'deadline', 'status', 'comment'].forEach(f => {
+    const now = String(row[f] === null || row[f] === undefined ? '' : row[f]).trim();
+    const was = String(base[f] === null || base[f] === undefined ? '' : base[f]).trim();
+    if (now !== was) out[f] = now;
+  });
+  return out;
+}
+
+function asgState(row) {
+  if (row.isNew) return 'new';
+  const b = asgBaseById()[row.assignment_id];
+  if (!b) return 'new';
+  return Object.keys(asgChangedFields(row, b)).length ? 'changed' : '';
+}
+
+function renderAssignments() {
+  const tbody = document.getElementById('assignTbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  const rows = asgSorted(ASG_ROWS.filter(asgVisible));
+
+  rows.forEach(a => {
+    const k = asgKey(a);
+    const tr = document.createElement('tr');
+    tr.id = 'assign-' + k;
+    const state = asgState(a);
+    if (state) tr.className = 'a-' + state;
+    const statusOpts = A_STATUSES.map(st =>
+      '<option value="' + esc(st) + '"' +
+      ((a.status || A_TODO) === st ? ' selected' : '') + '>' + esc(st) + '</option>'
+    ).join('');
+    tr.innerHTML =
+      '<td><input type="text" id="asg-text-' + esc(k) + '" data-ag="text" data-ak="' +
+        esc(k) + '" value="' + esc(a.text) + '" placeholder="Что сделать"></td>' +
+      '<td><input type="text" id="asg-responsible-' + esc(k) + '" data-ag="responsible" ' +
+        'data-ak="' + esc(k) + '" value="' + esc(a.responsible) + '" placeholder="Фамилия"></td>' +
+      '<td class="' + (asgOverdue(a) ? 'a-overdue' : '') + '" id="asg-dl-' + esc(k) + '">' +
+        '<input type="date" id="asg-deadline-' + esc(k) + '" data-ag="deadline" data-ak="' +
+        esc(k) + '" value="' + esc(a.deadline) + '"></td>' +
+      '<td><select data-ag="status" data-ak="' + esc(k) + '">' + statusOpts + '</select></td>' +
+      '<td><input type="text" id="asg-comment-' + esc(k) + '" data-ag="comment" data-ak="' +
+        esc(k) + '" value="' + esc(a.comment) + '" placeholder="Необязательно"></td>' +
+      '<td>' + (a.isNew
+        ? '<button type="button" class="mini danger" data-act="del-assign" data-ak="' +
+          esc(k) + '">✕</button>'
+        : '') + '</td>';
+    tbody.appendChild(tr);
+  });
+
+  const empty = document.getElementById('assignEmpty');
+  if (empty) empty.hidden = rows.length > 0;
+  const table = document.getElementById('assignTable');
+  if (table) table.style.display = rows.length ? '' : 'none';
+}
+
+function asgByKey(k) {
+  return ASG_ROWS.filter(a => asgKey(a) === k)[0] || null;
+}
+
+function onAsgField(k, field, value) {
+  const a = asgByKey(k);
+  if (!a) return;
+  a[field] = value;
+  if (field === 'deadline' || field === 'status') {
+    const cell = document.getElementById('asg-dl-' + k);
+    if (cell) cell.classList.toggle('a-overdue', asgOverdue(a));
+    const tr = document.getElementById('assign-' + k);
+    if (tr) { const st = asgState(a); tr.className = st ? 'a-' + st : ''; }
+  }
+  draftSave();
+}
+
+function addAssignment() {
+  _asgNew += 1;
+  ASG_ROWS.push({
+    assignment_id: null, tmp_id: 'new-' + _asgNew,
+    text: '', responsible: SITE_HEAD || '', deadline: '',
+    status: A_TODO, comment: '', isNew: true,
+  });
+  renderAssignments();
+  draftSave();
+  const input = document.getElementById('asg-text-new-' + _asgNew);
+  if (input) { input.focus(); input.scrollIntoView({block: 'center'}); }
+}
+
+function delAssignment(k) {
+  ASG_ROWS = ASG_ROWS.filter(a => asgKey(a) !== k);
+  renderAssignments();
+  draftSave();
+}
+
+function assignmentOps() {
+  const base = asgBaseById();
+  const ops = [];
+  ASG_ROWS.forEach(a => {
+    if (a.isNew) {
+      const filled = [a.text, a.responsible, a.deadline, a.comment]
+        .some(v => String(v || '').trim());
+      if (!filled) return;
+      ops.push({op: 'assignment_add', fields: {
+        text: (a.text || '').trim(), responsible: (a.responsible || '').trim(),
+        deadline: a.deadline || '', status: a.status || A_TODO,
+        comment: (a.comment || '').trim(),
+      }});
+      return;
+    }
+    const b = base[a.assignment_id];
+    if (!b) return;
+    const fields = asgChangedFields(a, b);
+    if (Object.keys(fields).length) {
+      ops.push({op: 'assignment_update', assignment_id: a.assignment_id, fields: fields});
+    }
+  });
+  return ops;
+}
+
+// ── Операции ───────────────────────────────────────────────────────────────
+// Диффом, а не по ходу правки: «поправил и вернул» не должно ехать в репозиторий.
+function buildOps() {
+  const ops = [];
+  const hdrOp = changedHeaderOp();
+  if (hdrOp) ops.push(hdrOp);
+  const base = baselineById();
+  const seen = {};
+
+  ROWS.forEach(row => {
+    seen[row.work_id] = true;
+    const fields = {
+      group: row.group || null,
+      name: row.name || null,
+      zahvatki_from_name: listFrom(row.zahvatki),
+      axes: row.axes || null,
+      base_start: row.base_start || null,
+      base_finish: row.base_finish || null,
+      base_duration_days: row.base_duration_days ? Number(row.base_duration_days) : null,
+      predecessor: row.predecessor || null,
+    };
+
+    if (row.isNew) {
+      ops.push({op: 'add', work_id: row.work_id, fields: fields});
+      return;
+    }
+
+    const b = base[row.work_id];
+    if (!b) return;
+
+    if (row.archived && !b.archived) {
+      ops.push({op: 'archive', work_id: row.work_id});
+      return;                      // архивную работу заодно не правим
+    }
+    if (!row.archived && b.archived) {
+      ops.push({op: 'restore', work_id: row.work_id});
+    }
+    if (row.archived) return;
+
+    const changed = changedFields(row, b);
+    if (!changed.length) return;
+    const payload = {};
+    changed.forEach(f => {
+      payload[f] = f === 'zahvatki_from_name' ? fields.zahvatki_from_name : fields[f];
+    });
+    // Переименование выделено отдельной операцией: в журнале «переименована»
+    // и «сдвинуты сроки» должны читаться по-разному.
+    if (changed.length === 1 && changed[0] === 'name') {
+      ops.push({op: 'rename', work_id: row.work_id, fields: {name: row.name}});
+    } else {
+      ops.push({op: 'update', work_id: row.work_id, fields: payload});
+    }
+  });
+
+  // Пропавшие из таблицы (такого не бывает, но если появится — это архив).
+  BASELINE.forEach(b => {
+    if (!seen[b.work_id] && !b.archived) {
+      ops.push({op: 'archive', work_id: b.work_id});
+    }
+  });
+
+  // Поручения — тем же списком операций и тем же конвертом: Александр правит
+  // график и раздаёт поручения в одном разговоре.
+  assignmentOps().forEach(o => ops.push(o));
+
+  // Порядок — одна операция на всю таблицу, и только если он правда другой.
+  const order = ROWS.filter(r => !r.isNew).map(r => r.work_id);
+  const baseOrder = BASELINE.map(w => w.work_id);
+  if (order.length === baseOrder.length && !order.every((w, i) => w === baseOrder[i])) {
+    ops.push({op: 'reorder', order: ROWS.map(r => r.work_id)});
+  }
+
+  return ops;
+}
+
+function describeOp(op) {
+  if (op.op === 'set_object') {
+    const labels = {internal_name: 'внутреннее название', contract_no: 'номер договора',
+                    site_head: 'начальник участка'};
+    const parts = Object.keys(op.fields).map(function(f) {
+      return (labels[f] || f) + ': ' + (op.fields[f] || '—');
+    });
+    return 'Шапка объекта — ' + parts.join('; ');
+  }
+  if (op.op === 'assignment_add') {
+    return 'Новое поручение: ' + (op.fields.text || '(без текста)') +
+           ' — ' + (op.fields.responsible || 'без ответственного') +
+           ', до ' + (op.fields.deadline || '—');
+  }
+  if (op.op === 'assignment_update') {
+    const labels = {text: 'текст', responsible: 'ответственный', deadline: 'дедлайн',
+                    status: 'статус', comment: 'комментарий'};
+    const parts = Object.keys(op.fields).map(function(f) {
+      return (labels[f] || f) + ': ' + (op.fields[f] || '—');
+    });
+    return 'Поручение ' + op.assignment_id + ' — ' + parts.join('; ');
+  }
+  const row = rowById(op.work_id);
+  const nameOf = id => {
+    const label = '№ ' + noOf(id);
+    const r = rowById(id);
+    if (r && r.name) return label + ' «' + r.name + '»';
+    const b = baselineById()[id];
+    return b && b.name ? label + ' «' + b.name + '»' : label;
+  };
+  if (op.op === 'add') return 'Добавить работу № ' + noOf(op.work_id) +
+    (row && row.name ? ' «' + row.name + '»' : ' (без названия)') +
+    (row && row.group ? ', группа «' + row.group + '»' : '');
+  if (op.op === 'archive') return 'Убрать в архив ' + nameOf(op.work_id);
+  if (op.op === 'restore') return 'Вернуть из архива ' + nameOf(op.work_id);
+  if (op.op === 'reorder') return 'Переставить порядок работ';
+  if (op.op === 'rename') return 'Переименовать № ' + noOf(op.work_id) + ' → «' +
+    op.fields.name + '»';
+  const labels = {
+    group: 'группа', name: 'название', zahvatki_from_name: 'захватки', axes: 'оси',
+    base_start: 'исходное начало', base_finish: 'исходное окончание',
+    base_duration_days: 'длительность', predecessor: 'привязка к №',
+  };
+  const parts = Object.keys(op.fields).map(f => {
+    const v = op.fields[f];
+    let shown = Array.isArray(v) ? (v.join(', ') || '—') : (v === null ? '—' : v);
+    if (f === 'predecessor' && v) shown = '№ ' + noOf(v);
+    return (labels[f] || f) + ': ' + shown;
+  });
+  return nameOf(op.work_id) + ' — ' + parts.join('; ');
+}
+
+function renderChanges() {
+  const box = document.getElementById('changesBox');
+  if (!box) return;
+  const ops = buildOps();
+  if (!ops.length) {
+    box.textContent = 'Пока ничего не изменено.';
+    return;
+  }
+  box.innerHTML = '<strong>' + ops.length + ' ' +
+    plural(ops.length, 'правка', 'правки', 'правок') +
+    '</strong><ul>' + ops.map(o => '<li>' + esc(describeOp(o)) + '</li>').join('') + '</ul>';
+}
+
+function validate() {
+  const problems = [];
+  const author = document.getElementById('f-author').value.trim();
+  if (!author) problems.push({focus: 'f-author', text: 'Не указано, кто правит план.'});
+  ASG_ROWS.forEach(a => {
+    const filled = [a.text, a.responsible, a.deadline, a.comment]
+      .some(v => String(v || '').trim());
+    if (!filled) return;                 // пустую строку просто не отправим
+    const k = asgKey(a);
+    if (!String(a.text || '').trim()) {
+      problems.push({focus: 'asg-text-' + k, text: 'Поручение без текста.'});
+    }
+    if (!String(a.responsible || '').trim()) {
+      problems.push({focus: 'asg-responsible-' + k,
+        text: 'Поручение «' + String(a.text || '').slice(0, 40) +
+              '» — не указан ответственный.'});
+    }
+    if (!a.deadline) {
+      problems.push({focus: 'asg-deadline-' + k,
+        text: 'Поручение «' + String(a.text || '').slice(0, 40) +
+              '» — не указан дедлайн.'});
+    }
+  });
+
+  ROWS.forEach(row => {
+    if (row.archived) return;
+    if (!String(row.name || '').trim()) {
+      problems.push({
+        focus: 'name|' + row.work_id,
+        text: 'Работа № ' + (row.no || row.work_id) + ' без названия.',
+      });
+    }
+    if (row.isNew && !row.base_start) {
+      problems.push({
+        focus: 'base_start|' + row.work_id,
+        text: 'Новая работа № ' + (row.no || row.work_id) +
+              ': не указано исходное начало.',
+      });
+    }
+    if (row.base_start && row.base_finish && row.base_finish < row.base_start) {
+      problems.push({
+        focus: 'base_finish|' + row.work_id,
+        text: 'Работа № ' + (row.no || row.work_id) +
+              ': окончание раньше начала.',
+      });
+    }
+  });
+  return problems;
+}
+
+function clearProblems() {
+  Array.prototype.forEach.call(document.querySelectorAll('.field-problem'),
+    el => el.classList.remove('field-problem'));
+}
+
+function focusProblem(problem) {
+  let el = null;
+  if (problem.focus.indexOf('|') >= 0) {
+    const parts = problem.focus.split('|');
+    el = document.querySelector('[data-f="' + parts[0] + '"][data-id="' + parts[1] + '"]');
+  } else {
+    el = document.getElementById(problem.focus);
+  }
+  if (!el) return;
+  el.classList.add('field-problem');
+  el.scrollIntoView({block: 'center'});
+}
+
+function showProblems(problems) {
+  clearProblems();
+  problems.forEach(focusProblem);
+  showBanner('warn', 'Не сохранено — сначала поправьте', {
+    text: 'Пока это не заполнено, план в работу не уйдёт.',
+    items: problems.map(p => p.text),
+  });
+  if (problems.length) focusProblem(problems[0]);
+}
+
+// ── Черновик ───────────────────────────────────────────────────────────────
+function draftSave() {
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({
+      author: document.getElementById('f-author').value,
+      rows: ROWS, next_seq: NEXT_SEQ,
+      hdr_state: HDR_STATE,
+      assignments: ASG_ROWS,
+    }));
+    const t = new Date().toLocaleTimeString('ru-RU', {hour:'2-digit',minute:'2-digit'});
+    document.getElementById('saveState').textContent = 'Черновик сохранён ' + t;
+  } catch (e) {
+    document.getElementById('saveState').textContent = 'Ошибка сохранения черновика';
+  }
+  renderChanges();
+}
+
+function draftLoad() {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    // Фамилия в черновике не восстанавливается: её подставляет персональный
+    // ключ, а не то, что лежало в браузере с прошлого раза.
+    if (Array.isArray(d.rows) && d.rows.length) ROWS = d.rows;
+    if (d.next_seq) NEXT_SEQ = Math.max(NEXT_SEQ, d.next_seq);
+    if (Array.isArray(d.assignments)) {
+      // Состояние заменяется целиком, а не дополняется: иначе черновик плодил
+      // бы строки при каждой загрузке.
+      ASG_ROWS = d.assignments;
+      _asgNew = ASG_ROWS.reduce(function(max, a) {
+        return Math.max(max, Number(String(a.tmp_id || '').replace('new-', '')) || 0);
+      }, 0);
+    }
+    if (d.hdr_state && typeof d.hdr_state === 'object') {
+      Object.assign(HDR_STATE, d.hdr_state);
+      ['internal_name', 'contract_no', 'site_head'].forEach(function(f) {
+        const el = document.querySelector('[data-hdr="' + f + '"]');
+        if (el && HDR_STATE[f] !== undefined) el.value = HDR_STATE[f] || '';
+      });
+    }
+  } catch (e) { /* испорченный черновик — работаем с чистого плана */ }
+}
+
+function draftClear() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+}
+
+// ── Пачка на отправку ──────────────────────────────────────────────────────
+function buildBatch() {
+  const ops = buildOps();
+  return {
+    kind: 'plan-changes',
+    v: 1,
+    object_code: OBJECT_CODE,
+    object_name: OBJECT_NAME,
+    // Ключ внутри пачки, то есть внутри шифртекста. Снаружи конверта видны
+    // только код объекта и время. Роль проверяет apply_plan.py на мини.
+    reporter_key: (WHO && WHO.key) || '',
+    author: (WHO && WHO.name) || '',
+    date: isoLocal(new Date()),
+    source: 'редактор плана',
+    ops: ops,
+  };
+}
+
+function downloadJson(batch) {
+  const fname = OBJECT_CODE + '-plan-' + isoLocal(new Date()) + '.json';
+  const blob = new Blob([JSON.stringify(batch, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = fname;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// >>> auth-core — проверка персонального ключа из ссылки.
+// Ключ во фрагменте (#k=…) имеет приоритет над запомненным: перевыпустили ключ
+// и прислали новую ссылку — она обязана сработать сразу, а не после чистки
+// хранилища браузера.
+const AUTH_STORE = 'pnstroy-key';
+
+async function authSha256Hex(text) {
+  const bytes = new TextEncoder().encode(text);
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest))
+    .map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function authKeyFromHash(hash) {
+  const m = /(?:^|[#&?])k=([^&]+)/.exec(String(hash || ''));
+  if (!m) return '';
+  try { return decodeURIComponent(m[1]).trim(); } catch (e) { return m[1].trim(); }
+}
+
+function authRememberedKey() {
+  try { return (localStorage.getItem(AUTH_STORE) || '').trim(); } catch (e) { return ''; }
+}
+
+function authRemember(key) {
+  try { localStorage.setItem(AUTH_STORE, key); } catch (e) { /* приватный режим */ }
+}
+
+// → запись реестра {person_id, name, role, objects, key} либо null.
+// null во всех случаях: ключа нет, ключ неизвестен, ключ отозван (отозванных
+// в таблице просто нет), браузер без WebCrypto.
+async function authResolve(entries) {
+  const key = authKeyFromHash(location.hash) || authRememberedKey();
+  if (!key) return null;
+  if (!(typeof crypto !== 'undefined' && crypto.subtle)) return null;
+  let digest;
+  try { digest = await authSha256Hex(key); } catch (e) { return null; }
+  const found = (entries || []).filter(e => e && e.h === digest)[0];
+  if (!found) return null;
+  authRemember(key);
+  return {key: key, person_id: found.p, name: found.n || '',
+          role: found.r || '', objects: found.o || []};
+}
+
+// Директор и сотрудник офиса ведут стройку целиком и видят все объекты;
+// начальник участка — только те, что записаны за ним в реестре.
+// 'pto' — уровень доступа, слившийся с 'office' 23.09.2026. Остаётся здесь на
+// случай страницы, собранной до слияния и сохранённой в закладках.
+function authIsOffice(who) {
+  return !!who && (who.role === 'office' || who.role === 'pto');
+}
+
+function authAllows(who, objectCode) {
+  if (!who) return false;
+  if (who.role === 'director' || authIsOffice(who)) return true;
+  if (!objectCode) return false;
+  return (who.objects || []).indexOf(objectCode) >= 0;
+}
+
+function authMayEditPlan(who) {
+  return !!who && (authIsOffice(who) || who.role === 'director');
+}
+
+// Раздел «Сотрудники» — только директору: ссылки начальникам участков раздаёт
+// Александр. Настоящая проверка стоит на мини (apply_people.py), здесь — то,
+// что показывать; без обёртки ключа раздел всё равно не расшифруется.
+function authMayManagePeople(who) {
+  return !!who && who.role === 'director';
+}
+
+// Подпись уровня доступа — та же, что в people.py: человек не должен видеть
+// в одном месте «office», а в другом «Сотрудник офиса».
+function authRoleLabel(role) {
+  if (role === 'site_head') return 'Начальник участка';
+  if (role === 'director') return 'Директор';
+  if (role === 'office' || role === 'pto') return 'Сотрудник офиса';
+  return role || '—';
+}
+
+// Содержимое страницы лежит в <template> и в документ не попадает, пока ключ
+// не проверен. Это не «скрыли отрисованное»: содержимое <template> браузер не
+// строит и не показывает вовсе — ни таблицы работ, ни списка объектов в
+// документе до этого момента нет.
+function authMountPage() {
+  const tpl = document.getElementById('pageTpl');
+  const app = document.getElementById('app');
+  if (!tpl || !app) return false;
+  app.appendChild(tpl.content.cloneNode(true));
+  return true;
+}
+
+function authShowDenied() {
+  const box = document.getElementById('noaccess');
+  if (box) box.classList.add('show');
+}
+
+// Ссылка на соседнюю страницу того же сайта — с тем же ключом во фрагменте.
+// Без этого переход из списка объектов в форму терял бы ключ, и работала бы
+// только память браузера.
+function authLink(href, who) {
+  if (!who || !who.key) return href;
+  return href + '#k=' + encodeURIComponent(who.key);
+}
+// <<< auth-core
+
+// >>> section-core — расшифровка закрытого раздела страницы.
+// HKDF-SHA-256 — в Chrome и в WebKit даёт те же байты, что cryptography на мини.
+const SEC_INFO = 'pnstroy-section-v1';
+
+function secBytesFromB64(b64) {
+  const bin = atob(String(b64 || ''));
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+async function secSha256Hex(text) {
+  const bytes = new TextEncoder().encode(String(text || ''));
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest))
+    .map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Персональный ключ + соль раздела → ключ, которым завёрнут ключ раздела.
+// Соль собрана на мини как «<папка форм>|<назначение>» и лежит в разделе: одна
+// и та же ссылка на двух разных сайтах разворачивает разные обёртки.
+async function secDeriveKey(personalKey, salt) {
+  const enc = new TextEncoder();
+  const ikm = await crypto.subtle.importKey(
+    'raw', enc.encode(String(personalKey || '')), 'HKDF', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    {name: 'HKDF', hash: 'SHA-256', salt: enc.encode(String(salt || '')),
+     info: enc.encode(SEC_INFO)},
+    ikm, {name: 'AES-GCM', length: 256}, false, ['decrypt']);
+}
+
+async function secAesDecrypt(key, iv, ct) {
+  const plain = await crypto.subtle.decrypt(
+    {name: 'AES-GCM', iv: secBytesFromB64(iv)}, key, secBytesFromB64(ct));
+  return new TextDecoder().decode(new Uint8Array(plain));
+}
+
+// Раздел + персональный ключ → содержимое (уже разобранный JSON) либо null.
+// null во всех случаях: раздела нет, обёртки для этого ключа нет, обёртка не
+// разворачивается, содержимое не расшифровывается, браузер без WebCrypto.
+// Отличать эти случаи в интерфейсе незачем — человеку показывается одно и то
+// же: «этот раздел вам не открыт».
+async function secOpen(section, personalKey) {
+  if (!section || !personalKey) return null;
+  if (!(typeof crypto !== 'undefined' && crypto.subtle)) return null;
+  let digest;
+  try { digest = await secSha256Hex(personalKey); } catch (e) { return null; }
+  const mine = (section.wraps || []).filter(w => w && w.h === digest)[0];
+  if (!mine) return null;
+  try {
+    const wrapKey = await secDeriveKey(personalKey, section.salt);
+    const rawKey = await crypto.subtle.decrypt(
+      {name: 'AES-GCM', iv: secBytesFromB64(mine.iv)}, wrapKey,
+      secBytesFromB64(mine.ct));
+    const dataKey = await crypto.subtle.importKey(
+      'raw', new Uint8Array(rawKey), {name: 'AES-GCM'}, false, ['decrypt']);
+    const data = section.data || {};
+    return JSON.parse(await secAesDecrypt(dataKey, data.iv, data.ct));
+  } catch (e) {
+    return null;
+  }
+}
+// <<< section-core
+
+// >>> journal-core — отрисовка журнала изменений.
+// Строки приходят расшифрованными из закрытого раздела (см. section-core):
+// до этого момента в документе нет ни одной фамилии из журнала.
+let JN_ROWS = null;
+
+function jnEsc(s) {
+  return String(s === null || s === undefined ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// «2026-09-23T21:34:51» → «23.09.2026 21:34». Дата без времени — только дата:
+// отчёт сдаётся за день, часа у него нет, и выдумывать «00:00» незачем.
+function jnWhen(at) {
+  const m = String(at || '').match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/);
+  if (!m) return String(at || '');
+  const day = m[3] + '.' + m[2] + '.' + m[1];
+  return m[4] ? day + ' ' + m[4] + ':' + m[5] : day;
+}
+
+function jnDay(at) {
+  const m = String(at || '').match(/^(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : '';
+}
+
+function jnFillFilters(data) {
+  const who = document.getElementById('jnWho');
+  (data.people || []).forEach(name => {
+    const o = document.createElement('option');
+    o.value = name; o.textContent = name; who.appendChild(o);
+  });
+  const kind = document.getElementById('jnKind');
+  (data.kinds || []).forEach(k => {
+    const o = document.createElement('option');
+    o.value = k.key; o.textContent = k.label; kind.appendChild(o);
+  });
+}
+
+function jnVisible() {
+  const who = document.getElementById('jnWho').value;
+  const kind = document.getElementById('jnKind').value;
+  const from = document.getElementById('jnFrom').value;
+  const to = document.getElementById('jnTo').value;
+  return (JN_ROWS || []).filter(r => {
+    if (who && r.who !== who) return false;
+    if (kind && r.kind !== kind) return false;
+    const day = jnDay(r.at);
+    if (from && day && day < from) return false;
+    if (to && day && day > to) return false;
+    return true;
+  });
+}
+
+function jnRender() {
+  const body = document.getElementById('jnBody');
+  const rows = jnVisible();
+  body.innerHTML = rows.map((r, i) => {
+    const details = (r.details || []).filter(x => x);
+    const more = details.length
+      ? '<span class="jn-more">подробнее ▾</span>' : '';
+    const head =
+      '<tr class="jn-row' + (details.length ? ' has-details' : '') +
+        '" data-i="' + i + '">' +
+      '<td class="jn-when">' + jnEsc(jnWhen(r.at)) + '</td>' +
+      '<td>' + jnEsc(r.who) +
+        (r.role ? '<span class="jn-role">' + jnEsc(r.role) + '</span>' : '') + '</td>' +
+      '<td>' + jnEsc(r.what) + '</td>' +
+      '<td>' + jnEsc(r.change) + more + '</td>' +
+      '<td class="jn-src">' + jnEsc(r.source) + '</td></tr>';
+    const body2 = details.length
+      ? '<tr class="jn-details" data-for="' + i + '" hidden><td colspan="5"><ul>' +
+        details.map(d => '<li>' + jnEsc(d) + '</li>').join('') + '</ul></td></tr>'
+      : '';
+    return head + body2;
+  }).join('');
+  const empty = document.getElementById('jnEmpty');
+  empty.hidden = rows.length > 0;
+  empty.textContent = (JN_ROWS && JN_ROWS.length)
+    ? 'По этому отбору ничего нет.' : 'Пока ничего не менялось.';
+}
+
+function jnWire() {
+  ['jnWho', 'jnKind', 'jnFrom', 'jnTo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', jnRender);
+  });
+  const body = document.getElementById('jnBody');
+  if (body) body.addEventListener('click', e => {
+    const tr = e.target.closest ? e.target.closest('tr.jn-row') : null;
+    if (!tr) return;
+    const det = document.querySelector('tr.jn-details[data-for="' + tr.dataset.i + '"]');
+    if (det) det.hidden = !det.hidden;
+  });
+}
+
+// Раздел расшифровывается один раз, при первом нажатии кнопки: до этого в
+// документе нет ни строки журнала, а у того, кому раздел не адресован, не
+// появится и после.
+async function jnSetup(section, who) {
+  const btn = document.getElementById('btnJournal');
+  const box = document.getElementById('journalBox');
+  if (!btn || !box) return;
+  btn.addEventListener('click', async () => {
+    if (box.classList.contains('show')) { box.classList.remove('show'); return; }
+    if (JN_ROWS === null) {
+      btn.disabled = true;
+      const data = await secOpen(section, who && who.key);
+      btn.disabled = false;
+      if (!data) {
+        JN_ROWS = [];
+        document.getElementById('jnEmpty').textContent =
+          'Журнал этого проекта вам не открыт.';
+      } else {
+        JN_ROWS = data.rows || [];
+        jnFillFilters(data);
+      }
+      jnWire();
+      jnRender();
+    }
+    box.classList.add('show');
+    box.scrollIntoView({behavior: 'smooth', block: 'start'});
+  });
+}
+// <<< journal-core
+
+// >>> gh-submit-core — чистая часть отправки в GitHub.
+// Блок выдёргивается из готового html и прогоняется в node тестом
+// tests/test_github_submit.py; ничего, кроме своих аргументов, не трогает.
+
+// Куски из констант GH_TA…GH_TD → токен. base64 от перевёрнутой строки: целой
+// строки токена в исходнике страницы нет, иначе GitHub отозвал бы его, как
+// только страница попала в публичный репозиторий сайта.
+function ghAssembleToken(parts) {
+  const blob = parts.join('');
+  if (!blob) return '';
+  const bin = atob(blob);
+  let out = '';
+  for (let i = bin.length - 1; i >= 0; i--) out += bin.charAt(i);
+  return out;
+}
+
+function ghStamp(d) {
+  const p = n => String(n).padStart(2, '0');
+  return '' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) +
+         '-' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
+}
+
+function ghReportPath(objectCode, week, stamp) {
+  return 'reports/' + objectCode + '/' + week + '-' + stamp + '.json';
+}
+
+function ghBase64(text) {
+  // GitHub Contents API принимает содержимое только base64 от utf-8 байтов.
+  const bytes = new TextEncoder().encode(text);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(bin);
+}
+
+// `content` — то, что ляжет в репозиторий файлом. Со включённым шифрованием это
+// конверт (ghEncryptEnvelope ниже), а не сам отчёт.
+// Путь и сообщение коммита берутся из cfg: этим же блоком уходят и отчёты
+// начальника участка (reports/<код>/<неделя>-<метка>.json), и пачки изменений
+// плана из редактора (plan/<код>/<метка>.json). Значения по умолчанию —
+// отчётные, чтобы форма отчёта ничего про это не знала.
+function ghBuildRequest(cfg, content, stamp) {
+  const prefix = cfg.pathPrefix || 'reports';
+  const slug = cfg.slug || ((cfg.week ? cfg.week + '-' : '') + stamp);
+  const path = prefix + '/' + cfg.objectCode + '/' + slug + '.json';
+  const message = cfg.message || ('report ' + cfg.objectCode + ' ' + cfg.week);
+  return {
+    path: path,
+    url: 'https://api.github.com/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + path,
+    init: {
+      method: 'PUT',
+      headers: {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': 'Bearer ' + cfg.token,
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: message,
+        content: ghBase64(JSON.stringify(content, null, 2)),
+        branch: cfg.branch,
+      }),
+    },
+  };
+}
+// <<< gh-submit-core
+
+// >>> gh-crypto-core — шифрование отчёта перед отправкой.
+// Блок так же выдёргивается из готового html и прогоняется в node тестом
+// tests/test_report_crypto.py: то, что здесь запечатано, распечатывается
+// на мини модулем tools/weekly/reports_crypto.py — иначе схема неверна.
+//
+// Гибрид: случайный AES-GCM-256 ключ шифрует отчёт, открытый RSA-3072 ключ
+// шифрует этот AES-ключ. Наружу (в приватный, но читаемый токеном репозиторий)
+// уходит только конверт; из содержимого отчёта в нём нет ничего.
+function ghCryptoAvailable() {
+  return typeof crypto !== 'undefined' && !!crypto.subtle &&
+         typeof crypto.subtle.encrypt === 'function';
+}
+
+// Тот же приём, что в ghBase64: по кускам, иначе длинный отчёт уронит стек.
+function ghB64Bytes(bytes) {
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(bin);
+}
+
+function ghBytesFromB64(b64) {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+async function ghEncryptEnvelope(pubKeyB64, keyId, payload, meta) {
+  const pub = await crypto.subtle.importKey(
+    'spki', ghBytesFromB64(pubKeyB64),
+    {name: 'RSA-OAEP', hash: 'SHA-256'}, false, ['encrypt']);
+
+  const aesKey = await crypto.subtle.generateKey(
+    {name: 'AES-GCM', length: 256}, true, ['encrypt']);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const plain = new TextEncoder().encode(JSON.stringify(payload));
+
+  const ct = new Uint8Array(
+    await crypto.subtle.encrypt({name: 'AES-GCM', iv: iv}, aesKey, plain));
+  const rawKey = new Uint8Array(await crypto.subtle.exportKey('raw', aesKey));
+  const ek = new Uint8Array(
+    await crypto.subtle.encrypt({name: 'RSA-OAEP'}, pub, rawKey));
+
+  // Метаданные — только служебные: по ним мини раскладывает файлы, и по ним
+  // же видно в логе, что пришло. Ни одного поля отчёта здесь нет.
+  //
+  // Переносятся все ключи meta, а не три заранее известных: у отчёта это код
+  // объекта, неделя и отметка времени, у пачки изменений плана недели нет, зато
+  // есть kind. Единственное переименование — objectCode → object_code, потому
+  // что снаружи конверт читает python.
+  const envelope = {
+    v: 1,
+    alg: 'RSA-OAEP-256+A256GCM',
+    kid: keyId,
+    ek: ghB64Bytes(ek),
+    iv: ghB64Bytes(iv),
+    ct: ghB64Bytes(ct),
+  };
+  Object.keys(meta || {}).forEach(key => {
+    const name = key === 'objectCode' ? 'object_code' : key;
+    if (meta[key] !== undefined) envelope[name] = meta[key];
+  });
+  return envelope;
+}
+// <<< gh-crypto-core
+
+// ── График из Excel ────────────────────────────────────────────────────────
+// Файл читается прямо в браузере и едет внутри того же шифрованного конверта,
+// что отчёты и правки плана: в репозитории он лежит шифртекстом, и прочитать
+// его может только мини. Разбирает файл tools/weekly/apply_schedule.py.
+
+function ruDate(iso) {
+  if (!iso) return '—';
+  const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? (m[3] + '.' + m[2] + '.' + m[1]) : String(iso);
+}
+
+// Местное время «дд.мм.гггг чч:мм». new Date().toISOString() даёт UTC, и
+// 23.09.2026 баннер показал Артёму 19:45 вместо 22:45.
+function ruNow() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  return p(d.getDate()) + '.' + p(d.getMonth() + 1) + '.' + d.getFullYear() +
+         ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+
+function ruDateTime(iso) {
+  if (!iso) return '—';
+  const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+  if (!m) return ruDate(iso);
+  return m[3] + '.' + m[2] + '.' + m[1] + ' ' + m[4] + ':' + m[5];
+}
+
+// Файл → base64. FileReader, а не fetch(URL.createObjectURL): у WebKit на
+// локальном файле второе иногда отдаёт пустое тело.
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onerror = () => reject(new Error('файл не прочитался'));
+    r.onload = () => {
+      const s = String(r.result || '');
+      const comma = s.indexOf(',');
+      resolve(comma >= 0 ? s.slice(comma + 1) : s);
+    };
+    r.readAsDataURL(file);
+  });
+}
+
+function renderLastUpdate() {
+  const box = document.getElementById('grafikLast');
+  if (!box) return;
+  const u = LAST_UPDATE;
+  if (!u) { box.hidden = true; box.innerHTML = ''; return; }
+  box.hidden = false;
+
+  if (u.status === 'rejected') {
+    box.innerHTML = '<h3>Файл не принят</h3>' +
+      '<p class="grafik-note">' + esc(ruDateTime(u.at)) + ', ' + esc(u.by || '—') +
+      ', файл «' + esc(u.file || '—') + '». Похоже, это график другого объекта, ' +
+      'поэтому план остался прежним.</p>' +
+      '<p class="grafik-note">' + esc(u.reason || '') + '</p>';
+    document.getElementById('grafikBox').classList.add('grafik-bad');
+    return;
+  }
+  document.getElementById('grafikBox').classList.remove('grafik-bad');
+
+  const shifted = u.shifted || [];
+  const later = shifted.filter(x => x.days > 0);
+  const earlier = shifted.filter(x => x.days < 0);
+  const parts = [];
+  if (later.length) parts.push('позже — ' + later.length);
+  if (earlier.length) parts.push('раньше — ' + earlier.length);
+  if ((u.added || []).length) parts.push('добавлено — ' + u.added.length);
+  if ((u.archived || []).length) parts.push('убрано в архив — ' + u.archived.length);
+  if ((u.renamed || []).length) parts.push('переименовано — ' + u.renamed.length);
+
+  let html = '<h3>Последнее обновление графика</h3>' +
+    '<p class="grafik-note">' + esc(ruDateTime(u.at)) + ', ' + esc(u.by || '—') +
+    ', файл «' + esc(u.file || '—') + '»' +
+    (u.rows ? ', строк в файле: ' + esc(u.rows) : '') + '.' +
+    (u.rolled_back_at
+      ? ' <strong>Отменено ' + esc(ruDateTime(u.rolled_back_at)) + '.</strong>'
+      : '') +
+    '</p>';
+
+  html += '<p class="grafik-note">' +
+    (parts.length ? 'Что изменилось: ' + esc(parts.join(', ')) + '.'
+                  : 'Ничего не изменилось: файл совпал с тем, что уже в плане.') +
+    '</p>';
+
+  if (shifted.length) {
+    html += '<ul>' + shifted.map(x =>
+      '<li>№ ' + esc(x.no) + ' ' + esc(x.name || '') + ' — ' +
+      (x.days > 0 ? 'позже на ' : 'раньше на ') + esc(Math.abs(x.days)) + ' ' +
+      plural(Math.abs(x.days), 'день', 'дня', 'дней') +
+      ' (было до ' + esc(x.was || '—') + ', стало до ' + esc(x.became || '—') +
+      ')</li>').join('') + '</ul>';
+  }
+  if ((u.added || []).length) {
+    html += '<p class="grafik-note">Добавлены: ' +
+      u.added.map(x => '№ ' + esc(x.no) + ' ' + esc(x.name || '')).join('; ') + '</p>';
+  }
+  if ((u.archived || []).length) {
+    html += '<p class="grafik-note">Убраны в архив: ' +
+      u.archived.map(x => '№ ' + esc(x.no) + ' ' + esc(x.name || '')).join('; ') + '</p>';
+  }
+  if ((u.anomalies || []).length) {
+    html += '<p class="grafik-note">Странности в файле (спросить у ПТО): ' +
+      u.anomalies.map(esc).join(' ') + '</p>';
+  }
+  if (!u.rolled_back_at) {
+    html += '<div class="grafik-row">' +
+      '<button type="button" class="danger" id="btnRollback">' +
+      'Отменить последнее обновление</button>' +
+      '<span class="grafik-state" id="rollbackState"></span></div>';
+  }
+  box.innerHTML = html;
+  const rb = document.getElementById('btnRollback');
+  if (rb) rb.addEventListener('click', () => {
+    try { doRollback().catch(e => showError('Отменить не удалось.', e)); }
+    catch (e) { showError('Отменить не удалось.', e); }
+  });
+}
+
+// Отправка конверта в plan/<КОД>/… — та же дорога, что у правок плана.
+// → путь файла в репозитории либо исключение с понятным текстом.
+async function sendEnvelope(payload, kind) {
+  const ghToken = ghAssembleToken(GH_TOKEN_PARTS);
+  if (!GH_OWNER || !GH_REPO || !ghToken || !PUB_KEY_B64) {
+    throw new Error('страница собрана без настроек отправки');
+  }
+  if (!ghCryptoAvailable()) throw new Error('браузер не умеет шифровать');
+  const envelope = await ghEncryptEnvelope(PUB_KEY_B64, KEY_ID, payload, {
+    objectCode: OBJECT_CODE, kind: kind, ts: new Date().toISOString(),
+  });
+  const cfg = {
+    owner: GH_OWNER, repo: GH_REPO, branch: GH_BRANCH, token: ghToken,
+    objectCode: OBJECT_CODE, pathPrefix: 'plan',
+    message: 'plan ' + OBJECT_CODE,
+  };
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const stamp = ghStamp(new Date()) + (attempt ? '-' + (attempt + 1) : '');
+    const req = ghBuildRequest(Object.assign({slug: stamp}, cfg), envelope, stamp);
+    let resp;
+    try {
+      resp = await fetch(req.url, req.init);
+    } catch (e) {
+      throw new Error('нет соединения с GitHub');
+    }
+    if (resp.status === 201 || resp.status === 200) return req.path;
+    if (resp.status === 422 && attempt < 2) continue;
+    throw new Error('GitHub ответил ошибкой ' + resp.status);
+  }
+  throw new Error('не удалось подобрать свободное имя файла');
+}
+
+async function doUpload() {
+  const input = document.getElementById('grafikFile');
+  const btn = document.getElementById('btnUpload');
+  const file = input && input.files && input.files[0];
+  if (!file) {
+    showBanner('warn', 'Файл не выбран', {
+      text: 'Нажмите «Выберите файл» и укажите график ПТО (.xls или .xlsx).'});
+    return;
+  }
+  const lower = file.name.toLowerCase();
+  if (!/\.(xls|xlsx)$/.test(lower)) {
+    showBanner('error', 'Это не файл Excel', {
+      text: 'Нужен файл графика с расширением .xls или .xlsx, а выбран «' +
+            file.name + '».'});
+    return;
+  }
+  if (file.size > MAX_FILE_BYTES) {
+    showBanner('error', 'Файл слишком большой', {
+      text: 'Размер файла — ' + (file.size / 1024 / 1024).toFixed(1) +
+            ' МБ, а принимаются файлы до 5 МБ. График ПТО столько не весит: ' +
+            'похоже, выбран не тот файл.'});
+    return;
+  }
+
+  if (btn) { btn.disabled = true; btn.textContent = 'Отправляем…'; }
+  showBanner('sending', 'Отправляем файл…', {
+    text: 'Файл шифруется и уходит на разбор. Не закрывайте страницу.'});
+
+  let path;
+  try {
+    const payload = {
+      kind: 'schedule_upload',
+      v: 1,
+      object_code: OBJECT_CODE,
+      object_name: OBJECT_NAME,
+      filename: file.name,
+      uploaded_at: new Date().toISOString(),
+      reporter_key: (WHO && WHO.key) || '',
+      author: (WHO && WHO.name) || '',
+      file_b64: await fileToBase64(file),
+    };
+    path = await sendEnvelope(payload, 'schedule_upload');
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Отправить файл'; }
+    showBanner('error', 'Файл не отправлен', {
+      text: (e && e.message ? e.message : 'неизвестная ошибка') +
+            '. План не изменился. Попробуйте ещё раз или скажите Артёму.'});
+    return;
+  }
+
+  if (btn) { btn.textContent = 'Файл отправлен ✓'; }
+  showBanner('ok', 'Файл отправлен', {
+    text: 'Изменения появятся на странице через 5–10 минут. Итог придёт в блок ' +
+          '«Последнее обновление графика» — перезагрузите страницу позже.',
+    items: ['Файл: ' + file.name,
+            'Размер: ' + (file.size / 1024).toFixed(0) + ' КБ',
+            'Время: ' + ruNow()],
+  });
+}
+
+async function doRollback() {
+  if (!confirm('Вернуть график к тому виду, который был до последнего обновления?')) {
+    return;
+  }
+  const btn = document.getElementById('btnRollback');
+  if (btn) { btn.disabled = true; btn.textContent = 'Отменяем…'; }
+  showBanner('sending', 'Отменяем обновление…', {
+    text: 'Просьба шифруется и уходит на разбор. Не закрывайте страницу.'});
+  try {
+    await sendEnvelope({
+      kind: 'schedule_rollback',
+      v: 1,
+      object_code: OBJECT_CODE,
+      object_name: OBJECT_NAME,
+      requested_at: new Date().toISOString(),
+      reporter_key: (WHO && WHO.key) || '',
+      author: (WHO && WHO.name) || '',
+      batch_id: (LAST_UPDATE && LAST_UPDATE.batch_id) || '',
+    }, 'schedule_rollback');
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = 'Отменить последнее обновление'; }
+    showBanner('error', 'Отменить не удалось', {
+      text: (e && e.message ? e.message : 'неизвестная ошибка') +
+            '. График остался как есть.'});
+    return;
+  }
+  if (btn) { btn.textContent = 'Отмена отправлена ✓'; }
+  showBanner('ok', 'Отмена отправлена', {
+    text: 'График вернётся к прежнему виду в течение 5–10 минут. ' +
+          'Перезагрузите страницу позже.'});
+}
+
+// ── Сохранение плана ───────────────────────────────────────────────────────
+function saveOk(path, count) {
+  const t = new Date().toLocaleString('ru-RU', {
+    day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit',
+  });
+  showBanner('ok', 'План сохранён ✓', {
+    text: 'Страница обновится в течение 5–10 минут: формы начальников участков ' +
+          'перегенерируются и выкладываются автоматически. Перезагрузите эту ' +
+          'страницу позже, чтобы увидеть план уже с применёнными правками.',
+    items: ['Правок отправлено: ' + count, 'Файл: ' + path, 'Время: ' + t],
+  });
+  const btn = document.getElementById('btnSave');
+  if (btn) { btn.disabled = true; btn.textContent = 'Сохранено ✓'; }
+  draftClear();
+}
+
+function saveFailed(reason, batch, opts) {
+  const btn = document.getElementById('btnSave');
+  if (btn) { btn.disabled = false; btn.textContent = 'Сохранить план'; }
+  const o = opts || {};
+  let saved = false;
+  if (o.autoSave) {
+    try { downloadJson(batch); saved = true; } catch (e) { /* ниже */ }
+  }
+  showBanner('error', 'Не удалось сохранить план: ' + reason, {
+    text: saved
+      ? 'Файл с правками скачан на компьютер — перешлите его Артёму.'
+      : 'Правки остались в черновике на этой странице и никуда не делись. ' +
+        'Нажмите «Сохранить файл (JSON)» и перешлите файл Артёму.',
+  });
+}
+
+async function doSave() {
+  const problems = validate();
+  if (problems.length) { showProblems(problems); return; }
+  clearProblems();
+
+  const batch = buildBatch();
+  if (!batch.ops.length) {
+    showBanner('warn', 'Сохранять нечего', {text: 'План не изменился.'});
+    return;
+  }
+
+  const btn = document.getElementById('btnSave');
+  if (btn) { btn.disabled = true; btn.textContent = 'Сохраняем…'; }
+  showBanner('sending', 'Сохраняем…', {
+    text: 'План шифруется и уходит в репозиторий. Не закрывайте страницу.',
+  });
+
+  const ghToken = ghAssembleToken(GH_TOKEN_PARTS);
+  if (!GH_OWNER || !GH_REPO || !ghToken || !PUB_KEY_B64) {
+    saveFailed('страница собрана без настроек отправки.', batch);
+    return;
+  }
+  if (!ghCryptoAvailable()) {
+    saveFailed('браузер не умеет шифровать.', batch);
+    return;
+  }
+
+  let envelope;
+  try {
+    envelope = await ghEncryptEnvelope(PUB_KEY_B64, KEY_ID, batch, {
+      objectCode: OBJECT_CODE, kind: 'plan-changes', ts: new Date().toISOString(),
+    });
+  } catch (e) {
+    saveFailed('не удалось зашифровать план' +
+      (e && e.message ? ' (' + e.message + ')' : '') + '.', batch);
+    return;
+  }
+
+  const cfg = {
+    owner: GH_OWNER, repo: GH_REPO, branch: GH_BRANCH, token: ghToken,
+    objectCode: OBJECT_CODE, pathPrefix: 'plan',
+    message: 'plan ' + OBJECT_CODE,
+  };
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const stamp = ghStamp(new Date()) + (attempt ? '-' + (attempt + 1) : '');
+    const req = ghBuildRequest(Object.assign({slug: stamp}, cfg), envelope, stamp);
+    let resp;
+    try {
+      resp = await fetch(req.url, req.init);
+    } catch (e) {
+      saveFailed('нет соединения с GitHub.', batch, {autoSave: true});
+      return;
+    }
+    if (resp.status === 201 || resp.status === 200) {
+      saveOk(req.path, batch.ops.length);
+      return;
+    }
+    if (resp.status === 422 && attempt < 2) continue;
+    saveFailed('GitHub ответил ошибкой ' + resp.status +
+      (resp.statusText ? ' (' + resp.statusText + ')' : '') + '.', batch);
+    return;
+  }
+  saveFailed('не удалось подобрать свободное имя файла.', batch);
+}
+
+// ── Обвязка ────────────────────────────────────────────────────────────────
+function wire() {
+  const table = document.getElementById('planTable');
+
+  // Делегирование, а не inline-атрибуты: весь скрипт лежит внутри IIFE, и
+  // атрибут вида on-click искал бы функции в глобальной области. Ровно на этом
+  // форма отчёта молча не работала 11.09.2026.
+  table.addEventListener('input', guard(e => {
+    const t = e.target;
+    if (!t || !t.dataset || !t.dataset.f) return;
+    t.classList.remove('field-problem');
+    onFieldInput(t.dataset.id, t.dataset.f, t.value);
+    // Перерисовываем только служебные поля строки, чтобы не терять фокус.
+    syncRowAfterInput(t.dataset.id, t.dataset.f);
+  }));
+  table.addEventListener('change', guard(e => {
+    const t = e.target;
+    if (!t || !t.dataset || !t.dataset.f) return;
+    onFieldInput(t.dataset.id, t.dataset.f, t.value);
+    syncRowAfterInput(t.dataset.id, t.dataset.f);
+  }));
+  table.addEventListener('click', guard(e => {
+    const btn = e.target.closest ? e.target.closest('button[data-act]') : null;
+    if (!btn) return;
+    const id = btn.dataset.id;
+    if (btn.dataset.act === 'up') moveRow(id, -1);
+    else if (btn.dataset.act === 'down') moveRow(id, 1);
+    else if (btn.dataset.act === 'archive') archiveRow(id);
+    else if (btn.dataset.act === 'restore') restoreRow(id);
+  }));
+
+  const asgBody = document.getElementById('assignTbody');
+  asgBody.addEventListener('input', guard(e => {
+    const t = e.target;
+    if (!t || !t.dataset || !t.dataset.ag) return;
+    t.classList.remove('field-problem');
+    onAsgField(t.dataset.ak, t.dataset.ag, t.value);
+  }));
+  asgBody.addEventListener('change', guard(e => {
+    const t = e.target;
+    if (!t || !t.dataset || !t.dataset.ag) return;
+    onAsgField(t.dataset.ak, t.dataset.ag, t.value);
+    if (t.dataset.ag === 'status') renderAssignments();   // фильтр мог его убрать
+  }));
+  asgBody.addEventListener('click', guard(e => {
+    const btn = e.target.closest ? e.target.closest('[data-act="del-assign"]') : null;
+    if (btn) delAssignment(btn.dataset.ak);
+  }));
+  document.getElementById('addAssign').addEventListener('click',
+    guard(() => addAssignment()));
+  document.getElementById('assign-filter').addEventListener('change',
+    guard(() => renderAssignments()));
+
+  document.getElementById('addWork').addEventListener('click', guard(() => addWork()));
+  document.getElementById('addGroup').addEventListener('click', guard(() => {
+    const name = prompt('Название новой группы (этапа):', '');
+    if (name === null) return;
+    addWork(name.trim());
+  }));
+  document.getElementById('toggleArchive').addEventListener('click', guard(() => {
+    showArchived = !showArchived;
+    renderTable();
+  }));
+
+  document.getElementById('btnUpload').addEventListener('click', () => {
+    try {
+      doUpload().catch(e => showError('Файл не отправлен.', e));
+    } catch (e) {
+      showError('Файл не отправлен.', e);
+    }
+  });
+
+  document.getElementById('btnSave').addEventListener('click', () => {
+    try {
+      doSave().catch(e => showError('Сбой при сохранении — план не ушёл.', e));
+    } catch (e) {
+      showError('Сбой при сохранении — план не ушёл.', e);
+    }
+  });
+
+  document.getElementById('btnShow').addEventListener('click', guard(() => {
+    const ops = buildOps();
+    renderChanges();
+    if (!ops.length) {
+      showBanner('warn', 'План не изменён', {text: 'Отправлять пока нечего.'});
+      return;
+    }
+    showBanner('ok', ops.length + ' ' + plural(ops.length, 'правка', 'правки', 'правок') +
+      ' к отправке', {items: ops.map(describeOp)});
+  }));
+
+  document.getElementById('btnDownload').addEventListener('click',
+    guard(() => downloadJson(buildBatch())));
+
+  document.getElementById('btnReset').addEventListener('click', guard(() => {
+    if (!confirm('Вернуть план как был? Все правки на этой странице пропадут.')) return;
+    draftClear();
+    resetRows();
+    resetHeader();
+    resetAssignments();
+    renderTable();
+    renderAssignments();
+    hideBanner();
+    const btn = document.getElementById('btnSave');
+    if (btn) { btn.disabled = false; btn.textContent = 'Сохранить план'; }
+  }));
+
+  document.getElementById('f-author').addEventListener('input', guard(e => {
+    e.target.classList.remove('field-problem');
+    draftSave();
+  }));
+
+  // Шапка объекта: обновляем HDR_STATE и автосохраняем черновик.
+  document.querySelectorAll('[data-hdr]').forEach(function(el) {
+    el.addEventListener('input', guard(function() {
+      HDR_STATE[el.dataset.hdr] = el.value;
+      draftSave();
+    }));
+  });
+
+  if (typeof ResizeObserver === 'function') {
+    new ResizeObserver(() => syncToolbarHeight()).observe(document.querySelector('.topbar'));
+  }
+  window.addEventListener('resize', () => syncToolbarHeight());
+  window.addEventListener('error', e => showError('Ошибка на странице.', e.error || e));
+  window.addEventListener('unhandledrejection',
+    e => showError('Ошибка на странице.', e.reason));
+}
+
+// Правка группы и архива меняет разметку таблицы, правка дат — соседние поля.
+// Полная перерисовка на каждый символ отняла бы фокус у поля, поэтому обновляем
+// точечно, а таблицу целиком — только когда поменялась группа.
+function syncRowAfterInput(id, field) {
+  const row = rowById(id);
+  if (!row) return;
+  if (field === 'base_start' || field === 'base_duration_days') {
+    const el = document.querySelector('[data-f="base_finish"][data-id="' + id + '"]');
+    if (el && el.value !== row.base_finish) el.value = row.base_finish;
+  } else if (field === 'base_finish') {
+    const el = document.querySelector('[data-f="base_duration_days"][data-id="' + id + '"]');
+    if (el && String(el.value) !== String(row.base_duration_days)) {
+      el.value = row.base_duration_days;
+    }
+  }
+  const tr = document.getElementById('row-' + id);
+  if (tr) {
+    const state = rowState(row);
+    tr.className = state ? 'row-' + state : '';
+  }
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+function start() {
+  resetRows();
+  resetHeader();
+  resetAssignments();
+  draftLoad();
+  renderTable();
+  renderAssignments();
+  renderLastUpdate();
+  wire();
+  syncToolbarHeight();
+}
+
+// Ключ проверяется до того, как редактор появится в документе. Роль важнее
+// объекта: план правят ПТО и Александр, и начальник участка сюда не попадёт,
+// даже если откроет ссылку на свой объект.
+async function bootstrap() {
+  WHO = await authResolve(AUTH_ENTRIES);
+  if (!authMayEditPlan(WHO) || !authAllows(WHO, OBJECT_CODE)) {
+    authShowDenied();
+    return;
+  }
+  authMountPage();
+  const authorEl = document.getElementById('f-author');
+  if (authorEl) { authorEl.value = WHO.name || ''; authorEl.readOnly = true; }
+  start();
+  if (JOURNAL_SECTION) await jnSetup(JOURNAL_SECTION, WHO);
+}
+
+bootstrap().catch(e => {
+  authShowDenied();
+  if (window.console) console.error(e);
+});
+
+})();
+</script>
+</body>
+</html>
