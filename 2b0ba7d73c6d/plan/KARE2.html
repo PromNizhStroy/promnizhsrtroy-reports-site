@@ -1401,6 +1401,15 @@ function ruDate(iso) {
   return m ? (m[3] + '.' + m[2] + '.' + m[1]) : String(iso);
 }
 
+// Местное время «дд.мм.гггг чч:мм». new Date().toISOString() даёт UTC, и
+// 23.09.2026 баннер показал Артёму 19:45 вместо 22:45.
+function ruNow() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  return p(d.getDate()) + '.' + p(d.getMonth() + 1) + '.' + d.getFullYear() +
+         ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+
 function ruDateTime(iso) {
   if (!iso) return '—';
   const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
@@ -1587,7 +1596,7 @@ async function doUpload() {
           '«Последнее обновление графика» — перезагрузите страницу позже.',
     items: ['Файл: ' + file.name,
             'Размер: ' + (file.size / 1024).toFixed(0) + ' КБ',
-            'Время: ' + ruDateTime(new Date().toISOString())],
+            'Время: ' + ruNow()],
   });
 }
 
