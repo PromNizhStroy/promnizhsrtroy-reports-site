@@ -319,6 +319,33 @@ tr.row-explained td{border-color:var(--green-border)}
 #noaccess h1{margin:0 0 10px;font-size:22px;color:#143b42}
 #noaccess p{margin:0;color:#667281;font-size:14px}
 
+
+/* Журнал изменений. Раздел закрыт, пока его не открыли кнопкой: он длинный, а
+   нужен не каждый раз. */
+#journalBox{display:none;margin:22px 0;padding:18px;background:#fff;
+  border:1px solid #d8dee6;border-radius:8px}
+#journalBox.show{display:block}
+#journalBox h2{margin:0 0 4px;font-size:18px;color:#143b42}
+#journalBox .jn-note{margin:0 0 14px;font-size:13px;color:#667281}
+#journalBox .jn-filters{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;
+  margin-bottom:14px}
+#journalBox .jn-filters label{display:block;font-size:12px;color:#667281;margin-bottom:3px}
+#journalBox .jn-filters select,#journalBox .jn-filters input{font:14px Arial,sans-serif;
+  padding:5px 7px;border:1px solid #d8dee6;border-radius:5px;background:#fff;color:#202832}
+#journalBox table{width:100%;border-collapse:collapse;font-size:13px}
+#journalBox th{text-align:left;padding:7px 8px;border-bottom:2px solid #d8dee6;
+  color:#667281;font-weight:600;white-space:nowrap}
+#journalBox td{padding:7px 8px;border-bottom:1px solid #eef2f5;vertical-align:top}
+#journalBox tr.jn-row.has-details{cursor:pointer}
+#journalBox tr.jn-details td{background:#f6f8fa;color:#41505f;font-size:12px}
+#journalBox tr.jn-details li{margin:2px 0}
+#journalBox .jn-when{white-space:nowrap;color:#667281}
+#journalBox .jn-role{display:block;color:#8a95a3;font-size:11px}
+#journalBox .jn-src{white-space:nowrap;color:#667281}
+#journalBox .jn-empty{color:#667281;font-size:14px;margin:10px 0 0}
+#journalBox .jn-more{color:#176f7d;font-size:11px;margin-left:5px}
+@media print{#journalBox{display:none !important}}
+
 </style>
 </head>
 <body>
@@ -337,6 +364,7 @@ tr.row-explained td{border-color:var(--green-border)}
       <button id="btnSubmit" class="primary">Отправить</button>
       <button id="btnSave">Сохранить данные (JSON)</button>
       <button id="btnPrint">PDF / печать</button>
+      <button type="button" id="btnJournal" title="Кто и что поправил в этом проекте руками">Журнал изменений</button>
       <a class="btn" id="btnExcel" href="KZH5-grafik-2026-09-23.xlsx" download="График Тепляк этап №5 на 23.09.2026.xlsx" title="Тот же график, что ведёт ПТО, с актуальными датами — для печати на стену">Скачать график (Excel)</a>
       <button id="btnClear" class="danger">Очистить</button>
     </div>
@@ -347,6 +375,30 @@ tr.row-explained td{border-color:var(--green-border)}
 <div class="sheet">
   <h1>Еженедельный отчёт начальника участка</h1>
   <p class="subtitle">Объект: <strong id="hdr-obj">ГРАФИК КЖ 5 этап</strong> &nbsp;|&nbsp; Отчётная неделя: <strong><span id="hdr-week-range"></span></strong></p>
+
+<div id="journalBox">
+  <h2>Журнал изменений</h2>
+  <p class="jn-note">Что люди поправили в этом проекте руками: правки в
+    редакторе, изменения из отчётов, загрузки графика, поручения. Сдвиги,
+    которые посчитались сами следом за чужой правкой, сюда не попадают.</p>
+  <div class="jn-filters">
+    <div><label for="jnWho">Кто</label>
+      <select id="jnWho"><option value="">все</option></select></div>
+    <div><label for="jnKind">Что</label>
+      <select id="jnKind"><option value="">всё</option></select></div>
+    <div><label for="jnFrom">С</label>
+      <input type="date" id="jnFrom"></div>
+    <div><label for="jnTo">По</label>
+      <input type="date" id="jnTo"></div>
+  </div>
+  <table id="jnTable">
+    <thead><tr>
+      <th>Когда</th><th>Кто</th><th>Что</th><th>Изменение</th><th>Источник</th>
+    </tr></thead>
+    <tbody id="jnBody"></tbody>
+  </table>
+  <p class="jn-empty" id="jnEmpty" hidden>Пока ничего не менялось.</p>
+</div>
 
   <div class="hgrid">
     <div class="span2"><label>Объект</label>
@@ -563,7 +615,11 @@ const PUB_KEY_B64 = "MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAmLVO5xLUbD/nHdt
 const KEY_ID      = "9f888f70f11bc7fc";
 // Таблица проверки персонального ключа: sha-256, роль и объекты. Самих ключей
 // здесь нет и быть не может — см. tools/weekly/people.py (auth_entries).
-const AUTH_ENTRIES = [{"p": "p-001", "n": "Мажоров А.В.", "r": "site_head", "o": ["KARE2", "KZH5"], "h": "8f53e2cbcc1f2b99d1a1d77738aded237790a9c29363ed541c69d33a06d5487a"}, {"p": "p-002", "n": "Медведев А.А.", "r": "director", "o": [], "h": "1472176cf0c5ddeaf1a5df30f6a1f075d48f82191878c2242ded07d296ba4274"}, {"p": "p-003", "n": "Инженер ПТО (имя уточняется)", "r": "pto", "o": [], "h": "3c2b05bc8ae4896d025ab2b1bb6003e096909ae478a33c94e62990c2b683bab1"}, {"p": "p-004", "n": "Ефимов А.", "r": "director", "o": [], "h": "ff64f204565e6c07a7817bec33caa5fca86a299c8f830dfc6c35aeb7cc50a978"}];
+const AUTH_ENTRIES = [{"p": "p-001", "n": "Мажоров А.В.", "r": "site_head", "o": ["KARE2", "KZH5"], "h": "8f53e2cbcc1f2b99d1a1d77738aded237790a9c29363ed541c69d33a06d5487a"}, {"p": "p-002", "n": "Медведев А.А.", "r": "director", "o": [], "h": "1472176cf0c5ddeaf1a5df30f6a1f075d48f82191878c2242ded07d296ba4274"}, {"p": "p-003", "n": "Инженер ПТО (имя уточняется)", "r": "office", "o": [], "h": "3c2b05bc8ae4896d025ab2b1bb6003e096909ae478a33c94e62990c2b683bab1"}, {"p": "p-004", "n": "Ефимов А.", "r": "director", "o": [], "h": "ff64f204565e6c07a7817bec33caa5fca86a299c8f830dfc6c35aeb7cc50a978"}];
+// Журнал изменений объекта — закрытый раздел: соль, шифртекст и обёртки ключа
+// по хэшам персональных ключей. Ни фамилий, ни правок открытым текстом здесь
+// нет. См. tools/weekly/section_crypto.py.
+const JOURNAL_SECTION = {"purpose": "journal:KZH5", "salt": "2b0ba7d73c6d|journal:KZH5", "data": {"v": 1, "alg": "A256GCM", "iv": "+jWfs1nEz0G1YAXZ", "ct": "K1A9M8oUsn29qZ48vNo385z2u2u7qyHFw9Kns75Q+RFxMvXcRdZhAUSCdMp3PsmYrXLSJlbN7WYfIFMJ7azxusYS48M0Rpng6VRDZKpQpYT0tQ9W+XlVGdWdl+wyAKa95maRgPbWfoB5LqeDqXhy+u0v3MPuEuaa9b+nFlKBn9FhktYw11UWShsf6iZg7RNshoESKPsWsvCbcxPzG/+7x1kHZtXbU/oWHiCo5MECu+xBswvtngPMxiQNbBj9siClj2Z3x2K9/E/Q++Ymeh1ef+x8DkuUBdClQVZwGL9OsQ7IygYe0v7dRr+AoSN8T80Niacej6I2QNEBbIRuCs2JfdHduEn1oxUtcn/7hBdMRTlJ3LfkdI8hgV5x9hjISLD5yy/puQop0Svxu4lvqw3Nq2e5OeNd3iQDoKQDX6gDcZcADlF80F4rXH9f9xcBEEDhO9HFK6Ki3jSQXNiyFuiXqcbAJiPoSRZFdTeqDW+EU9E8CL8ZCXjr17ay/04yS34OBjjhlfLmszVSuU2z7tXjA5f8yE5LUzmiU7pMVXq34SD2GBN3Sc5+PsRUmnbKmJM1J7HoFFfFhGocAEfHM6odUJvAEZedr1bC1io8xOhJEh9iPsAAPXMwND5dKEiNqAFbHZ4EK8OoH66k4oft9W5Snv7EkUk="}, "wraps": [{"h": "8f53e2cbcc1f2b99d1a1d77738aded237790a9c29363ed541c69d33a06d5487a", "iv": "8y8W8TJgCRQpSzIi", "ct": "4H8wATDKnjXgWmADr2Jde4clAF7cip2k7wgJ1EBGApIjJ0Prab0OAC+DAIuGk/Jb"}, {"h": "1472176cf0c5ddeaf1a5df30f6a1f075d48f82191878c2242ded07d296ba4274", "iv": "LASNzWnqHVWHNgdN", "ct": "BzQwOs17YRGxqn5+ASOHiOdLN2rCcrEVKKFiSVHBB5oTsTiaEiwLvRIAu1IIEUNw"}, {"h": "3c2b05bc8ae4896d025ab2b1bb6003e096909ae478a33c94e62990c2b683bab1", "iv": "rZUji88tBdEK5qEO", "ct": "CsXFue2cpzj79wRzEoUOPdGqvFCSLszZBgfKQTZKOo114WvF8NHGfsuX11WK6Pqi"}, {"h": "ff64f204565e6c07a7817bec33caa5fca86a299c8f830dfc6c35aeb7cc50a978", "iv": "bVdbiFyBRQ84CAe6", "ct": "pDnnRHFDg221R7jV/AaC9Aqo0KdCbOxG13dmjlwQ2lHHjTjSy4j/0SqKMJUfe4pM"}]};
 // Запись реестра, по чьей ссылке открыта страница. До проверки — null, и
 // тогда ниже ничего не запускается.
 let WHO = null;
@@ -2112,17 +2168,39 @@ async function authResolve(entries) {
           role: found.r || '', objects: found.o || []};
 }
 
-// Директор и ПТО ведут стройку целиком и видят все объекты; начальник участка —
-// только те, что записаны за ним в реестре.
+// Директор и сотрудник офиса ведут стройку целиком и видят все объекты;
+// начальник участка — только те, что записаны за ним в реестре.
+// 'pto' — уровень доступа, слившийся с 'office' 23.09.2026. Остаётся здесь на
+// случай страницы, собранной до слияния и сохранённой в закладках.
+function authIsOffice(who) {
+  return !!who && (who.role === 'office' || who.role === 'pto');
+}
+
 function authAllows(who, objectCode) {
   if (!who) return false;
-  if (who.role === 'director' || who.role === 'pto') return true;
+  if (who.role === 'director' || authIsOffice(who)) return true;
   if (!objectCode) return false;
   return (who.objects || []).indexOf(objectCode) >= 0;
 }
 
 function authMayEditPlan(who) {
-  return !!who && (who.role === 'pto' || who.role === 'director');
+  return !!who && (authIsOffice(who) || who.role === 'director');
+}
+
+// Раздел «Сотрудники» — только директору: ссылки начальникам участков раздаёт
+// Александр. Настоящая проверка стоит на мини (apply_people.py), здесь — то,
+// что показывать; без обёртки ключа раздел всё равно не расшифруется.
+function authMayManagePeople(who) {
+  return !!who && who.role === 'director';
+}
+
+// Подпись уровня доступа — та же, что в people.py: человек не должен видеть
+// в одном месте «office», а в другом «Сотрудник офиса».
+function authRoleLabel(role) {
+  if (role === 'site_head') return 'Начальник участка';
+  if (role === 'director') return 'Директор';
+  if (role === 'office' || role === 'pto') return 'Сотрудник офиса';
+  return role || '—';
 }
 
 // Содержимое страницы лежит в <template> и в документ не попадает, пока ключ
@@ -2150,6 +2228,195 @@ function authLink(href, who) {
   return href + '#k=' + encodeURIComponent(who.key);
 }
 // <<< auth-core
+
+// >>> section-core — расшифровка закрытого раздела страницы.
+// HKDF-SHA-256 — в Chrome и в WebKit даёт те же байты, что cryptography на мини.
+const SEC_INFO = 'pnstroy-section-v1';
+
+function secBytesFromB64(b64) {
+  const bin = atob(String(b64 || ''));
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+async function secSha256Hex(text) {
+  const bytes = new TextEncoder().encode(String(text || ''));
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest))
+    .map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Персональный ключ + соль раздела → ключ, которым завёрнут ключ раздела.
+// Соль собрана на мини как «<папка форм>|<назначение>» и лежит в разделе: одна
+// и та же ссылка на двух разных сайтах разворачивает разные обёртки.
+async function secDeriveKey(personalKey, salt) {
+  const enc = new TextEncoder();
+  const ikm = await crypto.subtle.importKey(
+    'raw', enc.encode(String(personalKey || '')), 'HKDF', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    {name: 'HKDF', hash: 'SHA-256', salt: enc.encode(String(salt || '')),
+     info: enc.encode(SEC_INFO)},
+    ikm, {name: 'AES-GCM', length: 256}, false, ['decrypt']);
+}
+
+async function secAesDecrypt(key, iv, ct) {
+  const plain = await crypto.subtle.decrypt(
+    {name: 'AES-GCM', iv: secBytesFromB64(iv)}, key, secBytesFromB64(ct));
+  return new TextDecoder().decode(new Uint8Array(plain));
+}
+
+// Раздел + персональный ключ → содержимое (уже разобранный JSON) либо null.
+// null во всех случаях: раздела нет, обёртки для этого ключа нет, обёртка не
+// разворачивается, содержимое не расшифровывается, браузер без WebCrypto.
+// Отличать эти случаи в интерфейсе незачем — человеку показывается одно и то
+// же: «этот раздел вам не открыт».
+async function secOpen(section, personalKey) {
+  if (!section || !personalKey) return null;
+  if (!(typeof crypto !== 'undefined' && crypto.subtle)) return null;
+  let digest;
+  try { digest = await secSha256Hex(personalKey); } catch (e) { return null; }
+  const mine = (section.wraps || []).filter(w => w && w.h === digest)[0];
+  if (!mine) return null;
+  try {
+    const wrapKey = await secDeriveKey(personalKey, section.salt);
+    const rawKey = await crypto.subtle.decrypt(
+      {name: 'AES-GCM', iv: secBytesFromB64(mine.iv)}, wrapKey,
+      secBytesFromB64(mine.ct));
+    const dataKey = await crypto.subtle.importKey(
+      'raw', new Uint8Array(rawKey), {name: 'AES-GCM'}, false, ['decrypt']);
+    const data = section.data || {};
+    return JSON.parse(await secAesDecrypt(dataKey, data.iv, data.ct));
+  } catch (e) {
+    return null;
+  }
+}
+// <<< section-core
+
+// >>> journal-core — отрисовка журнала изменений.
+// Строки приходят расшифрованными из закрытого раздела (см. section-core):
+// до этого момента в документе нет ни одной фамилии из журнала.
+let JN_ROWS = null;
+
+function jnEsc(s) {
+  return String(s === null || s === undefined ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// «2026-09-23T21:34:51» → «23.09.2026 21:34». Дата без времени — только дата:
+// отчёт сдаётся за день, часа у него нет, и выдумывать «00:00» незачем.
+function jnWhen(at) {
+  const m = String(at || '').match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/);
+  if (!m) return String(at || '');
+  const day = m[3] + '.' + m[2] + '.' + m[1];
+  return m[4] ? day + ' ' + m[4] + ':' + m[5] : day;
+}
+
+function jnDay(at) {
+  const m = String(at || '').match(/^(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : '';
+}
+
+function jnFillFilters(data) {
+  const who = document.getElementById('jnWho');
+  (data.people || []).forEach(name => {
+    const o = document.createElement('option');
+    o.value = name; o.textContent = name; who.appendChild(o);
+  });
+  const kind = document.getElementById('jnKind');
+  (data.kinds || []).forEach(k => {
+    const o = document.createElement('option');
+    o.value = k.key; o.textContent = k.label; kind.appendChild(o);
+  });
+}
+
+function jnVisible() {
+  const who = document.getElementById('jnWho').value;
+  const kind = document.getElementById('jnKind').value;
+  const from = document.getElementById('jnFrom').value;
+  const to = document.getElementById('jnTo').value;
+  return (JN_ROWS || []).filter(r => {
+    if (who && r.who !== who) return false;
+    if (kind && r.kind !== kind) return false;
+    const day = jnDay(r.at);
+    if (from && day && day < from) return false;
+    if (to && day && day > to) return false;
+    return true;
+  });
+}
+
+function jnRender() {
+  const body = document.getElementById('jnBody');
+  const rows = jnVisible();
+  body.innerHTML = rows.map((r, i) => {
+    const details = (r.details || []).filter(x => x);
+    const more = details.length
+      ? '<span class="jn-more">подробнее ▾</span>' : '';
+    const head =
+      '<tr class="jn-row' + (details.length ? ' has-details' : '') +
+        '" data-i="' + i + '">' +
+      '<td class="jn-when">' + jnEsc(jnWhen(r.at)) + '</td>' +
+      '<td>' + jnEsc(r.who) +
+        (r.role ? '<span class="jn-role">' + jnEsc(r.role) + '</span>' : '') + '</td>' +
+      '<td>' + jnEsc(r.what) + '</td>' +
+      '<td>' + jnEsc(r.change) + more + '</td>' +
+      '<td class="jn-src">' + jnEsc(r.source) + '</td></tr>';
+    const body2 = details.length
+      ? '<tr class="jn-details" data-for="' + i + '" hidden><td colspan="5"><ul>' +
+        details.map(d => '<li>' + jnEsc(d) + '</li>').join('') + '</ul></td></tr>'
+      : '';
+    return head + body2;
+  }).join('');
+  const empty = document.getElementById('jnEmpty');
+  empty.hidden = rows.length > 0;
+  empty.textContent = (JN_ROWS && JN_ROWS.length)
+    ? 'По этому отбору ничего нет.' : 'Пока ничего не менялось.';
+}
+
+function jnWire() {
+  ['jnWho', 'jnKind', 'jnFrom', 'jnTo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', jnRender);
+  });
+  const body = document.getElementById('jnBody');
+  if (body) body.addEventListener('click', e => {
+    const tr = e.target.closest ? e.target.closest('tr.jn-row') : null;
+    if (!tr) return;
+    const det = document.querySelector('tr.jn-details[data-for="' + tr.dataset.i + '"]');
+    if (det) det.hidden = !det.hidden;
+  });
+}
+
+// Раздел расшифровывается один раз, при первом нажатии кнопки: до этого в
+// документе нет ни строки журнала, а у того, кому раздел не адресован, не
+// появится и после.
+async function jnSetup(section, who) {
+  const btn = document.getElementById('btnJournal');
+  const box = document.getElementById('journalBox');
+  if (!btn || !box) return;
+  btn.addEventListener('click', async () => {
+    if (box.classList.contains('show')) { box.classList.remove('show'); return; }
+    if (JN_ROWS === null) {
+      btn.disabled = true;
+      const data = await secOpen(section, who && who.key);
+      btn.disabled = false;
+      if (!data) {
+        JN_ROWS = [];
+        document.getElementById('jnEmpty').textContent =
+          'Журнал этого проекта вам не открыт.';
+      } else {
+        JN_ROWS = data.rows || [];
+        jnFillFilters(data);
+      }
+      jnWire();
+      jnRender();
+    }
+    box.classList.add('show');
+    box.scrollIntoView({behavior: 'smooth', block: 'start'});
+  });
+}
+// <<< journal-core
 
 // >>> gh-submit-core — чистая часть отправки в GitHub.
 // Блок выдёргивается из готового html и прогоняется в node тестом
@@ -2786,6 +3053,7 @@ async function bootstrap() {
 
   wire();
   syncToolbarHeight();
+  if (JOURNAL_SECTION) await jnSetup(JOURNAL_SECTION, WHO);
 }
 
 bootstrap().catch(e => {

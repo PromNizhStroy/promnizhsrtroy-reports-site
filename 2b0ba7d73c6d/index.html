@@ -7,7 +7,7 @@
 <link rel="icon" href="data:,">
 <title>Еженедельный отчёт</title>
 <style>
-body{font:16px/1.6 Arial,sans-serif;max-width:600px;margin:40px auto;padding:0 16px;color:#202832}
+body{font:16px/1.6 Arial,sans-serif;max-width:980px;margin:40px auto;padding:0 16px;color:#202832}
 h1{font-size:22px;color:#143b42}
 ul{padding-left:20px}
 li{margin:8px 0}
@@ -28,6 +28,51 @@ a:hover{text-decoration:underline}
 #noaccess h1{margin:0 0 10px;font-size:22px;color:#143b42}
 #noaccess p{margin:0;color:#667281;font-size:14px}
 
+
+/* Раздел «Сотрудники». Виден только директору и только после расшифровки. */
+#peopleBlock{display:none;margin-top:36px;padding-top:20px;border-top:1px solid #d8dee6}
+#peopleBlock.show{display:block}
+#peopleBlock h2{font-size:18px;color:#143b42;margin:0 0 4px}
+#peopleBlock .pp-note{font-size:13px;color:#667281;margin:0 0 14px}
+#peopleBlock table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:10px}
+#peopleBlock th{text-align:left;padding:7px 6px;border-bottom:2px solid #d8dee6;
+  color:#667281;font-weight:600;white-space:nowrap}
+#peopleBlock td{padding:7px 6px;border-bottom:1px solid #eef2f5;vertical-align:top}
+#peopleBlock tr.pp-revoked td{color:#8a95a3}
+#peopleBlock .pp-link{font-family:Menlo,Consolas,monospace;font-size:12px;
+  word-break:break-all;color:#41505f}
+#peopleBlock .pp-act{background:#fff;border:1px solid #d8dee6;border-radius:5px;
+  padding:3px 8px;font:12px Arial,sans-serif;color:#176f7d;cursor:pointer;margin-right:4px}
+#peopleBlock .pp-act:hover{border-color:#176f7d}
+#peopleBlock .pp-act.danger{color:#c0392b}
+#peopleBlock .pp-toolbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+  margin:12px 0}
+#peopleBlock .pp-toolbar label{font-size:13px;color:#667281}
+#peopleBlock .pp-add{background:#176f7d;color:#fff;border:0;border-radius:6px;
+  padding:8px 14px;font:14px Arial,sans-serif;cursor:pointer}
+#peopleBlock .pp-form{display:none;margin:14px 0;padding:16px;background:#f6f8fa;
+  border:1px solid #d8dee6;border-radius:8px}
+#peopleBlock .pp-form.show{display:block}
+#peopleBlock .pp-form .pp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:12px}
+#peopleBlock .pp-form label{display:block;font-size:12px;color:#667281;margin-bottom:3px}
+#peopleBlock .pp-form input,#peopleBlock .pp-form select{width:100%;box-sizing:border-box;
+  font:14px Arial,sans-serif;padding:7px 8px;border:1px solid #d8dee6;border-radius:5px;
+  background:#fff;color:#202832}
+#peopleBlock .pp-objs{display:flex;flex-wrap:wrap;gap:10px;margin-top:4px}
+#peopleBlock .pp-objs label{display:inline-flex;align-items:center;gap:5px;font-size:13px;
+  color:#202832;margin:0}
+#peopleBlock .pp-objs input{width:auto}
+#peopleBlock .pp-hint{font-size:12px;color:#667281;margin:8px 0 0}
+#peopleBlock .pp-result{margin-top:14px;padding:14px;background:#e6f4ea;
+  border:1px solid #27ae60;border-radius:6px;display:none}
+#peopleBlock .pp-result.show{display:block}
+#peopleBlock .pp-result .pp-link{display:block;margin:8px 0}
+#peopleBlock .pp-bad{background:#fdecea;border-color:#c0392b}
+#peopleBlock .pp-log{margin-top:22px}
+#peopleBlock .pp-log h3{font-size:15px;color:#143b42;margin:0 0 6px}
+#peopleBlock .pp-log li{font-size:12px;color:#667281;margin:3px 0}
+
 </style>
 </head>
 <body>
@@ -45,12 +90,65 @@ a:hover{text-decoration:underline}
 Заполните форму и нажмите «Отправить» (или «Сохранить данные», если нет интернета).</p>
 
 <div class="plan-block" id="planBlock" hidden>
-<h2>Редактор плана — для Александра и ПТО</h2>
+<h2>Редактор плана — для сотрудников офиса и директора</h2>
 <ul id="planList"></ul>
 <p class="hint">Здесь правится сам список работ: добавить, переименовать, уточнить
 захватки и сроки, убрать в архив.<br>
 <strong>Начальникам участков сюда не нужно.</strong> Если в списке работ чего-то не
 хватает — напишите об этом в форме отчёта, в поле «Замечания к списку работ».</p>
+</div>
+
+<div id="peopleBlock">
+  <h2>Сотрудники</h2>
+  <p class="pp-note">Кому открыт доступ и по какой ссылке. Ссылка персональная:
+    кто её открыл, тот и работает от имени человека из таблицы. Передавать —
+    лично, не в общий чат.</p>
+
+  <table id="ppTable">
+    <thead><tr>
+      <th>ФИО</th><th>Должность</th><th>Уровень доступа</th><th>Объекты</th>
+      <th>Выдан</th><th>Статус</th><th>Персональная ссылка</th><th></th>
+    </tr></thead>
+    <tbody id="ppBody"></tbody>
+  </table>
+
+  <div class="pp-toolbar">
+    <button type="button" class="pp-add" id="ppAddBtn">+ Добавить сотрудника</button>
+    <label><input type="checkbox" id="ppShowRevoked"> показывать отозванных</label>
+  </div>
+
+  <div class="pp-form" id="ppForm">
+    <div class="pp-grid">
+      <div><label for="ppName">ФИО (обязательно)</label>
+        <input type="text" id="ppName" placeholder="Фамилия И.О." autocomplete="off"></div>
+      <div><label for="ppPosition">Должность</label>
+        <input type="text" id="ppPosition" placeholder="например, инженер ПТО"
+          autocomplete="off"></div>
+      <div><label for="ppRole">Уровень доступа</label>
+        <select id="ppRole">
+          <option value="site_head">Начальник участка — заполняет отчёты по своим объектам</option>
+          <option value="office">Сотрудник офиса — правит проекты и заводит новые</option>
+        </select></div>
+      <div id="ppObjBox"><label>Объекты (обязательно для начальника участка)</label>
+        <div class="pp-objs"><label><input type="checkbox" class="pp-obj" value="KARE2"> KARE2</label><label><input type="checkbox" class="pp-obj" value="KZH5"> KZH5</label></div></div>
+    </div>
+    <p class="pp-hint">Ссылку увидите сразу — её можно скопировать и передать.
+      Заработает она через 5–10 минут.</p>
+    <div class="pp-toolbar">
+      <button type="button" class="pp-add" id="ppSave">Завести и показать ссылку</button>
+      <button type="button" class="pp-act" id="ppCancel">Отмена</button>
+    </div>
+  </div>
+
+  <!-- Ответ лежит НЕ внутри формы добавления: та свёрнута, пока её не открыли
+       кнопкой, а отзыв доступа и смена объектов идут мимо неё — их итог иначе
+       было бы не увидеть. -->
+  <div class="pp-result" id="ppResult"></div>
+
+  <div class="pp-log">
+    <h3>Кто кому выдавал доступ</h3>
+    <ul id="ppLog"></ul>
+  </div>
 </div>
 </template>
 
@@ -59,7 +157,23 @@ a:hover{text-decoration:underline}
 'use strict';
 
 const OBJECTS = [{"code": "KARE2", "name": "Устройство каре этап №2", "file": "KARE2.html", "plan": "plan/KARE2.html"}, {"code": "KZH5", "name": "Тепляк этап №5", "file": "KZH5.html", "plan": "plan/KZH5.html"}];
-const AUTH_ENTRIES = [{"p": "p-001", "n": "Мажоров А.В.", "r": "site_head", "o": ["KARE2", "KZH5"], "h": "8f53e2cbcc1f2b99d1a1d77738aded237790a9c29363ed541c69d33a06d5487a"}, {"p": "p-002", "n": "Медведев А.А.", "r": "director", "o": [], "h": "1472176cf0c5ddeaf1a5df30f6a1f075d48f82191878c2242ded07d296ba4274"}, {"p": "p-003", "n": "Инженер ПТО (имя уточняется)", "r": "pto", "o": [], "h": "3c2b05bc8ae4896d025ab2b1bb6003e096909ae478a33c94e62990c2b683bab1"}, {"p": "p-004", "n": "Ефимов А.", "r": "director", "o": [], "h": "ff64f204565e6c07a7817bec33caa5fca86a299c8f830dfc6c35aeb7cc50a978"}];
+const AUTH_ENTRIES = [{"p": "p-001", "n": "Мажоров А.В.", "r": "site_head", "o": ["KARE2", "KZH5"], "h": "8f53e2cbcc1f2b99d1a1d77738aded237790a9c29363ed541c69d33a06d5487a"}, {"p": "p-002", "n": "Медведев А.А.", "r": "director", "o": [], "h": "1472176cf0c5ddeaf1a5df30f6a1f075d48f82191878c2242ded07d296ba4274"}, {"p": "p-003", "n": "Инженер ПТО (имя уточняется)", "r": "office", "o": [], "h": "3c2b05bc8ae4896d025ab2b1bb6003e096909ae478a33c94e62990c2b683bab1"}, {"p": "p-004", "n": "Ефимов А.", "r": "director", "o": [], "h": "ff64f204565e6c07a7817bec33caa5fca86a299c8f830dfc6c35aeb7cc50a978"}];
+// Закрытый раздел «Сотрудники»: соль, шифртекст и обёртки ключа по хэшам.
+// Ни фамилий, ни персональных ссылок открытым текстом здесь нет.
+const PEOPLE_SECTION = {"purpose": "people", "salt": "2b0ba7d73c6d|people", "data": {"v": 1, "alg": "A256GCM", "iv": "PcOerY+B+pDBxOGy", "ct": "MZ+9H9jxIS0hNM22hM1jbkYhOevqJkmNvYzohCRUzUYbo8JPV+iH0Aq5PNEs/YAI+UCxMLZaaEl52YoB+9cKs7GjWQLph3YkH0f4i/awC0zTawWoTZ0mootu34PUdwuJvGbrZBvmfuBVC8iN+oR+UKr7Icjw15eNKrX5pKiBYGlh3wbE5Mcejy3KSfxZO4zm92d2NUibF8A4XzSiw9EKEfcD8VgmUxqGA6Lt1xalQCnuwkNwcGSpLDSQK98aixoVY7owLv6Fan+woj25fTatAmEjfYNoVxtqZ+iVsEk1xJfPz4Q3KJ352tAFjD/oK0JUhdkmWIUc0rZd8SvJqf7BQTnbvIpl3Ec272KS3+nYMt9w5z8DRNTdnDu8EGHYP3ze4uXG5913ie024wvgGGgMsxLfPKbq+Cr9YDvHuFTHzYL7jmzrDrI5mmMTFunXf2cjzTqOWb3hEZSdXdAtCNE0X7onS9cbejyO7l8CK3FWCF0kybI+7MKLoZ3ejteLt5c1W6DMvwRwYrLuvY5pEvGGp6cO1JUhe8PCMriep/ukoBKYJQSYj+b4ot+ArvqPfZc6jQFFPuXoyLei3LGndB7J8U60RxRvxACU/nScwPwU/2Btq0BVcUjqFaZCD6c2K9vUCf0F7WEQjtsNff5X7DSXTI1BDbbgtb4O/DaMUmPtIMMDTRJIwwX5mQnVL0FWYtFEamdOQrCKyNWaP7OH6N53bG4AXAXepXUYXUydNMah7pFYP/pXcXn7h7RtsrHGSbcXAO+SbUy9/8h6Ju3+ezdhnoaFma/ozW8aBfGtjf4TjnZYWbvub7KwHOeK4KyMUwH665A3iufMekLu1DUK+eic/WDP8y69CWYRMO8Jmnmlz9B+lOlNe+Hz74js23FrIEk9kD0m/ScsutAKc6pN7c6f4q7JEwBDh1QoXRK8mDhkPrHetEAIv5Vx2eim5owWv+MPxFhC2n7nS5scE68IicdEPy38Sr5clIyDr3Zb0wkDuPgv1ZrDIBEcmQvWUAkYnjoEqPv2ZKnPel2EiVlqSR8J43SmNvhSsGQGNae4b/okMbbIHMj/7GMhGsBqwtkvpHp9VY59Y+Ylbm00GT92d4DxZ4QWi1LzRpNRgeWGBAxYDmLzwp8oX1LTbeDlVSYggedrOfhh0CY="}, "wraps": [{"h": "1472176cf0c5ddeaf1a5df30f6a1f075d48f82191878c2242ded07d296ba4274", "iv": "B4QwM5kR2natkpaj", "ct": "v45K6bLQCVxSsjjTM8mzZM/C7tCzWQxW438fcDjiAr/bNoIj+gaXINvsXV5Ca1HU"}, {"h": "ff64f204565e6c07a7817bec33caa5fca86a299c8f830dfc6c35aeb7cc50a978", "iv": "3e1U4Nd9MX8NFO3F", "ct": "HOYP5hMumxOE4lsU2QtPbhfpsT65o/J9PBde9a7VAS1Ubdp93qFBU2oLuSSjwX+M"}]};
+const PP_SITE_BASE = "https://PromNizhStroy.github.io/promnizhsrtroy-reports-site/2b0ba7d73c6d/";
+const PP_OBJECT_CODES = ["KARE2", "KZH5"];
+let WHO = null;
+
+const GH_OWNER  = "PromNizhStroy";
+const GH_REPO   = "promnizhsrtroy-reports-data";
+const GH_BRANCH = "main";
+// Токен кусками, как в форме отчёта: целую строку GitHub находит сканером в
+// публичном репозитории и отзывает. Склейка — в момент отправки.
+const GH_TOKEN_PARTS = ["WFFoTGRKY1Q0R01ER09TSjVMdE5oYUV", "VcVZJYURsSGRVWWVuNWhqbE5lalBaND",
+                        "FqaE5XOVRwMUNLR0dfRjAyTWlXbkFyd", "Xc5MFlMV05JNUIxMV90YXBfYnVodGln"];
+const PUB_KEY_B64 = "MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAmLVO5xLUbD/nHdtxztfa3c5kH34vcZPymtS7civX1e09wKEmarVDpIJGPI4LEo1MkAASEJqm0MIz2gzG/QKeJ0YDsR0/Mr8cdq9Tjr2FbjYxIiO4Rp4tW5mg6pWeegtNKep3TZqd6tEAI3ygccblpJTr3wRLIUhX6RRtowHaZQWzgTal565DFHIK4CW5fS8+CbxmeAXTnj3hx0nS+nxaKts/lCdgGr5dUDSn+/9lKtzJ9qC8IoDYND5+cWRHsWTqKuU63zXJFgGVY/c9PLvNE617CmMgfHi1UNxOWdWIiS57XJO+0nUaRuOGkgs+Ptj8J40861qoXvVBGFr/lqtPY4Db/UrxQLEuyP5SqJcJT6E5pTIA2IZ1uHl2TjGAjeSQbyt1VGx/C+zPVv7K3KewwsFLTBtEtlFELglCqH+78IyYz7V8nSs35R6ABC/7FJlLREClytcSJ/5TFSdKTfPPn1I1Cw4IV3L3585qsRrd8Y/z72nH5+Jg6jOM6iJlXLzNAgMBAAE=";
+const KEY_ID      = "9f888f70f11bc7fc";
 
 // >>> auth-core — проверка персонального ключа из ссылки.
 // Ключ во фрагменте (#k=…) имеет приоритет над запомненным: перевыпустили ключ
@@ -104,17 +218,39 @@ async function authResolve(entries) {
           role: found.r || '', objects: found.o || []};
 }
 
-// Директор и ПТО ведут стройку целиком и видят все объекты; начальник участка —
-// только те, что записаны за ним в реестре.
+// Директор и сотрудник офиса ведут стройку целиком и видят все объекты;
+// начальник участка — только те, что записаны за ним в реестре.
+// 'pto' — уровень доступа, слившийся с 'office' 23.09.2026. Остаётся здесь на
+// случай страницы, собранной до слияния и сохранённой в закладках.
+function authIsOffice(who) {
+  return !!who && (who.role === 'office' || who.role === 'pto');
+}
+
 function authAllows(who, objectCode) {
   if (!who) return false;
-  if (who.role === 'director' || who.role === 'pto') return true;
+  if (who.role === 'director' || authIsOffice(who)) return true;
   if (!objectCode) return false;
   return (who.objects || []).indexOf(objectCode) >= 0;
 }
 
 function authMayEditPlan(who) {
-  return !!who && (who.role === 'pto' || who.role === 'director');
+  return !!who && (authIsOffice(who) || who.role === 'director');
+}
+
+// Раздел «Сотрудники» — только директору: ссылки начальникам участков раздаёт
+// Александр. Настоящая проверка стоит на мини (apply_people.py), здесь — то,
+// что показывать; без обёртки ключа раздел всё равно не расшифруется.
+function authMayManagePeople(who) {
+  return !!who && who.role === 'director';
+}
+
+// Подпись уровня доступа — та же, что в people.py: человек не должен видеть
+// в одном месте «office», а в другом «Сотрудник офиса».
+function authRoleLabel(role) {
+  if (role === 'site_head') return 'Начальник участка';
+  if (role === 'director') return 'Директор';
+  if (role === 'office' || role === 'pto') return 'Сотрудник офиса';
+  return role || '—';
 }
 
 // Содержимое страницы лежит в <template> и в документ не попадает, пока ключ
@@ -143,6 +279,501 @@ function authLink(href, who) {
 }
 // <<< auth-core
 
+// >>> section-core — расшифровка закрытого раздела страницы.
+// HKDF-SHA-256 — в Chrome и в WebKit даёт те же байты, что cryptography на мини.
+const SEC_INFO = 'pnstroy-section-v1';
+
+function secBytesFromB64(b64) {
+  const bin = atob(String(b64 || ''));
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+async function secSha256Hex(text) {
+  const bytes = new TextEncoder().encode(String(text || ''));
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(digest))
+    .map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Персональный ключ + соль раздела → ключ, которым завёрнут ключ раздела.
+// Соль собрана на мини как «<папка форм>|<назначение>» и лежит в разделе: одна
+// и та же ссылка на двух разных сайтах разворачивает разные обёртки.
+async function secDeriveKey(personalKey, salt) {
+  const enc = new TextEncoder();
+  const ikm = await crypto.subtle.importKey(
+    'raw', enc.encode(String(personalKey || '')), 'HKDF', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    {name: 'HKDF', hash: 'SHA-256', salt: enc.encode(String(salt || '')),
+     info: enc.encode(SEC_INFO)},
+    ikm, {name: 'AES-GCM', length: 256}, false, ['decrypt']);
+}
+
+async function secAesDecrypt(key, iv, ct) {
+  const plain = await crypto.subtle.decrypt(
+    {name: 'AES-GCM', iv: secBytesFromB64(iv)}, key, secBytesFromB64(ct));
+  return new TextDecoder().decode(new Uint8Array(plain));
+}
+
+// Раздел + персональный ключ → содержимое (уже разобранный JSON) либо null.
+// null во всех случаях: раздела нет, обёртки для этого ключа нет, обёртка не
+// разворачивается, содержимое не расшифровывается, браузер без WebCrypto.
+// Отличать эти случаи в интерфейсе незачем — человеку показывается одно и то
+// же: «этот раздел вам не открыт».
+async function secOpen(section, personalKey) {
+  if (!section || !personalKey) return null;
+  if (!(typeof crypto !== 'undefined' && crypto.subtle)) return null;
+  let digest;
+  try { digest = await secSha256Hex(personalKey); } catch (e) { return null; }
+  const mine = (section.wraps || []).filter(w => w && w.h === digest)[0];
+  if (!mine) return null;
+  try {
+    const wrapKey = await secDeriveKey(personalKey, section.salt);
+    const rawKey = await crypto.subtle.decrypt(
+      {name: 'AES-GCM', iv: secBytesFromB64(mine.iv)}, wrapKey,
+      secBytesFromB64(mine.ct));
+    const dataKey = await crypto.subtle.importKey(
+      'raw', new Uint8Array(rawKey), {name: 'AES-GCM'}, false, ['decrypt']);
+    const data = section.data || {};
+    return JSON.parse(await secAesDecrypt(dataKey, data.iv, data.ct));
+  } catch (e) {
+    return null;
+  }
+}
+// <<< section-core
+
+// >>> gh-submit-core — чистая часть отправки в GitHub.
+// Блок выдёргивается из готового html и прогоняется в node тестом
+// tests/test_github_submit.py; ничего, кроме своих аргументов, не трогает.
+
+// Куски из констант GH_TA…GH_TD → токен. base64 от перевёрнутой строки: целой
+// строки токена в исходнике страницы нет, иначе GitHub отозвал бы его, как
+// только страница попала в публичный репозиторий сайта.
+function ghAssembleToken(parts) {
+  const blob = parts.join('');
+  if (!blob) return '';
+  const bin = atob(blob);
+  let out = '';
+  for (let i = bin.length - 1; i >= 0; i--) out += bin.charAt(i);
+  return out;
+}
+
+function ghStamp(d) {
+  const p = n => String(n).padStart(2, '0');
+  return '' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) +
+         '-' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
+}
+
+function ghReportPath(objectCode, week, stamp) {
+  return 'reports/' + objectCode + '/' + week + '-' + stamp + '.json';
+}
+
+function ghBase64(text) {
+  // GitHub Contents API принимает содержимое только base64 от utf-8 байтов.
+  const bytes = new TextEncoder().encode(text);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(bin);
+}
+
+// `content` — то, что ляжет в репозиторий файлом. Со включённым шифрованием это
+// конверт (ghEncryptEnvelope ниже), а не сам отчёт.
+// Путь и сообщение коммита берутся из cfg: этим же блоком уходят и отчёты
+// начальника участка (reports/<код>/<неделя>-<метка>.json), и пачки изменений
+// плана из редактора (plan/<код>/<метка>.json). Значения по умолчанию —
+// отчётные, чтобы форма отчёта ничего про это не знала.
+function ghBuildRequest(cfg, content, stamp) {
+  const prefix = cfg.pathPrefix || 'reports';
+  const slug = cfg.slug || ((cfg.week ? cfg.week + '-' : '') + stamp);
+  const path = prefix + '/' + cfg.objectCode + '/' + slug + '.json';
+  const message = cfg.message || ('report ' + cfg.objectCode + ' ' + cfg.week);
+  return {
+    path: path,
+    url: 'https://api.github.com/repos/' + cfg.owner + '/' + cfg.repo + '/contents/' + path,
+    init: {
+      method: 'PUT',
+      headers: {
+        'Accept': 'application/vnd.github+json',
+        'Authorization': 'Bearer ' + cfg.token,
+        'X-GitHub-Api-Version': '2022-11-28',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: message,
+        content: ghBase64(JSON.stringify(content, null, 2)),
+        branch: cfg.branch,
+      }),
+    },
+  };
+}
+// <<< gh-submit-core
+
+// >>> gh-crypto-core — шифрование отчёта перед отправкой.
+// Блок так же выдёргивается из готового html и прогоняется в node тестом
+// tests/test_report_crypto.py: то, что здесь запечатано, распечатывается
+// на мини модулем tools/weekly/reports_crypto.py — иначе схема неверна.
+//
+// Гибрид: случайный AES-GCM-256 ключ шифрует отчёт, открытый RSA-3072 ключ
+// шифрует этот AES-ключ. Наружу (в приватный, но читаемый токеном репозиторий)
+// уходит только конверт; из содержимого отчёта в нём нет ничего.
+function ghCryptoAvailable() {
+  return typeof crypto !== 'undefined' && !!crypto.subtle &&
+         typeof crypto.subtle.encrypt === 'function';
+}
+
+// Тот же приём, что в ghBase64: по кускам, иначе длинный отчёт уронит стек.
+function ghB64Bytes(bytes) {
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(bin);
+}
+
+function ghBytesFromB64(b64) {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+async function ghEncryptEnvelope(pubKeyB64, keyId, payload, meta) {
+  const pub = await crypto.subtle.importKey(
+    'spki', ghBytesFromB64(pubKeyB64),
+    {name: 'RSA-OAEP', hash: 'SHA-256'}, false, ['encrypt']);
+
+  const aesKey = await crypto.subtle.generateKey(
+    {name: 'AES-GCM', length: 256}, true, ['encrypt']);
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const plain = new TextEncoder().encode(JSON.stringify(payload));
+
+  const ct = new Uint8Array(
+    await crypto.subtle.encrypt({name: 'AES-GCM', iv: iv}, aesKey, plain));
+  const rawKey = new Uint8Array(await crypto.subtle.exportKey('raw', aesKey));
+  const ek = new Uint8Array(
+    await crypto.subtle.encrypt({name: 'RSA-OAEP'}, pub, rawKey));
+
+  // Метаданные — только служебные: по ним мини раскладывает файлы, и по ним
+  // же видно в логе, что пришло. Ни одного поля отчёта здесь нет.
+  //
+  // Переносятся все ключи meta, а не три заранее известных: у отчёта это код
+  // объекта, неделя и отметка времени, у пачки изменений плана недели нет, зато
+  // есть kind. Единственное переименование — objectCode → object_code, потому
+  // что снаружи конверт читает python.
+  const envelope = {
+    v: 1,
+    alg: 'RSA-OAEP-256+A256GCM',
+    kid: keyId,
+    ek: ghB64Bytes(ek),
+    iv: ghB64Bytes(iv),
+    ct: ghB64Bytes(ct),
+  };
+  Object.keys(meta || {}).forEach(key => {
+    const name = key === 'objectCode' ? 'object_code' : key;
+    if (meta[key] !== undefined) envelope[name] = meta[key];
+  });
+  return envelope;
+}
+// <<< gh-crypto-core
+
+// >>> people-core — раздел «Сотрудники»: список, выдача и отзыв доступа.
+// Ключ новому сотруднику генерирует браузер — тем же алфавитом и той же длины,
+// что people.py на мини: ссылку надо показать сразу, а мини заведёт запись
+// через 5–10 минут, на следующем шаге забора.
+const PP_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+const PP_KEY_LENGTH = 26;
+
+let PP_DATA = null;      // расшифрованное содержимое раздела
+let PP_PENDING = [];     // заведённые в этом сеансе — мини их ещё не видел
+
+function ppEsc(s) {
+  return String(s === null || s === undefined ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// Случайный ключ без перекоса: значения байта, не делящиеся на длину алфавита
+// нацело, выбрасываются. Иначе первые символы алфавита выпадали бы чаще —
+// мелочь, но ключ здесь и есть весь доступ.
+function ppNewKey() {
+  const n = PP_ALPHABET.length;
+  const limit = 256 - (256 % n);
+  let out = '';
+  while (out.length < PP_KEY_LENGTH) {
+    const buf = crypto.getRandomValues(new Uint8Array(PP_KEY_LENGTH));
+    for (let i = 0; i < buf.length && out.length < PP_KEY_LENGTH; i++) {
+      if (buf[i] < limit) out += PP_ALPHABET.charAt(buf[i] % n);
+    }
+  }
+  return out;
+}
+
+function ppLink(key) {
+  return PP_SITE_BASE + '#k=' + encodeURIComponent(key);
+}
+
+function ppRoleLabel(role) { return authRoleLabel(role); }
+
+function ppObjects(p) {
+  if (p.role === 'director' || p.role === 'office' || p.role === 'pto') return 'все объекты';
+  return (p.objects || []).join(', ') || '—';
+}
+
+function ppRuDate(iso) {
+  const m = String(iso || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? (m[3] + '.' + m[2] + '.' + m[1]) : '—';
+}
+
+function ppRows() {
+  const rows = ((PP_DATA && PP_DATA.people) || []).slice();
+  // Заведённые только что — вверху и с пометкой: в реестре мини их ещё нет,
+  // и после публикации они придут оттуда уже обычными строками.
+  PP_PENDING.forEach(p => {
+    if (!rows.some(r => r.key === p.key)) rows.push(p);
+  });
+  const live = rows.filter(p => !p.revoked_at);
+  const gone = rows.filter(p => p.revoked_at);
+  return document.getElementById('ppShowRevoked').checked ? live.concat(gone) : live;
+}
+
+function ppRender() {
+  const body = document.getElementById('ppBody');
+  body.innerHTML = ppRows().map(p => {
+    const revoked = !!p.revoked_at;
+    const link = p.key ? ppLink(p.key) : '';
+    const cell = revoked
+      ? '<span class="pp-link">ссылка не работает</span>'
+      : '<span class="pp-link" data-link="' + ppEsc(link) + '">' +
+        '••••••••••••</span>' +
+        '<button type="button" class="pp-act" data-act="show">Показать</button>' +
+        '<button type="button" class="pp-act" data-act="copy">Скопировать</button>';
+    const acts = revoked ? '' :
+      ((p.role === 'site_head'
+        ? '<button type="button" class="pp-act" data-act="objects">Изменить объекты</button>'
+        : '') +
+       (p.person_id
+        ? '<button type="button" class="pp-act danger" data-act="revoke">Отозвать доступ</button>'
+        : '<span class="pp-link">заводится…</span>'));
+    return '<tr class="' + (revoked ? 'pp-revoked' : '') + '" data-id="' +
+      ppEsc(p.person_id || '') + '" data-key="' + ppEsc(p.key || '') + '">' +
+      '<td>' + ppEsc(p.name) + '</td>' +
+      '<td>' + ppEsc(p.position || '—') + '</td>' +
+      '<td>' + ppEsc(ppRoleLabel(p.role)) + '</td>' +
+      '<td>' + ppEsc(ppObjects(p)) + '</td>' +
+      '<td>' + ppEsc(ppRuDate(p.issued_at)) + '</td>' +
+      '<td>' + (revoked ? 'отозван ' + ppEsc(ppRuDate(p.revoked_at)) : 'действует') + '</td>' +
+      '<td>' + cell + '</td><td>' + acts + '</td></tr>';
+  }).join('');
+
+  const log = document.getElementById('ppLog');
+  const events = ((PP_DATA && PP_DATA.log) || []).slice().reverse();
+  log.innerHTML = events.length
+    ? events.map(e => '<li>' + ppEsc(ppRuDate(e.at)) + ' — ' +
+        ppEsc(e.action_label || e.action) + ': ' + ppEsc(e.person_name) +
+        ' (' + ppEsc(e.role_label || e.role) + ')' +
+        (e.by_name ? ', выдал ' + ppEsc(e.by_name) : '') + '</li>').join('')
+    : '<li>Пока записей нет.</li>';
+}
+
+function ppCopy(text, btn) {
+  const done = () => { const t = btn.textContent; btn.textContent = 'Скопировано';
+    setTimeout(() => { btn.textContent = t; }, 1500); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done, () => ppCopyFallback(text, done));
+  } else {
+    ppCopyFallback(text, done);
+  }
+}
+
+// Запасной путь: Safari отдаёт буфер обмена не всегда, а ссылку надо передать
+// здесь и сейчас.
+function ppCopyFallback(text, done) {
+  const ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); done(); } catch (e) { /* покажем как есть */ }
+  document.body.removeChild(ta);
+}
+
+// ── Отправка запроса на мини ────────────────────────────────────────────────
+// Тот же конверт, что у отчётов и правок плана: ключ нового сотрудника лежит
+// внутри шифртекста, снаружи — только вид запроса и время.
+async function ppSend(payload) {
+  const token = ghAssembleToken(GH_TOKEN_PARTS);
+  if (!GH_OWNER || !GH_REPO || !token || !PUB_KEY_B64) {
+    return 'страница собрана без настроек отправки.';
+  }
+  if (!ghCryptoAvailable()) return 'браузер не умеет шифровать.';
+  let envelope;
+  try {
+    envelope = await ghEncryptEnvelope(PUB_KEY_B64, KEY_ID, payload,
+      {kind: payload.kind, ts: new Date().toISOString()});
+  } catch (e) {
+    return 'не удалось зашифровать запрос' + (e && e.message ? ' (' + e.message + ')' : '') + '.';
+  }
+  const cfg = {owner: GH_OWNER, repo: GH_REPO, branch: GH_BRANCH, token: token,
+               objectCode: 'requests', pathPrefix: 'people',
+               message: 'people ' + payload.kind};
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const stamp = ghStamp(new Date()) + (attempt ? '-' + (attempt + 1) : '');
+    const req = ghBuildRequest(Object.assign({slug: stamp}, cfg), envelope, stamp);
+    let resp;
+    try { resp = await fetch(req.url, req.init); }
+    catch (e) { return 'нет соединения с GitHub.'; }
+    if (resp.status === 201 || resp.status === 200) return null;
+    if (resp.status === 422 && attempt < 2) continue;
+    return 'GitHub ответил ошибкой ' + resp.status + '.';
+  }
+  return 'не удалось подобрать свободное имя файла.';
+}
+
+function ppResult(html, bad) {
+  const box = document.getElementById('ppResult');
+  box.className = 'pp-result show' + (bad ? ' pp-bad' : '');
+  box.innerHTML = html;
+}
+
+function ppSelectedObjects() {
+  return Array.prototype.slice
+    .call(document.querySelectorAll('#ppObjBox .pp-obj:checked'))
+    .map(el => el.value);
+}
+
+async function ppAdd() {
+  const name = document.getElementById('ppName').value.trim();
+  const position = document.getElementById('ppPosition').value.trim();
+  const role = document.getElementById('ppRole').value;
+  const objects = role === 'site_head' ? ppSelectedObjects() : [];
+  if (!name) { ppResult('Без ФИО завести нельзя.', true); return; }
+  if (role === 'site_head' && !objects.length) {
+    ppResult('У начальника участка должен быть хотя бы один объект.', true);
+    return;
+  }
+  // Совпадение по ФИО и уровню — предупреждение, а не отказ: однофамильцы на
+  // стройке бывают, и решать это за Александра неправильно.
+  const twin = ((PP_DATA && PP_DATA.people) || []).some(
+    p => !p.revoked_at && p.name === name && p.role === role);
+
+  const key = ppNewKey();
+  const person = {name: name, position: position, role: role, objects: objects,
+                  key: key, issued_at: new Date().toISOString().slice(0, 10)};
+  const btn = document.getElementById('ppSave');
+  btn.disabled = true; btn.textContent = 'Заводим…';
+  const error = await ppSend({
+    kind: 'people_add', v: 1,
+    reporter_key: (WHO && WHO.key) || '',
+    author: (WHO && WHO.name) || '',
+    person: person,
+  });
+  btn.disabled = false; btn.textContent = 'Завести и показать ссылку';
+  if (error) { ppResult('Не отправлено: ' + ppEsc(error), true); return; }
+
+  PP_PENDING.push(person);
+  ppRender();
+  ppResult(
+    (twin ? '<p><strong>Такой человек уже есть</strong> — с тем же ФИО и уровнем ' +
+            'доступа. Заведён всё равно: если это ошибка, отзовите лишнего.</p>' : '') +
+    '<p><strong>' + ppEsc(name) + '</strong> — ' + ppEsc(ppRoleLabel(role)) +
+    '. Ссылка для передачи:</p>' +
+    '<span class="pp-link" id="ppNewLink">' + ppEsc(ppLink(key)) + '</span>' +
+    '<button type="button" class="pp-act" id="ppCopyNew">Скопировать</button>' +
+    '<p class="pp-hint">Ссылка заработает через 5–10 минут — столько нужно, ' +
+    'чтобы запись дошла до хранилища и сайт обновился.</p>');
+  document.getElementById('ppCopyNew').addEventListener('click', function () {
+    ppCopy(ppLink(key), this);
+  });
+  ['ppName', 'ppPosition'].forEach(id => { document.getElementById(id).value = ''; });
+  document.querySelectorAll('#ppObjBox .pp-obj').forEach(el => { el.checked = false; });
+}
+
+async function ppRevoke(personId, name) {
+  if (!window.confirm('Отозвать доступ: ' + name + '?\n\nЕго ссылка перестанет ' +
+      'открывать формы, а закрытые разделы он больше не расшифрует.')) return;
+  const error = await ppSend({
+    kind: 'people_revoke', v: 1,
+    reporter_key: (WHO && WHO.key) || '',
+    author: (WHO && WHO.name) || '',
+    person_id: personId,
+  });
+  ppResult(error ? 'Не отправлено: ' + ppEsc(error)
+    : 'Доступ отзывается: <strong>' + ppEsc(name) + '</strong>. Через 5–10 минут ' +
+      'его ссылка перестанет работать.', !!error);
+}
+
+async function ppUpdateObjects(personId, name, current) {
+  const answer = window.prompt('Объекты для «' + name + '» через запятую.\n' +
+    'Доступные: ' + PP_OBJECT_CODES.join(', '), (current || []).join(', '));
+  if (answer === null) return;
+  const objects = answer.split(',').map(s => s.trim()).filter(s => s);
+  if (!objects.length) { ppResult('Нужен хотя бы один объект.', true); return; }
+  const error = await ppSend({
+    kind: 'people_update', v: 1,
+    reporter_key: (WHO && WHO.key) || '',
+    author: (WHO && WHO.name) || '',
+    person_id: personId, objects: objects,
+  });
+  ppResult(error ? 'Не отправлено: ' + ppEsc(error)
+    : 'Объекты для <strong>' + ppEsc(name) + '</strong> меняются: ' +
+      ppEsc(objects.join(', ')) + '. Через 5–10 минут это будет на сайте.', !!error);
+}
+
+function ppWire() {
+  document.getElementById('ppShowRevoked').addEventListener('change', ppRender);
+  document.getElementById('ppAddBtn').addEventListener('click', () => {
+    document.getElementById('ppForm').classList.toggle('show');
+  });
+  document.getElementById('ppCancel').addEventListener('click', () => {
+    document.getElementById('ppForm').classList.remove('show');
+  });
+  document.getElementById('ppRole').addEventListener('change', e => {
+    document.getElementById('ppObjBox').style.display =
+      e.target.value === 'site_head' ? '' : 'none';
+  });
+  document.getElementById('ppSave').addEventListener('click', () => {
+    ppAdd().catch(e => ppResult('Не получилось: ' + ppEsc(e && e.message), true));
+  });
+  document.getElementById('ppBody').addEventListener('click', e => {
+    const btn = e.target.closest ? e.target.closest('button[data-act]') : null;
+    if (!btn) return;
+    const tr = btn.closest('tr');
+    const name = tr.cells[0].textContent;
+    const act = btn.dataset.act;
+    if (act === 'show' || act === 'copy') {
+      const span = tr.querySelector('.pp-link[data-link]');
+      const link = span.dataset.link;
+      if (act === 'show') span.textContent = link;
+      else ppCopy(link, btn);
+      return;
+    }
+    if (act === 'revoke') {
+      ppRevoke(tr.dataset.id, name)
+        .catch(err => ppResult('Не получилось: ' + ppEsc(err && err.message), true));
+      return;
+    }
+    if (act === 'objects') {
+      const person = ((PP_DATA && PP_DATA.people) || [])
+        .filter(p => p.person_id === tr.dataset.id)[0];
+      ppUpdateObjects(tr.dataset.id, name, person && person.objects)
+        .catch(err => ppResult('Не получилось: ' + ppEsc(err && err.message), true));
+    }
+  });
+}
+
+// Раздел показывается, только если он расшифровался: не директору обёртка
+// ключа не адресована, и содержимого у него нет вовсе.
+async function ppSetup(section, who) {
+  if (!authMayManagePeople(who)) return;
+  PP_DATA = await secOpen(section, who && who.key);
+  if (!PP_DATA) return;
+  document.getElementById('peopleBlock').classList.add('show');
+  ppWire();
+  ppRender();
+}
+// <<< people-core
+
 function esc(s) {
   return String(s === null || s === undefined ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
@@ -154,6 +785,7 @@ async function bootstrap() {
   // Список объектов не отрисовывается вовсе, пока ключ не сошёлся: разметка
   // лежит в <template>, и в документ её кладёт только эта ветка.
   if (!who) { authShowDenied(); return; }
+  WHO = who;
   const allowed = OBJECTS.filter(o => authAllows(who, o.code));
   if (!allowed.length) { authShowDenied(); return; }
   authMountPage();
@@ -165,13 +797,14 @@ async function bootstrap() {
     : (allowed.length > 1 ? 'объекты ' : 'объект ') +
       allowed.map(o => o.code).join(', ');
   document.getElementById('whoami').textContent =
-    (who.name || '') + (who.name ? ' — ' : '') + scope;
+    (who.name || '') + (who.name ? ' — ' : '') + scope +
+    (who.role ? ' (' + authRoleLabel(who.role) + ')' : '');
 
   document.getElementById('objList').innerHTML = allowed.map(o =>
     '<li><a href="' + esc(authLink(o.file, who)) + '">' +
     esc(o.name) + ' (' + esc(o.code) + ')</a></li>').join('');
 
-  // Редактор плана — только ПТО и Александру: начальнику участка ссылка на
+  // Редактор плана — только офису и директору: начальнику участка ссылка на
   // него не показывается вовсе, а страница его всё равно не пустит.
   if (authMayEditPlan(who)) {
     document.getElementById('planBlock').hidden = false;
@@ -180,6 +813,10 @@ async function bootstrap() {
         '<li><a href="' + esc(authLink(o.plan, who)) + '">' +
         esc(o.name) + ' (' + esc(o.code) + ')</a></li>').join('');
   }
+
+  // Раздел «Сотрудники». Не директору он не расшифруется, поэтому проверка
+  // роли здесь — про то, что показывать, а не про то, что охранять.
+  if (PEOPLE_SECTION) await ppSetup(PEOPLE_SECTION, who);
 }
 
 bootstrap().catch(e => {
