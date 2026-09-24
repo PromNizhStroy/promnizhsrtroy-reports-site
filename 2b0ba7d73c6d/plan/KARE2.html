@@ -765,10 +765,23 @@ input:focus,select:focus,textarea:focus{
 </div>
 
 <div class="help-step" id="dir-s3">
-<p><strong>Изменить объекты начальника участка.</strong> Кнопка
-<strong>«Изменить объекты»</strong> в строке — введите через запятую новый список
-кодов. Кнопка есть только у начальников участков: офис и директор и так видят
-все объекты.</p>
+<p><strong>Изменить данные сотрудника.</strong></p>
+<ol style="margin:4px 0 8px;font-size:15px;padding-left:20px;line-height:1.7">
+  <li>В строке сотрудника нажмите <strong>«Изменить»</strong> — откроется та же
+    форма, что при добавлении, уже заполненная.</li>
+  <li>Поправьте ФИО, должность, уровень доступа (<strong>Начальник участка</strong>
+    или <strong>Сотрудник офиса</strong>) и, для начальника участка, объекты.</li>
+  <li>Нажмите <strong>«Сохранить»</strong>. Изменения появятся через 5–10 минут.</li>
+</ol>
+<p><strong>Ссылка у сотрудника остаётся прежней</strong> — заново передавать её не
+нужно. Новое ФИО появится в его форме и в журналах с этого момента; старые записи
+остаются как были. Если убрать у начальника участка объект, этот объект у него
+перестанет открываться. Сделали сотрудника офиса начальником участка — он больше не
+сможет править проекты, и наоборот.</p>
+<p>У директоров уровень доступа на этой странице не меняется — поле неактивно;
+если нужно, напишите Артёму. Каждая правка записывается в «Кто кому выдавал
+доступ»: что было и что стало.</p>
+<figure><img src="../help/img/dir-04-edit-person.png" loading="lazy" alt="Форма «Изменить данные» сотрудника" onerror="this.style.display='none'"><figcaption>«Изменить»: те же поля, ссылка та же</figcaption></figure>
 </div>
 
 <div class="help-step" id="dir-s4">
@@ -830,7 +843,7 @@ const PUB_KEY_B64 = "MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAmLVO5xLUbD/nHdt
 const KEY_ID      = "9f888f70f11bc7fc";
 // Таблица проверки персонального ключа: sha-256, роль и объекты. Самих ключей
 // в странице нет — см. tools/weekly/people.py (auth_entries).
-const AUTH_ENTRIES = [{"p": "p-001", "n": "Мажоров А.В.", "r": "site_head", "o": ["KARE2", "KZH5"], "h": "8f53e2cbcc1f2b99d1a1d77738aded237790a9c29363ed541c69d33a06d5487a"}, {"p": "p-002", "n": "Медведев А.А.", "r": "director", "o": [], "h": "1472176cf0c5ddeaf1a5df30f6a1f075d48f82191878c2242ded07d296ba4274"}, {"p": "p-003", "n": "Инженер ПТО (имя уточняется)", "r": "office", "o": [], "h": "3c2b05bc8ae4896d025ab2b1bb6003e096909ae478a33c94e62990c2b683bab1"}, {"p": "p-004", "n": "Ефимов А.", "r": "director", "o": [], "h": "ff64f204565e6c07a7817bec33caa5fca86a299c8f830dfc6c35aeb7cc50a978"}];
+const AUTH_ENTRIES = [{"p": "p-001", "n": "Мажоров А.В.", "r": "site_head", "o": ["KARE2", "KZH5"], "h": "8f53e2cbcc1f2b99d1a1d77738aded237790a9c29363ed541c69d33a06d5487a"}, {"p": "p-002", "n": "Медведев А.А.", "r": "director", "o": [], "h": "1472176cf0c5ddeaf1a5df30f6a1f075d48f82191878c2242ded07d296ba4274"}, {"p": "p-003", "n": "Елена Ивановна", "r": "office", "o": [], "h": "3c2b05bc8ae4896d025ab2b1bb6003e096909ae478a33c94e62990c2b683bab1"}, {"p": "p-004", "n": "Ефимов А.", "r": "director", "o": [], "h": "ff64f204565e6c07a7817bec33caa5fca86a299c8f830dfc6c35aeb7cc50a978"}];
 // Журнал изменений объекта — закрытый раздел: соль, шифртекст и обёртки ключа.
 // Фамилий и правок открытым текстом в странице нет.
 const JOURNAL_SECTION = {"purpose": "journal:KARE2", "salt": "2b0ba7d73c6d|journal:KARE2", "data": {"v": 1, "alg": "A256GCM", "iv": "Va0NY4eR6vonoSHA", "ct": "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"}, "wraps": [{"h": "8f53e2cbcc1f2b99d1a1d77738aded237790a9c29363ed541c69d33a06d5487a", "iv": "8uHmVhHglfmjz1Z+", "ct": "gRJ5wrGqhCxMJcEfqSiGkjgtHcSt+27GkEhKfJPkP3lKOP/peY2n36wKYHP3K5KA"}, {"h": "1472176cf0c5ddeaf1a5df30f6a1f075d48f82191878c2242ded07d296ba4274", "iv": "j4rOi0GI/mvsfVqw", "ct": "xrXf9AGilaxwZ3z0SnF5+KzXd97bAspCEzJiPXZRbPMhg0ZRezKJuUmCjSZvWn+z"}, {"h": "3c2b05bc8ae4896d025ab2b1bb6003e096909ae478a33c94e62990c2b683bab1", "iv": "BnFnw3JNphX9X8vG", "ct": "qD9vJVPRAFX0LWiZjo9gI/NyfuJgZ11OXKq6UWQRK+bnjqxf2Klu8rIjpnvnjhdE"}, {"h": "ff64f204565e6c07a7817bec33caa5fca86a299c8f830dfc6c35aeb7cc50a978", "iv": "/HeURZ6ji3xW3dEJ", "ct": "vzAZPAwoK+bnzfUp1ag/iz0485deB4vp4bp74+mv22R/ANK8AefqodW8hyVBrVDi"}]};

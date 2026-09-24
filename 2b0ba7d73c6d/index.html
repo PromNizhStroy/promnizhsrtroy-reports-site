@@ -54,6 +54,8 @@ a:hover{text-decoration:underline}
 #peopleBlock .pp-form{display:none;margin:14px 0;padding:16px;background:#f6f8fa;
   border:1px solid #d8dee6;border-radius:8px}
 #peopleBlock .pp-form.show{display:block}
+#peopleBlock .pp-form-title{font-size:15px;color:#143b42;margin:0 0 12px}
+#peopleBlock .pp-form select:disabled{background:#eef2f5;color:#667281}
 #peopleBlock .pp-form .pp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
   gap:12px}
 #peopleBlock .pp-form label{display:block;font-size:12px;color:#667281;margin-bottom:3px}
@@ -190,6 +192,7 @@ a:hover{text-decoration:underline}
   </div>
 
   <div class="pp-form" id="ppForm">
+    <h3 id="ppFormTitle" class="pp-form-title">Новый сотрудник</h3>
     <div class="pp-grid">
       <div><label for="ppName">ФИО (обязательно)</label>
         <input type="text" id="ppName" placeholder="Фамилия И.О." autocomplete="off"></div>
@@ -200,11 +203,14 @@ a:hover{text-decoration:underline}
         <select id="ppRole">
           <option value="site_head">Начальник участка — заполняет отчёты по своим объектам</option>
           <option value="office">Сотрудник офиса — правит проекты и заводит новые</option>
-        </select></div>
+          <option value="director" hidden disabled>Директор</option>
+        </select>
+        <p class="pp-hint" id="ppRoleHint" hidden>Уровень «Директор» на этой странице
+          не меняется. Если нужно — напишите Артёму.</p></div>
       <div id="ppObjBox"><label>Объекты (обязательно для начальника участка)</label>
         <div class="pp-objs"><label><input type="checkbox" class="pp-obj" value="KARE2"> KARE2</label><label><input type="checkbox" class="pp-obj" value="KZH5"> KZH5</label></div></div>
     </div>
-    <p class="pp-hint">Ссылку увидите сразу — её можно скопировать и передать.
+    <p class="pp-hint" id="ppFormHint">Ссылку увидите сразу — её можно скопировать и передать.
       Заработает она через 5–10 минут.</p>
     <div class="pp-toolbar">
       <button type="button" class="pp-add" id="ppSave">Завести и показать ссылку</button>
@@ -213,7 +219,7 @@ a:hover{text-decoration:underline}
   </div>
 
   <!-- Ответ лежит НЕ внутри формы добавления: та свёрнута, пока её не открыли
-       кнопкой, а отзыв доступа и смена объектов идут мимо неё — их итог иначе
+       кнопкой, отзыв доступа идёт мимо неё, а после правки она закрывается — их итог иначе
        было бы не увидеть. -->
   <div class="pp-result" id="ppResult"></div>
 
@@ -611,10 +617,23 @@ a:hover{text-decoration:underline}
 </div>
 
 <div class="help-step" id="dir-s3">
-<p><strong>Изменить объекты начальника участка.</strong> Кнопка
-<strong>«Изменить объекты»</strong> в строке — введите через запятую новый список
-кодов. Кнопка есть только у начальников участков: офис и директор и так видят
-все объекты.</p>
+<p><strong>Изменить данные сотрудника.</strong></p>
+<ol style="margin:4px 0 8px;font-size:15px;padding-left:20px;line-height:1.7">
+  <li>В строке сотрудника нажмите <strong>«Изменить»</strong> — откроется та же
+    форма, что при добавлении, уже заполненная.</li>
+  <li>Поправьте ФИО, должность, уровень доступа (<strong>Начальник участка</strong>
+    или <strong>Сотрудник офиса</strong>) и, для начальника участка, объекты.</li>
+  <li>Нажмите <strong>«Сохранить»</strong>. Изменения появятся через 5–10 минут.</li>
+</ol>
+<p><strong>Ссылка у сотрудника остаётся прежней</strong> — заново передавать её не
+нужно. Новое ФИО появится в его форме и в журналах с этого момента; старые записи
+остаются как были. Если убрать у начальника участка объект, этот объект у него
+перестанет открываться. Сделали сотрудника офиса начальником участка — он больше не
+сможет править проекты, и наоборот.</p>
+<p>У директоров уровень доступа на этой странице не меняется — поле неактивно;
+если нужно, напишите Артёму. Каждая правка записывается в «Кто кому выдавал
+доступ»: что было и что стало.</p>
+<figure><img src="help/img/dir-04-edit-person.png" loading="lazy" alt="Форма «Изменить данные» сотрудника" onerror="this.style.display='none'"><figcaption>«Изменить»: те же поля, ссылка та же</figcaption></figure>
 </div>
 
 <div class="help-step" id="dir-s4">
@@ -646,10 +665,10 @@ a:hover{text-decoration:underline}
 'use strict';
 
 const OBJECTS = [{"code": "KARE2", "name": "Устройство каре этап №2", "file": "KARE2.html", "plan": "plan/KARE2.html"}, {"code": "KZH5", "name": "Устройство фундаментов - Этап №5", "file": "KZH5.html", "plan": "plan/KZH5.html"}];
-const AUTH_ENTRIES = [{"p": "p-001", "n": "Мажоров А.В.", "r": "site_head", "o": ["KARE2", "KZH5"], "h": "8f53e2cbcc1f2b99d1a1d77738aded237790a9c29363ed541c69d33a06d5487a"}, {"p": "p-002", "n": "Медведев А.А.", "r": "director", "o": [], "h": "1472176cf0c5ddeaf1a5df30f6a1f075d48f82191878c2242ded07d296ba4274"}, {"p": "p-003", "n": "Инженер ПТО (имя уточняется)", "r": "office", "o": [], "h": "3c2b05bc8ae4896d025ab2b1bb6003e096909ae478a33c94e62990c2b683bab1"}, {"p": "p-004", "n": "Ефимов А.", "r": "director", "o": [], "h": "ff64f204565e6c07a7817bec33caa5fca86a299c8f830dfc6c35aeb7cc50a978"}];
+const AUTH_ENTRIES = [{"p": "p-001", "n": "Мажоров А.В.", "r": "site_head", "o": ["KARE2", "KZH5"], "h": "8f53e2cbcc1f2b99d1a1d77738aded237790a9c29363ed541c69d33a06d5487a"}, {"p": "p-002", "n": "Медведев А.А.", "r": "director", "o": [], "h": "1472176cf0c5ddeaf1a5df30f6a1f075d48f82191878c2242ded07d296ba4274"}, {"p": "p-003", "n": "Елена Ивановна", "r": "office", "o": [], "h": "3c2b05bc8ae4896d025ab2b1bb6003e096909ae478a33c94e62990c2b683bab1"}, {"p": "p-004", "n": "Ефимов А.", "r": "director", "o": [], "h": "ff64f204565e6c07a7817bec33caa5fca86a299c8f830dfc6c35aeb7cc50a978"}];
 // Закрытый раздел «Сотрудники»: соль, шифртекст и обёртки ключа по хэшам.
 // Ни фамилий, ни персональных ссылок открытым текстом здесь нет.
-const PEOPLE_SECTION = {"purpose": "people", "salt": "2b0ba7d73c6d|people", "data": {"v": 1, "alg": "A256GCM", "iv": "PcOerY+B+pDBxOGy", "ct": "MZ+9H9jxIS0hNM22hM1jbkYhOevqJkmNvYzohCRUzUYbo8JPV+iH0Aq5PNEs/YAI+UCxMLZaaEl52YoB+9cKs7GjWQLph3YkH0f4i/awC0zTawWoTZ0mootu34PUdwuJvGbrZBvmfuBVC8iN+oR+UKr7Icjw15eNKrX5pKiBYGlh3wbE5Mcejy3KSfxZO4zm92d2NUibF8A4XzSiw9EKEfcD8VgmUxqGA6Lt1xalQCnuwkNwcGSpLDSQK98aixoVY7owLv6Fan+woj25fTatAmEjfYNoVxtqZ+iVsEk1xJfPz4Q3KJ352tAFjD/oK0JUhdkmWIUc0rZd8SvJqf7BQTnbvIpl3Ec272KS3+nYMt9w5z8DRNTdnDu8EGHYP3ze4uXG5913ie024wvgGGgMsxLfPKbq+Cr9YDvHuFTHzYL7jmzrDrI5mmMTFunXf2cjzTqOWb3hEZSdXdAtCNE0X7onS9cbejyO7l8CK3FWCF0kybI+7MKLoZ3ejteLt5c1W6DMvwRwYrLuvY5pEvGGp6cO1JUhe8PCMriep/ukoBKYJQSYj+b4ot+ArvqPfZc6jQFFPuXoyLei3LGndB7J8U60RxRvxACU/nScwPwU/2Btq0BVcUjqFaZCD6c2K9vUCf0F7WEQjtsNff5X7DSXTI1BDbbgtb4O/DaMUmPtIMMDTRJIwwX5mQnVL0FWYtFEamdOQrCKyNWaP7OH6N53bG4AXAXepXUYXUydNMah7pFYP/pXcXn7h7RtsrHGSbcXAO+SbUy9/8h6Ju3+ezdhnoaFma/ozW8aBfGtjf4TjnZYWbvub7KwHOeK4KyMUwH665A3iufMekLu1DUK+eic/WDP8y69CWYRMO8Jmnmlz9B+lOlNe+Hz74js23FrIEk9kD0m/ScsutAKc6pN7c6f4q7JEwBDh1QoXRK8mDhkPrHetEAIv5Vx2eim5owWv+MPxFhC2n7nS5scE68IicdEPy38Sr5clIyDr3Zb0wkDuPgv1ZrDIBEcmQvWUAkYnjoEqPv2ZKnPel2EiVlqSR8J43SmNvhSsGQGNae4b/okMbbIHMj/7GMhGsBqwtkvpHp9VY59Y+Ylbm00GT92d4DxZ4QWi1LzRpNRgeWGBAxYDmLzwp8oX1LTbeDlVSYggedrOfhh0CY="}, "wraps": [{"h": "1472176cf0c5ddeaf1a5df30f6a1f075d48f82191878c2242ded07d296ba4274", "iv": "B4QwM5kR2natkpaj", "ct": "v45K6bLQCVxSsjjTM8mzZM/C7tCzWQxW438fcDjiAr/bNoIj+gaXINvsXV5Ca1HU"}, {"h": "ff64f204565e6c07a7817bec33caa5fca86a299c8f830dfc6c35aeb7cc50a978", "iv": "3e1U4Nd9MX8NFO3F", "ct": "HOYP5hMumxOE4lsU2QtPbhfpsT65o/J9PBde9a7VAS1Ubdp93qFBU2oLuSSjwX+M"}]};
+const PEOPLE_SECTION = {"purpose": "people", "salt": "2b0ba7d73c6d|people", "data": {"v": 1, "alg": "A256GCM", "iv": "UbPoBx2nMeXNtDXI", "ct": "f9HWDZ2wqF7RSxELqak+o9KcqUsk7vJpcEWsfgsfQX/h6xb4iZ+uuKmMBeo81Er3hODLlSukIIQsuokK/juLsg1HSoTu3ZEUSjYn0kl3pKQkEeWNkmeZyJMCiXoepX2NmHF/+qUL2CzqYRcNSlE88t/60juosUoj8Bxs8RFQhGYOu22ey/0Uq+4MLTovKEkF+BlL9sGUV4PvArFKxA3jADOOkZswtV21tkXhGztHxmaKc/DhMXGgYX6tgAyhEZcjXD/AHIGb6dzvhWAO5Of/3dJGlZRuZDZJeUxLkI2vjPXiSMlMx8e15EwrpT6h74Kij/VWeHAyCTmWL4I1SHvRiHauTlEoT4WJ+NYhcvivJr+gV4wYMMiDmEAgWJHhJ5S0Vpm1m2iK5pjyiOLtpbOBz8FRNxMqbvcrlJQHxqGio7XPpAITFQZ4ZzXZEdptTHgeditpLosT77PVO4jpeUP+3f5s8C9qDdIcQQuI8dTKqo6N2sUfBqyMJb4s/zowxOMSdoGBAH28g7faTXBWHOSLq0SIzOOgrKFHJwUI4n4qyqPsf6GKMRW3Sbd4hruSLGhrVBUaoMVFyUP+ofc2IfROpft5lzO3q2iHlNvXTfwT2NLqQbS9l/S3o2WH8mZY3tGRQ19uofEy2psFac2gwFO4796SyJj/hGIplcB+TwACMNGgglwmioh6TE8OTCjKUurgo8xNrOobCoBax0Tuq83OoDqbDI15/X9L6pUzYVUdfNObv/jWuE2A5A7EeaWEmbwFlK1mK0yWuJhnEjQxjSowm4ge6BF4jOYiiXaOLCU8c3mK0iL4LgmLEGQENyaAWlLxNf0PtYFWgUMPu0PCvJte56vjTEc2fKPIgKiEhOa8pNgJ+MN65B2zsMhcETjArzg0LfAnMx6MDEqJ+XkM+MDxtbVqgx9h38nTYW0JMcQFNNTbtV7aVQTgXUExm4xv6DVldNztMPDk8JCMWmhHOPL+ZQVxWiOWP7g/LAcu895pViM3OssTSgBN/iBDALEnu/3qtefXGEtQUjl1r8dbe8fNi5K177EZXaU+XCgM5bMiIQuBhJBZp3MKKgmm3QCfPgww1jWaVDqFK9aVwUbAcnn592cdWJ0Ncmz1+JvKWCKOeiE2BWPV/8E6NajtnxNBstY7i2TiFY1Hghk/y2C8LgoCSKf9TvktiBcxBHjVaDoI0T2maKj682yZciy43gEgmvYTLhhRVfe5Wjlu8i+HY0z4wM9MnXypKfkF1MqNrfMTdHjqQfwHlz2COIJ6jpIDQjkclDvbc/nZVfd3YxVfjJDqiKLSQgt4Z2V7330/012Fo7pALzVYJLogV/tbYXGQEe5uhUuRb1ynavAPOvMLRluWPcuLWSwk9FYRMZf8J/pijy7GA/fHXKW3NWZSoPFeAelegecSd6siYuuOHxfsUCYAXoADCRJVcn5Gc4JRFnvaxSCIcH/5s7ZwrivuFqFc5ZpZCHpwamJ2YByLH0OIcg9sEtJSfRNUJLrp7GLmr40rt4FE8Qak+VCVSeUWcFoR1pnvf3+Fi/JT0nRrRvUKzYsqbxpOEzO2E/8TU+ZVGm1ApH8iNRY02vrICWWA76oFHWwORKyiloAp4MWh7nUqVn8xkGjxf9wb59W0hV9RcTArQMDON2LhlhIpBqMq4Ri8Qw5JbBj6E72BWhrb2RTeMHf7JHMqXlPVRbzFiGfeWd2VbIc="}, "wraps": [{"h": "1472176cf0c5ddeaf1a5df30f6a1f075d48f82191878c2242ded07d296ba4274", "iv": "B4QwM5kR2natkpaj", "ct": "v45K6bLQCVxSsjjTM8mzZM/C7tCzWQxW438fcDjiAr/bNoIj+gaXINvsXV5Ca1HU"}, {"h": "ff64f204565e6c07a7817bec33caa5fca86a299c8f830dfc6c35aeb7cc50a978", "iv": "3e1U4Nd9MX8NFO3F", "ct": "HOYP5hMumxOE4lsU2QtPbhfpsT65o/J9PBde9a7VAS1Ubdp93qFBU2oLuSSjwX+M"}]};
 const PP_SITE_BASE = "https://PromNizhStroy.github.io/promnizhsrtroy-reports-site/2b0ba7d73c6d/";
 const PP_OBJECT_CODES = ["KARE2", "KZH5"];
 let WHO = null;
@@ -977,6 +996,7 @@ const PP_KEY_LENGTH = 26;
 
 let PP_DATA = null;      // расшифрованное содержимое раздела
 let PP_PENDING = [];     // заведённые в этом сеансе — мини их ещё не видел
+let PP_EDIT = null;      // запись, которую сейчас правят; null — форма добавления
 
 function ppEsc(s) {
   return String(s === null || s === undefined ? '' : s)
@@ -1028,6 +1048,8 @@ function ppRows() {
   return document.getElementById('ppShowRevoked').checked ? live.concat(gone) : live;
 }
 
+const PP_BY_VERB = {add: 'выдал', revoke: 'отозвал', update: 'изменил'};
+
 function ppRender() {
   const body = document.getElementById('ppBody');
   body.innerHTML = ppRows().map(p => {
@@ -1040,12 +1062,10 @@ function ppRender() {
         '<button type="button" class="pp-act" data-act="show">Показать</button>' +
         '<button type="button" class="pp-act" data-act="copy">Скопировать</button>';
     const acts = revoked ? '' :
-      ((p.role === 'site_head'
-        ? '<button type="button" class="pp-act" data-act="objects">Изменить объекты</button>'
-        : '') +
-       (p.person_id
-        ? '<button type="button" class="pp-act danger" data-act="revoke">Отозвать доступ</button>'
-        : '<span class="pp-link">заводится…</span>'));
+      (p.person_id
+        ? '<button type="button" class="pp-act" data-act="edit">Изменить</button>' +
+          '<button type="button" class="pp-act danger" data-act="revoke">Отозвать доступ</button>'
+        : '<span class="pp-link">заводится…</span>');
     return '<tr class="' + (revoked ? 'pp-revoked' : '') + '" data-id="' +
       ppEsc(p.person_id || '') + '" data-key="' + ppEsc(p.key || '') + '">' +
       '<td>' + ppEsc(p.name) + '</td>' +
@@ -1062,8 +1082,11 @@ function ppRender() {
   log.innerHTML = events.length
     ? events.map(e => '<li>' + ppEsc(ppRuDate(e.at)) + ' — ' +
         ppEsc(e.action_label || e.action) + ': ' + ppEsc(e.person_name) +
-        ' (' + ppEsc(e.role_label || e.role) + ')' +
-        (e.by_name ? ', выдал ' + ppEsc(e.by_name) : '') + '</li>').join('')
+        (e.action === 'update' && e.detail
+          ? ' — ' + ppEsc(e.detail)
+          : ' (' + ppEsc(e.role_label || e.role) + ')') +
+        (e.by_name ? ', ' + ppEsc(PP_BY_VERB[e.action] || 'выдал') + ' ' +
+                     ppEsc(e.by_name) : '') + '</li>').join('')
     : '<li>Пока записей нет.</li>';
 }
 
@@ -1194,37 +1217,114 @@ async function ppRevoke(personId, name) {
       'его ссылка перестанет работать.', !!error);
 }
 
-async function ppUpdateObjects(personId, name, current) {
-  const answer = window.prompt('Объекты для «' + name + '» через запятую.\n' +
-    'Доступные: ' + PP_OBJECT_CODES.join(', '), (current || []).join(', '));
-  if (answer === null) return;
-  const objects = answer.split(',').map(s => s.trim()).filter(s => s);
-  if (!objects.length) { ppResult('Нужен хотя бы один объект.', true); return; }
-  const error = await ppSend({
-    kind: 'people_update', v: 1,
+// ── Форма: добавление и правка ──────────────────────────────────────────────
+// Одна форма на оба случая: поля те же, и Александру не надо учить второй
+// экран. В режиме правки ключ не трогается — ссылка у человека та же.
+
+function ppSyncRole() {
+  const role = document.getElementById('ppRole').value;
+  document.getElementById('ppObjBox').style.display = role === 'site_head' ? '' : 'none';
+}
+
+function ppOpenAdd() {
+  PP_EDIT = null;
+  document.getElementById('ppFormTitle').textContent = 'Новый сотрудник';
+  document.getElementById('ppSave').textContent = 'Завести и показать ссылку';
+  document.getElementById('ppFormHint').hidden = false;
+  document.getElementById('ppRoleHint').hidden = true;
+  const sel = document.getElementById('ppRole');
+  sel.disabled = false; sel.value = 'site_head';
+  ['ppName', 'ppPosition'].forEach(id => { document.getElementById(id).value = ''; });
+  document.querySelectorAll('#ppObjBox .pp-obj').forEach(el => { el.checked = false; });
+  ppSyncRole();
+}
+
+function ppOpenEdit(person) {
+  PP_EDIT = person;
+  document.getElementById('ppFormTitle').textContent = 'Изменить данные: ' + person.name;
+  document.getElementById('ppSave').textContent = 'Сохранить';
+  document.getElementById('ppFormHint').hidden = true;
+  document.getElementById('ppName').value = person.name || '';
+  document.getElementById('ppPosition').value = person.position || '';
+  const sel = document.getElementById('ppRole');
+  const role = person.role === 'pto' ? 'office' : person.role;
+  sel.value = role;
+  // Директора со страницы не назначают и не снимают (решение 23.09): поле
+  // видно, но неактивно, и рядом сказано почему.
+  sel.disabled = role === 'director';
+  document.getElementById('ppRoleHint').hidden = role !== 'director';
+  const mine = person.objects || [];
+  document.querySelectorAll('#ppObjBox .pp-obj').forEach(el => {
+    el.checked = mine.indexOf(el.value) >= 0;
+  });
+  ppSyncRole();
+  const form = document.getElementById('ppForm');
+  form.classList.add('show');
+  form.scrollIntoView({block: 'nearest'});
+  document.getElementById('ppName').focus();
+}
+
+function ppCloseForm() {
+  document.getElementById('ppForm').classList.remove('show');
+  ppOpenAdd();
+}
+
+async function ppUpdate(person) {
+  const name = document.getElementById('ppName').value.trim();
+  const position = document.getElementById('ppPosition').value.trim();
+  const role = person.role === 'director' ? 'director'
+    : document.getElementById('ppRole').value;
+  const objects = role === 'site_head' ? ppSelectedObjects() : [];
+  if (!name) { ppResult('ФИО не может быть пустым.', true); return; }
+  if (role === 'site_head' && !objects.length) {
+    ppResult('У начальника участка должен быть хотя бы один объект.', true);
+    return;
+  }
+  // Совпадение ФИО с другим действующим сотрудником — предупреждение, не отказ.
+  const twin = ((PP_DATA && PP_DATA.people) || []).some(
+    p => !p.revoked_at && p.person_id !== person.person_id && p.name === name);
+
+  const payload = {
+    kind: 'people_update', v: 2,
     reporter_key: (WHO && WHO.key) || '',
     author: (WHO && WHO.name) || '',
-    person_id: personId, objects: objects,
-  });
-  ppResult(error ? 'Не отправлено: ' + ppEsc(error)
-    : 'Объекты для <strong>' + ppEsc(name) + '</strong> меняются: ' +
-      ppEsc(objects.join(', ')) + '. Через 5–10 минут это будет на сайте.', !!error);
+    person_id: person.person_id,
+    name: name, position: position, objects: objects,
+  };
+  // Уровень директора не отправляется вовсе: менять его со страницы нельзя.
+  if (person.role !== 'director') payload.role = role;
+
+  const btn = document.getElementById('ppSave');
+  btn.disabled = true; btn.textContent = 'Сохраняем…';
+  const error = await ppSend(payload);
+  btn.disabled = false; btn.textContent = 'Сохранить';
+  if (error) { ppResult('Не отправлено: ' + ppEsc(error), true); return; }
+  ppCloseForm();
+  ppResult(
+    (twin ? '<p><strong>Такое ФИО уже есть</strong> у другого сотрудника. ' +
+            'Сохранено всё равно — проверьте, что это не ошибка.</p>' : '') +
+    '<p>Данные сотрудника <strong>' + ppEsc(name) + '</strong> отправлены. ' +
+    'Изменения появятся через 5–10 минут.</p>' +
+    '<p class="pp-hint">Ссылка у сотрудника остаётся прежней — заново передавать ' +
+    'её не нужно.</p>');
 }
 
 function ppWire() {
   document.getElementById('ppShowRevoked').addEventListener('change', ppRender);
   document.getElementById('ppAddBtn').addEventListener('click', () => {
-    document.getElementById('ppForm').classList.toggle('show');
+    const form = document.getElementById('ppForm');
+    if (PP_EDIT || !form.classList.contains('show')) {
+      ppOpenAdd();
+      form.classList.add('show');
+    } else {
+      form.classList.remove('show');
+    }
   });
-  document.getElementById('ppCancel').addEventListener('click', () => {
-    document.getElementById('ppForm').classList.remove('show');
-  });
-  document.getElementById('ppRole').addEventListener('change', e => {
-    document.getElementById('ppObjBox').style.display =
-      e.target.value === 'site_head' ? '' : 'none';
-  });
+  document.getElementById('ppCancel').addEventListener('click', ppCloseForm);
+  document.getElementById('ppRole').addEventListener('change', ppSyncRole);
   document.getElementById('ppSave').addEventListener('click', () => {
-    ppAdd().catch(e => ppResult('Не получилось: ' + ppEsc(e && e.message), true));
+    const job = PP_EDIT ? ppUpdate(PP_EDIT) : ppAdd();
+    job.catch(e => ppResult('Не получилось: ' + ppEsc(e && e.message), true));
   });
   document.getElementById('ppBody').addEventListener('click', e => {
     const btn = e.target.closest ? e.target.closest('button[data-act]') : null;
@@ -1244,11 +1344,10 @@ function ppWire() {
         .catch(err => ppResult('Не получилось: ' + ppEsc(err && err.message), true));
       return;
     }
-    if (act === 'objects') {
+    if (act === 'edit') {
       const person = ((PP_DATA && PP_DATA.people) || [])
         .filter(p => p.person_id === tr.dataset.id)[0];
-      ppUpdateObjects(tr.dataset.id, name, person && person.objects)
-        .catch(err => ppResult('Не получилось: ' + ppEsc(err && err.message), true));
+      if (person) ppOpenEdit(person);
     }
   });
 }
