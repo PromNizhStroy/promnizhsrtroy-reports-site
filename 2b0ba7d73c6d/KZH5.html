@@ -347,9 +347,20 @@ tr.row-explained td{border-color:var(--green-border)}
 @media print{#journalBox{display:none !important}}
 
 
-/* ── Кнопка «Инструкция» ────────────────────────────────────────────────── */
+/* ── Кнопка «Инструкция» на формах ─────────────────────────────────────── */
 #btnHelp{min-width:38px;font-weight:700;color:#176f7d;border-color:#176f7d}
 #btnHelp:hover{background:#f0f8fa}
+
+/* ── Заметная кнопка на главной странице ────────────────────────────────── */
+#btnHelp.idx-help-btn{
+  background:#FFF4CC;border:2px solid #b38a00;border-radius:6px;
+  color:#4a3900;font-size:15px;font-weight:700;padding:8px 16px;
+  min-width:unset;white-space:normal}
+#btnHelp.idx-help-btn:hover{background:#ffe999;border-color:#8a6800}
+.idx-toolbar{flex-wrap:wrap}
+@media(max-width:600px){
+  #btnHelp.idx-help-btn{width:100%}
+}
 
 /* ── Модальное окно инструкции ──────────────────────────────────────────── */
 #helpOverlay{display:none;position:fixed;inset:0;z-index:200;
@@ -616,7 +627,11 @@ tr.row-explained td{border-color:var(--green-border)}
   <h2 class="help-title">Инструкция</h2>
   <p class="help-role-label" id="helpRoleLabel"></p>
   <div id="helpTabs" hidden></div>
-  <div id="helpSectionNu" class="help-section"><div class="help-toc">
+  <div id="helpSectionNu" class="help-section"><div class="help-note">
+<strong>Форма рассчитана на компьютер; с телефона пользоваться неудобно.</strong>
+</div>
+
+<div class="help-toc">
   <p>Оглавление:</p>
   <ol>
     <li><a href="#nu-s1">Открыть форму</a></li>
@@ -639,7 +654,6 @@ tr.row-explained td{border-color:var(--green-border)}
 шапке и списком всех работ объекта. Ссылка персональная — не передавайте её
 другим: кто её открыл, тот и отправляет отчёт.</p>
 <figure><img src="help/img/nu-01-form-open.png" loading="lazy" alt="Форма с фамилией и списком работ" onerror="this.style.display='none'"><figcaption>Форма открылась — фамилия и объект подставились автоматически</figcaption></figure>
-<figure><img src="help/img/nu-p1-form-open.png" loading="lazy" alt="Та же форма на телефоне" onerror="this.style.display='none'"><figcaption>С телефона — то же самое, кнопки уходят в несколько рядов</figcaption></figure>
 </div>
 
 <div class="help-step" id="nu-s2">
@@ -648,7 +662,6 @@ tr.row-explained td{border-color:var(--green-border)}
 нажмите поле <strong>«Дата отчёта»</strong> и выберите сегодняшнее число.</p>
 <figure><img src="help/img/nu-02-week-picker.png" loading="lazy" alt="Жёлтое поле выбора недели" onerror="this.style.display='none'"><figcaption>Нажмите жёлтое поле — откроется список недель</figcaption></figure>
 <figure><img src="help/img/nu-02b-date.png" loading="lazy" alt="Поле «Дата отчёта»" onerror="this.style.display='none'"><figcaption>Дата отчёта — сегодняшнее число</figcaption></figure>
-<figure><img src="help/img/nu-p2-week.png" loading="lazy" alt="Выбор недели на телефоне" onerror="this.style.display='none'"><figcaption>На телефоне то же самое</figcaption></figure>
 </div>
 
 <div class="help-step" id="nu-s3">
@@ -673,7 +686,6 @@ tr.row-explained td{border-color:var(--green-border)}
 </ul>
 <figure><img src="help/img/nu-04-works-table.png" loading="lazy" alt="Таблица работ" onerror="this.style.display='none'"><figcaption>Столбцы «План.», «Факт.», статус и процент</figcaption></figure>
 <figure><img src="help/img/nu-04b-status-pct.png" loading="lazy" alt="Статус и процент выполнения в строке" onerror="this.style.display='none'"><figcaption>Статус «в работе» — процент обязателен</figcaption></figure>
-<figure><img src="help/img/nu-p3-works.png" loading="lazy" alt="Таблица работ на телефоне" onerror="this.style.display='none'"><figcaption>На телефоне таблица прокручивается вбок, номер и название закреплены слева</figcaption></figure>
 </div>
 
 <div class="help-step" id="nu-s5">
@@ -690,7 +702,6 @@ tr.row-explained td{border-color:var(--green-border)}
 <figure><img src="help/img/nu-05-shift-reason.png" loading="lazy" alt="Красная рамка и поля причины" onerror="this.style.display='none'"><figcaption>Поставили дату позже — появились «Причина задержки» и «Решение для возврата в график»</figcaption></figure>
 <figure><img src="help/img/nu-06-explained.png" loading="lazy" alt="Зелёная пометка «Отклонение объяснено»" onerror="this.style.display='none'"><figcaption>После заполнения — зелёная пометка «Отклонение объяснено ✓»</figcaption></figure>
 <figure><img src="help/img/nu-06c-cascade.png" loading="lazy" alt="Следующие работы со значком «сдвинуто»" onerror="this.style.display='none'"><figcaption>Следующие работы поехали сами — на них значок «сдвинуто +7д»</figcaption></figure>
-<figure><img src="help/img/nu-p4-reason.png" loading="lazy" alt="Поля причины на телефоне" onerror="this.style.display='none'"><figcaption>На телефоне поля причины открываются под названием работы</figcaption></figure>
 </div>
 
 <div class="help-step" id="nu-s6">
@@ -713,7 +724,6 @@ tr.row-explained td{border-color:var(--green-border)}
 <strong>«Отправить изменения»</strong>.</p>
 <figure><img src="help/img/nu-08-submit-btn.png" loading="lazy" alt="Кнопка «Отправить» в верхней панели" onerror="this.style.display='none'"><figcaption>Кнопка «Отправить» — в верхней панели</figcaption></figure>
 <figure><img src="help/img/nu-08-sent.png" loading="lazy" alt="Зелёный баннер «Отправлено»" onerror="this.style.display='none'"><figcaption>Зелёная полоса — отчёт ушёл</figcaption></figure>
-<figure><img src="help/img/nu-p5-submit.png" loading="lazy" alt="Зелёная полоса на телефоне" onerror="this.style.display='none'"><figcaption>На телефоне полоса та же</figcaption></figure>
 </div>
 
 <div class="help-step" id="nu-s9">
@@ -994,9 +1004,10 @@ tr.row-explained td{border-color:var(--green-border)}
 </div>
 
 <div class="help-step" id="dir-s5">
-<p><strong>Своя инструкция у каждого.</strong> Кнопка <strong>«?»</strong> есть на
-каждой странице, и открывает она инструкцию того уровня, с которым человек вошёл.
-У вас видны все три — переключайтесь вкладками наверху.</p>
+<p><strong>Своя инструкция у каждого.</strong> На главной странице — кнопка
+<strong>«? Инструкция как пользоваться формой»</strong>. На страницах форм —
+кнопка <strong>«?»</strong> вверху. Открывает инструкцию того уровня, с которым
+человек вошёл. У вас видны все три — переключайтесь вкладками наверху.</p>
 <figure><img src="help/img/dir-03-help-tabs.png" loading="lazy" alt="Вкладки инструкции у директора" onerror="this.style.display='none'"><figcaption>Вкладки: начальник участка, сотрудник офиса, директор</figcaption></figure>
 </div>
 
