@@ -161,10 +161,14 @@ input:focus,select:focus,textarea:focus{
 .plan-table th.col-no{background:var(--soft);z-index:5}
 .plan-table td.col-ord{white-space:nowrap}
 
-tr.row-changed{background:var(--changed)}
-tr.row-added{background:var(--added)}
-tr.row-archived{background:#f2f2f2;color:var(--muted)}
-tr.row-archived td input,tr.row-archived td select{
+/* Цвет строки перебивает `.plan-table tbody tr` выше, поэтому селектор такой
+   же длинный: у короткого `tr.row-changed` вес меньше, и правленая строка
+   оставалась белой — а инструкция обещает человеку жёлтую. */
+.plan-table tbody tr.row-changed{background:var(--changed)}
+.plan-table tbody tr.row-added{background:var(--added)}
+.plan-table tbody tr.row-archived{background:#f2f2f2;color:var(--muted)}
+.plan-table tbody tr.row-archived td input,
+.plan-table tbody tr.row-archived td select{
   background:#fafafa;color:var(--muted)}
 .badge{display:inline-block;margin-left:4px;font-size:10px;color:#fff;
   border-radius:3px;padding:1px 4px;vertical-align:middle}
@@ -432,6 +436,7 @@ tr.row-archived td input,tr.row-archived td select{
 шапке и списком всех работ объекта. Ссылка персональная — не передавайте её
 другим: кто её открыл, тот и отправляет отчёт.</p>
 <figure><img src="../help/img/nu-01-form-open.png" loading="lazy" alt="Форма с фамилией и списком работ" onerror="this.style.display='none'"><figcaption>Форма открылась — фамилия и объект подставились автоматически</figcaption></figure>
+<figure><img src="../help/img/nu-p1-form-open.png" loading="lazy" alt="Та же форма на телефоне" onerror="this.style.display='none'"><figcaption>С телефона — то же самое, кнопки уходят в несколько рядов</figcaption></figure>
 </div>
 
 <div class="help-step" id="nu-s2">
@@ -439,6 +444,8 @@ tr.row-archived td input,tr.row-archived td select{
 неделю —» — откроется список. Выберите неделю, за которую сдаёте отчёт. Затем
 нажмите поле <strong>«Дата отчёта»</strong> и выберите сегодняшнее число.</p>
 <figure><img src="../help/img/nu-02-week-picker.png" loading="lazy" alt="Жёлтое поле выбора недели" onerror="this.style.display='none'"><figcaption>Нажмите жёлтое поле — откроется список недель</figcaption></figure>
+<figure><img src="../help/img/nu-02b-date.png" loading="lazy" alt="Поле «Дата отчёта»" onerror="this.style.display='none'"><figcaption>Дата отчёта — сегодняшнее число</figcaption></figure>
+<figure><img src="../help/img/nu-p2-week.png" loading="lazy" alt="Выбор недели на телефоне" onerror="this.style.display='none'"><figcaption>На телефоне то же самое</figcaption></figure>
 </div>
 
 <div class="help-step" id="nu-s3">
@@ -449,6 +456,8 @@ tr.row-archived td input,tr.row-archived td select{
   <li>Хотите добавить поручение, которое на планёрке не записали, — нажмите <strong>«+ Поручение»</strong> и заполните кому и к какому числу.</li>
 </ul>
 <figure><img src="../help/img/nu-03-assignments.png" loading="lazy" alt="Блок поручений" onerror="this.style.display='none'"><figcaption>Поручения: готово / сделать / просрочено</figcaption></figure>
+<figure><img src="../help/img/nu-03b-overdue.png" loading="lazy" alt="Красная дата просроченного поручения" onerror="this.style.display='none'"><figcaption>Красная дата — срок прошёл, а поручение ещё «сделать»</figcaption></figure>
+<figure><img src="../help/img/nu-03c-add-assign.png" loading="lazy" alt="Кнопка «+ Поручение»" onerror="this.style.display='none'"><figcaption>«+ Поручение» — записать своё</figcaption></figure>
 </div>
 
 <div class="help-step" id="nu-s4">
@@ -460,6 +469,8 @@ tr.row-archived td input,tr.row-archived td select{
   <li><strong>% выполнения</strong> — заполняйте по ситуации.</li>
 </ul>
 <figure><img src="../help/img/nu-04-works-table.png" loading="lazy" alt="Таблица работ" onerror="this.style.display='none'"><figcaption>Столбцы «План.», «Факт.», статус и процент</figcaption></figure>
+<figure><img src="../help/img/nu-04b-status-pct.png" loading="lazy" alt="Статус и процент выполнения в строке" onerror="this.style.display='none'"><figcaption>Статус «в работе» — процент обязателен</figcaption></figure>
+<figure><img src="../help/img/nu-p3-works.png" loading="lazy" alt="Таблица работ на телефоне" onerror="this.style.display='none'"><figcaption>На телефоне таблица прокручивается вбок, номер и название закреплены слева</figcaption></figure>
 </div>
 
 <div class="help-step" id="nu-s5">
@@ -472,8 +483,11 @@ tr.row-archived td input,tr.row-archived td select{
 <p>Без заполнения форма не отправится. После заполнения появляется зелёная
 пометка <strong>«Отклонение объяснено ✓»</strong>. Следующие работы,
 зависящие от этой, сдвинутся автоматически.</p>
-<figure><img src="../help/img/nu-05-shift-reason.png" loading="lazy" alt="Красная рамка и поля причины" onerror="this.style.display='none'"><figcaption>Поля «Почему» и «Что делаете» — обязательны при сдвиге</figcaption></figure>
-<figure><img src="../help/img/nu-06-explained.png" loading="lazy" alt="Зелёная пометка «Отклонение объяснено»" onerror="this.style.display='none'"><figcaption>После заполнения — зелёная пометка</figcaption></figure>
+<figure><img src="../help/img/nu-05-before-shift.png" loading="lazy" alt="Дата окончания до сдвига" onerror="this.style.display='none'"><figcaption>До сдвига: дата совпадает с плановой</figcaption></figure>
+<figure><img src="../help/img/nu-05-shift-reason.png" loading="lazy" alt="Красная рамка и поля причины" onerror="this.style.display='none'"><figcaption>Поставили дату позже — появились «Причина задержки» и «Решение для возврата в график»</figcaption></figure>
+<figure><img src="../help/img/nu-06-explained.png" loading="lazy" alt="Зелёная пометка «Отклонение объяснено»" onerror="this.style.display='none'"><figcaption>После заполнения — зелёная пометка «Отклонение объяснено ✓»</figcaption></figure>
+<figure><img src="../help/img/nu-06c-cascade.png" loading="lazy" alt="Следующие работы со значком «сдвинуто»" onerror="this.style.display='none'"><figcaption>Следующие работы поехали сами — на них значок «сдвинуто +7д»</figcaption></figure>
+<figure><img src="../help/img/nu-p4-reason.png" loading="lazy" alt="Поля причины на телефоне" onerror="this.style.display='none'"><figcaption>На телефоне поля причины открываются под названием работы</figcaption></figure>
 </div>
 
 <div class="help-step" id="nu-s6">
@@ -494,25 +508,30 @@ tr.row-archived td input,tr.row-archived td select{
 в верхней панели. При успехе появится зелёная полоса <strong>«Отправлено ✓»</strong>
 и путь к файлу. Если нужно что-то поправить — кнопка изменится на
 <strong>«Отправить изменения»</strong>.</p>
+<figure><img src="../help/img/nu-08-submit-btn.png" loading="lazy" alt="Кнопка «Отправить» в верхней панели" onerror="this.style.display='none'"><figcaption>Кнопка «Отправить» — в верхней панели</figcaption></figure>
 <figure><img src="../help/img/nu-08-sent.png" loading="lazy" alt="Зелёный баннер «Отправлено»" onerror="this.style.display='none'"><figcaption>Зелёная полоса — отчёт ушёл</figcaption></figure>
+<figure><img src="../help/img/nu-p5-submit.png" loading="lazy" alt="Зелёная полоса на телефоне" onerror="this.style.display='none'"><figcaption>На телефоне полоса та же</figcaption></figure>
 </div>
 
 <div class="help-step" id="nu-s9">
 <p><strong>9. Нет интернета.</strong> Нажмите
 <strong>«Сохранить данные (JSON)»</strong> — файл скачается на устройство. Этот
 файл пришлите Александру — он поместит его в систему сам. Данные не потеряются.</p>
+<figure><img src="../help/img/nu-09-save-json.png" loading="lazy" alt="Кнопка «Сохранить данные (JSON)»" onerror="this.style.display='none'"><figcaption>Нет связи — «Сохранить данные (JSON)»</figcaption></figure>
 </div>
 
 <div class="help-step" id="nu-s10">
 <p><strong>10. Скачать график (Excel)</strong> — кнопка в панели инструментов.
 Это актуальный график со свежими датами — для печати и вывески на стену
 площадки после планёрки во вторник.</p>
+<figure><img src="../help/img/nu-10-excel.png" loading="lazy" alt="Кнопка «Скачать график (Excel)»" onerror="this.style.display='none'"><figcaption>«Скачать график (Excel)» — в верхней панели</figcaption></figure>
 </div>
 
 <div class="help-step" id="nu-s11">
 <p><strong>11. Журнал изменений</strong> — кнопка в панели инструментов. Здесь
 видно, кто и что правил в этом проекте руками: правки в редакторе, загрузки
 графика, поручения. Автоматические пересчёты не показываются.</p>
+<figure><img src="../help/img/nu-11-journal.png" loading="lazy" alt="Журнал изменений" onerror="this.style.display='none'"><figcaption>Журнал: когда, кто, что именно</figcaption></figure>
 </div>
 
 <div class="help-step" id="nu-s12">
@@ -521,6 +540,7 @@ tr.row-archived td input,tr.row-archived td select{
 (так бывает в мессенджерах). Напишите Александру — он пришлёт ссылку ещё раз.
 Не передавайте свою ссылку другим: она привязана к вам.
 </div>
+<figure><img src="../help/img/nu-12-noaccess.png" loading="lazy" alt="Страница «Нет доступа»" onerror="this.style.display='none'"><figcaption>Так выглядит обрезанная ссылка</figcaption></figure>
 </div></div>
   <div id="helpSectionOffice" class="help-section"><div class="help-toc">
   <p>Оглавление:</p>
@@ -559,7 +579,8 @@ tr.row-archived td input,tr.row-archived td select{
 связаны — измените любое), «Начинается после».</p>
 <p>Изменённая строка жёлтая, добавленная — голубая. Блок
 <strong>«Что изменится»</strong> перечисляет правки словами.</p>
-<figure><img src="../help/img/office-03-work-edit.png" loading="lazy" alt="Раскрытая форма правки работы" onerror="this.style.display='none'"><figcaption>Правка: название, даты, «Начинается после»</figcaption></figure>
+<figure><img src="../help/img/office-03-work-edit.png" loading="lazy" alt="Правленая строка подсвечена жёлтым" onerror="this.style.display='none'"><figcaption>Правленая строка становится жёлтой</figcaption></figure>
+<figure><img src="../help/img/office-03b-changes.png" loading="lazy" alt="Блок «Что уйдёт при сохранении»" onerror="this.style.display='none'"><figcaption>«Что изменится» перечисляет правки словами</figcaption></figure>
 </div>
 
 <div class="help-step" id="of-s4">
@@ -571,7 +592,9 @@ tr.row-archived td input,tr.row-archived td select{
   <li><strong>Вернуть из архива:</strong> нажмите «Показать архив» в конце
     таблицы → «↩ Вернуть» у нужной работы.</li>
 </ul>
-<figure><img src="../help/img/office-04-archive.png" loading="lazy" alt="Кнопки «+ Работа» и «× Убрать»" onerror="this.style.display='none'"><figcaption>Добавить, убрать в архив, вернуть</figcaption></figure>
+<figure><img src="../help/img/office-04b-add-work.png" loading="lazy" alt="Кнопки «+ Добавить работу»" onerror="this.style.display='none'"><figcaption>Добавить работу — в конце таблицы</figcaption></figure>
+<figure><img src="../help/img/office-04-archive.png" loading="lazy" alt="Кнопка «Показать архив»" onerror="this.style.display='none'"><figcaption>«Показать архив» — убранные работы становятся видны серой строкой</figcaption></figure>
+<figure><img src="../help/img/office-04c-restore.png" loading="lazy" alt="Кнопка «Вернуть» у архивной работы" onerror="this.style.display='none'"><figcaption>«Вернуть» возвращает работу в план</figcaption></figure>
 </div>
 
 <div class="help-step" id="of-s5">
@@ -583,13 +606,15 @@ tr.row-archived td input,tr.row-archived td select{
 <p>Если загрузили не тот файл — нажмите <strong>«Отменить последнее
 обновление»</strong> в том же блоке.</p>
 <figure><img src="../help/img/office-05-upload.png" loading="lazy" alt="Форма загрузки Excel" onerror="this.style.display='none'"><figcaption>Загрузите файл — план обновится за 5–10 минут</figcaption></figure>
-<figure><img src="../help/img/office-06-last-update.png" loading="lazy" alt="Блок «Последнее обновление графика»" onerror="this.style.display='none'"><figcaption>Блок показывает, что изменилось</figcaption></figure>
+<figure><img src="../help/img/office-06-last-update.png" loading="lazy" alt="Блок «Последнее обновление графика»" onerror="this.style.display='none'"><figcaption>Блок показывает, что сдвинулось, что добавилось, что ушло в архив</figcaption></figure>
+<figure><img src="../help/img/office-06b-rollback.png" loading="lazy" alt="Кнопка «Отменить последнее обновление»" onerror="this.style.display='none'"><figcaption>Загрузили не тот файл — «Отменить последнее обновление»</figcaption></figure>
 </div>
 
 <div class="help-step" id="of-s6">
 <p><strong>6. Скачать график (Excel)</strong> — кнопка в панели инструментов.
 Это актуальный файл со свежими датами для печати на стену площадки после
 планёрки во вторник.</p>
+<figure><img src="../help/img/office-10-excel.png" loading="lazy" alt="Кнопка «Скачать график (Excel)» в редакторе" onerror="this.style.display='none'"><figcaption>«Скачать график (Excel)» — в панели редактора</figcaption></figure>
 </div>
 
 <div class="help-step" id="of-s7">
@@ -651,7 +676,8 @@ tr.row-archived td input,tr.row-archived td select{
 связаны — измените любое), «Начинается после».</p>
 <p>Изменённая строка жёлтая, добавленная — голубая. Блок
 <strong>«Что изменится»</strong> перечисляет правки словами.</p>
-<figure><img src="../help/img/office-03-work-edit.png" loading="lazy" alt="Раскрытая форма правки работы" onerror="this.style.display='none'"><figcaption>Правка: название, даты, «Начинается после»</figcaption></figure>
+<figure><img src="../help/img/office-03-work-edit.png" loading="lazy" alt="Правленая строка подсвечена жёлтым" onerror="this.style.display='none'"><figcaption>Правленая строка становится жёлтой</figcaption></figure>
+<figure><img src="../help/img/office-03b-changes.png" loading="lazy" alt="Блок «Что уйдёт при сохранении»" onerror="this.style.display='none'"><figcaption>«Что изменится» перечисляет правки словами</figcaption></figure>
 </div>
 
 <div class="help-step" id="of-s4">
@@ -663,7 +689,9 @@ tr.row-archived td input,tr.row-archived td select{
   <li><strong>Вернуть из архива:</strong> нажмите «Показать архив» в конце
     таблицы → «↩ Вернуть» у нужной работы.</li>
 </ul>
-<figure><img src="../help/img/office-04-archive.png" loading="lazy" alt="Кнопки «+ Работа» и «× Убрать»" onerror="this.style.display='none'"><figcaption>Добавить, убрать в архив, вернуть</figcaption></figure>
+<figure><img src="../help/img/office-04b-add-work.png" loading="lazy" alt="Кнопки «+ Добавить работу»" onerror="this.style.display='none'"><figcaption>Добавить работу — в конце таблицы</figcaption></figure>
+<figure><img src="../help/img/office-04-archive.png" loading="lazy" alt="Кнопка «Показать архив»" onerror="this.style.display='none'"><figcaption>«Показать архив» — убранные работы становятся видны серой строкой</figcaption></figure>
+<figure><img src="../help/img/office-04c-restore.png" loading="lazy" alt="Кнопка «Вернуть» у архивной работы" onerror="this.style.display='none'"><figcaption>«Вернуть» возвращает работу в план</figcaption></figure>
 </div>
 
 <div class="help-step" id="of-s5">
@@ -675,13 +703,15 @@ tr.row-archived td input,tr.row-archived td select{
 <p>Если загрузили не тот файл — нажмите <strong>«Отменить последнее
 обновление»</strong> в том же блоке.</p>
 <figure><img src="../help/img/office-05-upload.png" loading="lazy" alt="Форма загрузки Excel" onerror="this.style.display='none'"><figcaption>Загрузите файл — план обновится за 5–10 минут</figcaption></figure>
-<figure><img src="../help/img/office-06-last-update.png" loading="lazy" alt="Блок «Последнее обновление графика»" onerror="this.style.display='none'"><figcaption>Блок показывает, что изменилось</figcaption></figure>
+<figure><img src="../help/img/office-06-last-update.png" loading="lazy" alt="Блок «Последнее обновление графика»" onerror="this.style.display='none'"><figcaption>Блок показывает, что сдвинулось, что добавилось, что ушло в архив</figcaption></figure>
+<figure><img src="../help/img/office-06b-rollback.png" loading="lazy" alt="Кнопка «Отменить последнее обновление»" onerror="this.style.display='none'"><figcaption>Загрузили не тот файл — «Отменить последнее обновление»</figcaption></figure>
 </div>
 
 <div class="help-step" id="of-s6">
 <p><strong>6. Скачать график (Excel)</strong> — кнопка в панели инструментов.
 Это актуальный файл со свежими датами для печати на стену площадки после
 планёрки во вторник.</p>
+<figure><img src="../help/img/office-10-excel.png" loading="lazy" alt="Кнопка «Скачать график (Excel)» в редакторе" onerror="this.style.display='none'"><figcaption>«Скачать график (Excel)» — в панели редактора</figcaption></figure>
 </div>
 
 <div class="help-step" id="of-s7">
@@ -711,6 +741,7 @@ tr.row-archived td input,tr.row-archived td select{
 <p style="font-size:15px;margin:0 0 16px">На главной странице — ниже списка
 объектов. Виден только директору: здесь персональные ссылки, которые нельзя
 публиковать открыто.</p>
+<figure><img src="../help/img/dir-00-people-block.png" loading="lazy" alt="Раздел «Сотрудники» на главной странице" onerror="this.style.display='none'"><figcaption>Раздел «Сотрудники» — ниже списка объектов</figcaption></figure>
 
 <div class="help-step" id="dir-s1">
 <p><strong>Добавить сотрудника.</strong></p>
@@ -736,13 +767,21 @@ tr.row-archived td input,tr.row-archived td select{
 <div class="help-step" id="dir-s3">
 <p><strong>Изменить объекты начальника участка.</strong> Кнопка
 <strong>«Изменить объекты»</strong> в строке — введите через запятую новый список
-кодов.</p>
+кодов. Кнопка есть только у начальников участков: офис и директор и так видят
+все объекты.</p>
 </div>
 
 <div class="help-step" id="dir-s4">
 <p><strong>Отозвать доступ.</strong> Кнопка <strong>«Отозвать доступ»</strong>
 в строке, затем подтверждение. Через 5–10 минут ссылка перестанет работать.
 Запись остаётся серой строкой в истории.</p>
+</div>
+
+<div class="help-step" id="dir-s5">
+<p><strong>Своя инструкция у каждого.</strong> Кнопка <strong>«?»</strong> есть на
+каждой странице, и открывает она инструкцию того уровня, с которым человек вошёл.
+У вас видны все три — переключайтесь вкладками наверху.</p>
+<figure><img src="../help/img/dir-03-help-tabs.png" loading="lazy" alt="Вкладки инструкции у директора" onerror="this.style.display='none'"><figcaption>Вкладки: начальник участка, сотрудник офиса, директор</figcaption></figure>
 </div>
 
 <div class="help-h3" id="dir-rhythm">Недельный ритм</div>
