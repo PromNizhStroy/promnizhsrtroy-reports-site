@@ -183,6 +183,35 @@ a:hover{text-decoration:underline}
 хватает — напишите об этом в форме отчёта, в поле «Замечания к списку работ».</p>
 </div>
 
+
+<div class="np-block" id="npBlock" hidden>
+<h2>Новый проект</h2>
+<form class="np-form" id="npForm" novalidate>
+  <label for="npName">Название проекта <span class="req">*</span></label>
+  <input id="npName" type="text" placeholder="Как в шапке графика ПТО" autocomplete="off">
+  <p class="np-hint">Введите название точно так, как оно написано в шапке графика ПТО</p>
+  <label for="npInternal">Внутреннее название</label>
+  <input id="npInternal" type="text" placeholder="Сокращение или пометка" autocomplete="off">
+  <label for="npContract">Номер договора</label>
+  <input id="npContract" type="text" autocomplete="off">
+  <label for="npSiteHeadSel">Начальник участка</label>
+  <select id="npSiteHeadSel">
+    <option value="">— не указан —</option>
+    <option value="p-001">Мажоров А.В.</option>
+    <option value="__new__">Другой — ввести ФИО</option>
+  </select>
+  <div id="npNewHead" hidden>
+    <label for="npHeadFio">ФИО нового начальника участка</label>
+    <input id="npHeadFio" type="text" autocomplete="off">
+  </div>
+  <label for="npFile">График работ (Excel, необязательно)</label>
+  <input id="npFile" type="file" accept=".xls,.xlsx">
+  <p class="np-hint">Файл должен быть в формате .xls или .xlsx, не более 5 МБ</p>
+  <button type="submit" class="np-btn" id="npSubmit">Создать проект</button>
+</form>
+<div id="npResult" class="np-result" hidden></div>
+</div>
+
 <div id="peopleBlock">
   <h2>Сотрудники</h2>
   <p class="pp-note">Кому открыт доступ и по какой ссылке. Ссылка персональная:
@@ -239,35 +268,6 @@ a:hover{text-decoration:underline}
     <ul id="ppLog"></ul>
   </div>
 </div>
-
-<div class="np-block" id="npBlock" hidden>
-<h2>Новый проект</h2>
-<form class="np-form" id="npForm" novalidate>
-  <label for="npName">Название проекта <span class="req">*</span></label>
-  <input id="npName" type="text" placeholder="Как в шапке графика ПТО" autocomplete="off">
-  <p class="np-hint">Введите название точно так, как оно написано в шапке графика ПТО</p>
-  <label for="npInternal">Внутреннее название</label>
-  <input id="npInternal" type="text" placeholder="Сокращение или пометка" autocomplete="off">
-  <label for="npContract">Номер договора</label>
-  <input id="npContract" type="text" autocomplete="off">
-  <label for="npSiteHeadSel">Начальник участка</label>
-  <select id="npSiteHeadSel">
-    <option value="">— не указан —</option>
-    <option value="p-001">Мажоров А.В.</option>
-    <option value="__new__">Другой — ввести ФИО</option>
-  </select>
-  <div id="npNewHead" hidden>
-    <label for="npHeadFio">ФИО нового начальника участка</label>
-    <input id="npHeadFio" type="text" autocomplete="off">
-  </div>
-  <label for="npFile">График работ (Excel, необязательно)</label>
-  <input id="npFile" type="file" accept=".xls,.xlsx">
-  <p class="np-hint">Файл должен быть в формате .xls или .xlsx, не более 5 МБ</p>
-  <button type="submit" class="np-btn" id="npSubmit">Создать проект</button>
-</form>
-<div id="npResult" class="np-result" hidden></div>
-</div>
-
 </template>
 
 <div id="helpOverlay" role="dialog" aria-modal="true" aria-label="Инструкция">
