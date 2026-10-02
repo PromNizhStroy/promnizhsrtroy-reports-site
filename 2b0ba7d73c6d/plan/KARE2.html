@@ -348,6 +348,39 @@ input:focus,select:focus,textarea:focus{
     </div>
   </div>
 
+  <h2>Поручения</h2>
+  <p class="hint">
+    Кто что делает по объекту и к какому сроку. Начальник участка видит этот же
+    список в своей форме отчёта и переключает «сделать» ↔ «готово»;
+    <strong>«принято директором» ставится только здесь</strong>. Красная ячейка даты — срок прошёл, а
+    поручение всё ещё «сделать». Поручения уходят тем же «Сохранить план», что и
+    правки графика.
+  </p>
+  <div class="assign-bar">
+    <label class="lbl" for="assign-filter">Показывать</label>
+    <select id="assign-filter">
+      <option value="open" selected>«сделать» и «готово»</option>
+      <option value="сделать">только «сделать»</option>
+      <option value="готово">только «готово»</option>
+      <option value="принято директором">принятые директором</option>
+      <option value="all">все</option>
+    </select>
+    <button type="button" class="add-btn" id="addAssign">+ Поручение</button>
+  </div>
+  <table class="assign-table" id="assignTable">
+    <thead><tr>
+      <th>Поручение</th>
+      <th style="width:160px">Ответственный</th>
+      <th style="width:130px">Дедлайн</th>
+      <th style="width:175px">Статус</th>
+      <th style="width:240px">Комментарий</th>
+      <th style="width:34px"></th>
+    </tr></thead>
+    <tbody id="assignTbody"></tbody>
+  </table>
+  <p class="a-empty" id="assignEmpty" hidden>Поручений по этому объекту пока нет.</p>
+
+  <h2>Таблица работ</h2>
   <p class="hint">
     Правьте прямо в таблице. Жёлтая строка — изменённая, голубая — добавленная,
     серая — убранная в архив. «В архив» не удаляет работу: она исчезает из формы
@@ -380,38 +413,6 @@ input:focus,select:focus,textarea:focus{
     <button type="button" class="add-btn" id="addGroup">+ Добавить работу в новой группе</button>
     <button type="button" class="add-btn" id="toggleArchive">Показать архив</button>
   </div>
-
-  <h2>Поручения</h2>
-  <p class="hint">
-    Кто что делает по объекту и к какому сроку. Начальник участка видит этот же
-    список в своей форме отчёта и переключает «сделать» ↔ «готово»;
-    <strong>«принято директором» ставится только здесь</strong>. Красная ячейка даты — срок прошёл, а
-    поручение всё ещё «сделать». Поручения уходят тем же «Сохранить план», что и
-    правки графика.
-  </p>
-  <div class="assign-bar">
-    <label class="lbl" for="assign-filter">Показывать</label>
-    <select id="assign-filter">
-      <option value="open" selected>«сделать» и «готово»</option>
-      <option value="сделать">только «сделать»</option>
-      <option value="готово">только «готово»</option>
-      <option value="принято директором">принятые директором</option>
-      <option value="all">все</option>
-    </select>
-    <button type="button" class="add-btn" id="addAssign">+ Поручение</button>
-  </div>
-  <table class="assign-table" id="assignTable">
-    <thead><tr>
-      <th>Поручение</th>
-      <th style="width:160px">Ответственный</th>
-      <th style="width:130px">Дедлайн</th>
-      <th style="width:175px">Статус</th>
-      <th style="width:240px">Комментарий</th>
-      <th style="width:34px"></th>
-    </tr></thead>
-    <tbody id="assignTbody"></tbody>
-  </table>
-  <p class="a-empty" id="assignEmpty" hidden>Поручений по этому объекту пока нет.</p>
 
   <h2>Что уйдёт при сохранении</h2>
   <div class="changes-box" id="changesBox">Пока ничего не изменено.</div>
@@ -628,7 +629,7 @@ input:focus,select:focus,textarea:focus{
 </div>
 
 <div class="help-step" id="of-s7">
-<p><strong>7. Поручения.</strong> Раздел ниже таблицы работ. Отличие от формы
+<p><strong>7. Поручения.</strong> Раздел сразу под шапкой объекта, над таблицей работ. Отличие от формы
 НУ — здесь доступен статус <strong>«принято директором»</strong>: «готово»
 говорит исполнитель, принимает — Александр. Дедлайн и текст поручения из формы
 НУ правятся только здесь. Красная ячейка даты — срок прошёл.</p>
@@ -725,7 +726,7 @@ input:focus,select:focus,textarea:focus{
 </div>
 
 <div class="help-step" id="of-s7">
-<p><strong>7. Поручения.</strong> Раздел ниже таблицы работ. Отличие от формы
+<p><strong>7. Поручения.</strong> Раздел сразу под шапкой объекта, над таблицей работ. Отличие от формы
 НУ — здесь доступен статус <strong>«принято директором»</strong>: «готово»
 говорит исполнитель, принимает — Александр. Дедлайн и текст поручения из формы
 НУ правятся только здесь. Красная ячейка даты — срок прошёл.</p>
