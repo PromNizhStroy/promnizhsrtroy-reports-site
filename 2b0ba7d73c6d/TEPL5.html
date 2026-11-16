@@ -466,7 +466,7 @@ tr.row-explained td{border-color:var(--green-border)}
     <div class="span2"><label>Объект</label>
       <input type="text" id="f-object" value="Тепляк - этап №5"></div>
     <div><label>Внутреннее название</label>
-      <input type="text" id="f-internal-name" value="КЖ1"></div>
+      <input type="text" id="f-internal-name" value="Тепляк - этап №5 46602-5-14-КЖ1"></div>
     <div><label>Договор №</label>
       <input type="text" id="f-contract" value="№31-07/2026"></div>
     <div><label>Захватки / оси</label>
@@ -1046,7 +1046,7 @@ const SITE_HEAD = "p-001";
 const LAST_REPORT_BAKED = "";
 // Состояние, с которым страница собрана: план из хранилища и шапка. К нему
 // возвращает resetForm() — при переключении недели и по кнопке «Очистить».
-const DEFAULTS = {"object": "Тепляк - этап №5", "internal_name": "КЖ1", "contract": "№31-07/2026", "zahvatki": "", "author": ""};
+const DEFAULTS = {"object": "Тепляк - этап №5", "internal_name": "Тепляк - этап №5 46602-5-14-КЖ1", "contract": "№31-07/2026", "zahvatki": "", "author": ""};
 const TODAY = isoLocal(new Date());
 // Версия формата черновика. Растёт, когда меняется то, как черновик разложен;
 // черновик прежней версии не подставляется, а стирается с плашкой — иначе
@@ -1081,7 +1081,7 @@ const AUTH_ENTRIES = [{"p": "p-001", "n": "Мажоров А.В.", "r": "site_he
 // Журнал изменений объекта — закрытый раздел: соль, шифртекст и обёртки ключа
 // по хэшам персональных ключей. Ни фамилий, ни правок открытым текстом здесь
 // нет. См. tools/weekly/section_crypto.py.
-const JOURNAL_SECTION = {"purpose": "journal:TEPL5", "salt": "2b0ba7d73c6d|journal:TEPL5", "data": {"v": 1, "alg": "A256GCM", "iv": "s8KG6NhqKSctquTQ", "ct": "+Bfypn/VivyS0WNvJNQxs+QCwYBxaOEh+V69xEFzNtJFo+uAWD6IbVrYXk4YOXp1QlsiXZJLp9xpyFH3xP0yEFjW+yVzNyhZx7DD1Hs9UfC8wYXfWOET7xnUIxYMDUYLqsFB9+EweMTrg7ntI2d9keZlkWy5QOx5WxfDJaFRiEfnVmo8czigufxUhcPlh1sC6x1sKfl3et2i7/JA1pyOWF9p4weEYc8tA4W6YuT9XsTtT1vpWRjEJiYBujCx8L1FpLUcJZiXwXqbLQ6k8GcmwK85BMzNAmgIk4MyUGiJrIDfK57qTxRoRoQSpjZ/F7gx48F1YfiVBJUtEm/xjnY1I358OYmWOj7hVAas+saguCVSZTu75OmNBm0d1l8f2Lnu7pbBfvV0ghNijMX1LGHp7UcEFNbhyHJ8dWOJLBl1Z0NxUsqTdbnthWtZzO+som/5zcDblPfb+lSHu1/PkUzUDZoWU5N5vmhnF6MWtoBtAJ91Emu1DW7H36WGALAFEkAos+bV6VmsB70="}, "wraps": [{"h": "8f53e2cbcc1f2b99d1a1d77738aded237790a9c29363ed541c69d33a06d5487a", "iv": "3JNjJJJGj6RDIKGS", "ct": "sqwg+9xoVd3k9O5/bXGaqO54sijKEctt72DnISG9UxRAretOLgW+KocFr014z14Z"}, {"h": "1472176cf0c5ddeaf1a5df30f6a1f075d48f82191878c2242ded07d296ba4274", "iv": "/vajSoZToGqHDH6T", "ct": "ww8WODCOtp7WGxDfQoffXFv+VHtfp6CfAZBTqRSJfjvaqY/xD3ZA7n01Mrk/dbZO"}, {"h": "3c2b05bc8ae4896d025ab2b1bb6003e096909ae478a33c94e62990c2b683bab1", "iv": "1UpvmR0lgBUXS0co", "ct": "itTKxRUuXhtOq8+hZacGRiiOrAih893IqqEoCb7jBj21ipyPO2XBoTx7w83nUblz"}, {"h": "ff64f204565e6c07a7817bec33caa5fca86a299c8f830dfc6c35aeb7cc50a978", "iv": "3eALWUiWU+oW1j9J", "ct": "k+9tHPizOF1/yWtIrCziaXCZnw3NoEOG9hEhKRSHf9weC7kIsPq0/R6f4cJELYg/"}, {"h": "cfef5e1a5dcb339bb38ffe6acaf1b795fe7b70a1f5ea6807dabbe06c05ae4c12", "iv": "i3Qj7C61vdkpp8QQ", "ct": "D1fAQ2C59GGb4UpioHXVynK3EAGcjvhMy2Ut82aITUCFl9rMIavMu1GNytOyMpQn"}]};
+const JOURNAL_SECTION = {"purpose": "journal:TEPL5", "salt": "2b0ba7d73c6d|journal:TEPL5", "data": {"v": 1, "alg": "A256GCM", "iv": "Saxi7IrVBvh9FvHF", "ct": "XAUBsJm9hANnaSSCoKbaIrfaUm+yc22joOzTXS4JPoYa2O8x+phLN9PYQEXaKOuWUg77bb5HRmq36u9kwdPZiMnLSZvcAJ4GZ5o+tc8Dr2wdkORRZqWk8ajxTkun1eiyU/BbgboiwWjN/leJIMRQqIUTlwWdKwegWq7irCHtnnBCMQh2jZ/6d3P/mopKQObl8B9sZIHVveeC/O31LbKt40MtO74EdSK8ccdbOaC/PphcX9CEaBDuzUjMenWrHJczHpEtMb9kCe44+Yb2b6Msk6MQKXNDLQJDuQxNHjg9kDRj9seixzL7tTF9YcIR3UuZo3qhyYawNSnV5cP8Lc9A7Q/HL7zlcaxOE55/tV6bLEN3qKkmKFnYRxYhQuC7pe3aya1EZwlNKjhd37QgyV27HRQsfkykw693EyxRx4cqTmhn+5KP+hUlh8p7FsBzRshmBkOA+ue+fj3yxbjg22faO4a0dGnYufKtUdkagBbjMhI1nvPy+xcLAEi2TIRUqgr8tAgJ0Nd5gOY0kVoxCZf7qlLum6lWf59/Otji9t7WYNn3UgO3f84u4lenO/nkfDNfK8PLMafN4SLwhmGLQ/c+SBimsVFW1O/Q///8/1NKsR018hDeykWUICJdjxqSeGQv59l02IsoLKJsR0l9hFCELJr4BRg29mSk4y3keJF39QCzk8eCRXT0+XlrKqXq1x+6mhDobF7ESZRhe8vL1WFdPk54eHSlCxfHNf4bBN3k4RvT2E9dNuhDJITiIuSfvseldsAcRw4uVT0KpqRuG9FOT2BqIa5PP9Mx7SgFzHBymUylIoYk0ti96tfhSU1tMals7hxF+Uo1c8ASUnMLhIhxRddNHxMj18dxGxs1xg6pzNl704L6IL//qVzxb7eC4D1kF5lyFb7p4KvtsvV2CYOE6N4bNzMr+f2/F9My0iUjQ/jDk12aK+Z1syj/th1q5kztwwFgZK1zIIRaGE5ds2ipq0F4j/15d9Ev/Ef6r8kWHlYciBI+1jM="}, "wraps": [{"h": "8f53e2cbcc1f2b99d1a1d77738aded237790a9c29363ed541c69d33a06d5487a", "iv": "3JNjJJJGj6RDIKGS", "ct": "sqwg+9xoVd3k9O5/bXGaqO54sijKEctt72DnISG9UxRAretOLgW+KocFr014z14Z"}, {"h": "1472176cf0c5ddeaf1a5df30f6a1f075d48f82191878c2242ded07d296ba4274", "iv": "/vajSoZToGqHDH6T", "ct": "ww8WODCOtp7WGxDfQoffXFv+VHtfp6CfAZBTqRSJfjvaqY/xD3ZA7n01Mrk/dbZO"}, {"h": "3c2b05bc8ae4896d025ab2b1bb6003e096909ae478a33c94e62990c2b683bab1", "iv": "1UpvmR0lgBUXS0co", "ct": "itTKxRUuXhtOq8+hZacGRiiOrAih893IqqEoCb7jBj21ipyPO2XBoTx7w83nUblz"}, {"h": "ff64f204565e6c07a7817bec33caa5fca86a299c8f830dfc6c35aeb7cc50a978", "iv": "3eALWUiWU+oW1j9J", "ct": "k+9tHPizOF1/yWtIrCziaXCZnw3NoEOG9hEhKRSHf9weC7kIsPq0/R6f4cJELYg/"}, {"h": "cfef5e1a5dcb339bb38ffe6acaf1b795fe7b70a1f5ea6807dabbe06c05ae4c12", "iv": "i3Qj7C61vdkpp8QQ", "ct": "D1fAQ2C59GGb4UpioHXVynK3EAGcjvhMy2Ut82aITUCFl9rMIavMu1GNytOyMpQn"}]};
 // Запись реестра, по чьей ссылке открыта страница. До проверки — null, и
 // тогда ниже ничего не запускается.
 let WHO = null;
