@@ -95,6 +95,13 @@ a:hover{text-decoration:underline}
 .np-result{margin-top:12px;padding:10px 14px;border-radius:4px;font-size:14px}
 .np-result.ok{background:#e8f7ef;color:#1a6638;border:1px solid #a8dbb5}
 .np-result.err{background:#fdf0f0;color:#9b1c1c;border:1px solid #f5b7b7}
+.np-status{margin-top:22px}
+.np-status h3{font-size:14px;color:#143b42;margin:0 0 6px}
+.np-status table{border-collapse:collapse;width:100%;font-size:13px}
+.np-status td{border-top:1px solid #e3e8ee;padding:6px 8px 6px 0;vertical-align:top}
+.np-status .st-ok{color:#1a6638;font-weight:bold}
+.np-status .st-err{color:#9b1c1c;font-weight:bold}
+.np-status .st-note{color:#667281}
 
 
 /* ── Кнопка «Инструкция» на формах ─────────────────────────────────────── */
@@ -210,6 +217,7 @@ a:hover{text-decoration:underline}
   <button type="submit" class="np-btn" id="npSubmit">Создать проект</button>
 </form>
 <div id="npResult" class="np-result" hidden></div>
+<div id="npStatus" class="np-status" hidden></div>
 </div>
 
 <div id="peopleBlock">
@@ -498,7 +506,8 @@ a:hover{text-decoration:underline}
 <p><strong>9. Новый проект.</strong> На главной странице — блок
 <strong>«Новый проект»</strong>. Заполните название, договор, начальника участка
 и прикрепите Excel-график (если есть). Нажмите «Создать проект». Через 5–10 минут
-объект появится в списке.</p>
+обновите страницу: объект появится в списке, а ниже формы, в «Последних заявках», —
+итог: создан и с каким кодом, загрузился ли график, или почему не создан.</p>
 <figure><img src="help/img/office-09-new-project.png" loading="lazy" alt="Форма «Новый проект»" onerror="this.style.display='none'"><figcaption>Создать проект: название, договор, НУ, график</figcaption></figure>
 </div></div>
   <div id="helpSectionDirector" class="help-section"><div class="help-toc">
@@ -595,7 +604,8 @@ a:hover{text-decoration:underline}
 <p><strong>9. Новый проект.</strong> На главной странице — блок
 <strong>«Новый проект»</strong>. Заполните название, договор, начальника участка
 и прикрепите Excel-график (если есть). Нажмите «Создать проект». Через 5–10 минут
-объект появится в списке.</p>
+обновите страницу: объект появится в списке, а ниже формы, в «Последних заявках», —
+итог: создан и с каким кодом, загрузился ли график, или почему не создан.</p>
 <figure><img src="help/img/office-09-new-project.png" loading="lazy" alt="Форма «Новый проект»" onerror="this.style.display='none'"><figcaption>Создать проект: название, договор, НУ, график</figcaption></figure>
 </div>
 
@@ -682,6 +692,8 @@ const AUTH_ENTRIES = [{"p": "p-001", "n": "Мажоров А.В.", "r": "site_he
 const PEOPLE_SECTION = {"purpose": "people", "salt": "2b0ba7d73c6d|people", "data": {"v": 1, "alg": "A256GCM", "iv": "9cT21HJqkWNyqngm", "ct": "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"}, "wraps": [{"h": "1472176cf0c5ddeaf1a5df30f6a1f075d48f82191878c2242ded07d296ba4274", "iv": "B4QwM5kR2natkpaj", "ct": "v45K6bLQCVxSsjjTM8mzZM/C7tCzWQxW438fcDjiAr/bNoIj+gaXINvsXV5Ca1HU"}, {"h": "ff64f204565e6c07a7817bec33caa5fca86a299c8f830dfc6c35aeb7cc50a978", "iv": "3e1U4Nd9MX8NFO3F", "ct": "HOYP5hMumxOE4lsU2QtPbhfpsT65o/J9PBde9a7VAS1Ubdp93qFBU2oLuSSjwX+M"}]};
 const PP_SITE_BASE = "https://PromNizhStroy.github.io/promnizhsrtroy-reports-site/2b0ba7d73c6d/";
 const PP_OBJECT_CODES = ["KARE2", "KZH5", "TEPL5"];
+// Итоги последних заявок «Новый проект» (без ФИО) — блок «Последние заявки».
+const NP_STATUS = [];
 let WHO = null;
 
 const GH_OWNER  = "PromNizhStroy";
@@ -1413,6 +1425,33 @@ function npSetup(who) {
 
   const form = document.getElementById('npForm');
   if (form) form.addEventListener('submit', async e => { e.preventDefault(); await npSubmit(who); });
+  npRenderStatus(typeof NP_STATUS !== 'undefined' ? NP_STATUS : []);
+}
+
+// «Последние заявки»: что стало с отправленным. Без этого отказ видел только
+// лог на мини — уведомления выключены, и 16.11 и 23.11 заявки молча пропали.
+function npStatusText(s) {
+  const esc = t => String(t === null || t === undefined ? '' : t)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const at = String(s.at || '');
+  const when = at.length >= 16 ? at.slice(8, 10) + '.' + at.slice(5, 7) + ' ' + at.slice(11, 16) : esc(at);
+  const title = esc(s.name || '—') + (s.internal_name ? ' <span class="st-note">(' + esc(s.internal_name) + ')</span>' : '');
+  let res;
+  if (s.status === 'created') {
+    res = '<span class="st-ok">создан' + (s.code ? ' — ' + esc(s.code) : '') + '</span>' +
+          (s.approved ? ' <span class="st-note">(одобрено администратором)</span>' : '') +
+          (s.schedule ? '<br><span class="st-note">' + esc(s.schedule) + '</span>' : '');
+  } else {
+    res = '<span class="st-err">не создан</span><br><span class="st-note">' + esc(s.reason || '') + '</span>';
+  }
+  return '<tr><td>' + when + '</td><td>' + title + '</td><td>' + res + '</td></tr>';
+}
+
+function npRenderStatus(items) {
+  const box = document.getElementById('npStatus');
+  if (!box || !items || !items.length) return;
+  box.innerHTML = '<h3>Последние заявки</h3><table>' + items.map(npStatusText).join('') + '</table>';
+  box.hidden = false;
 }
 
 async function npReadFile(input) {
@@ -1492,7 +1531,8 @@ async function npSubmit(who) {
       const txt = await resp.text().catch(() => '');
       throw new Error('Ошибка GitHub (' + resp.status + ')' + (txt ? ': ' + txt.slice(0, 120) : ''));
     }
-    npShowResult('Проект отправлен. Появится в списке через 5–10 минут', true);
+    npShowResult('Проект отправлен. Через 5–10 минут обновите страницу: проект появится в ' +
+                 'списке, а итог заявки — в «Последних заявках» ниже', true);
     document.getElementById('npForm').reset();
     const newDiv = document.getElementById('npNewHead');
     if (newDiv) newDiv.hidden = true;
