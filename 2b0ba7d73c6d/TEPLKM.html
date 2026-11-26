@@ -466,7 +466,7 @@ tr.row-explained td{border-color:var(--green-border)}
     <div class="span2"><label>Объект</label>
       <input type="text" id="f-object" value="Тепляк"></div>
     <div><label>Внутреннее название</label>
-      <input type="text" id="f-internal-name" value="Тепляк - этап №5 46602-5-14-КМ"></div>
+      <input type="text" id="f-internal-name" value="Тепляк этап №5"></div>
     <div><label>Договор №</label>
       <input type="text" id="f-contract" value="№31-07/2026"></div>
     <div><label>Захватки / оси</label>
@@ -1043,12 +1043,12 @@ const WORKS = [{"unit": "т", "qty_plan": 75.0, "fact_start": null, "fact_finish
 // отдельно, в ASSIGN (см. блок «Поручения»), и сравниваются с этим списком.
 const ASSIGNMENTS = [];
 // Кого ставить ответственным у нового поручения по умолчанию.
-const SITE_HEAD = "p-001";
+const SITE_HEAD = "\u041c\u0430\u0436\u043e\u0440\u043e\u0432.\u0410.\u0412";
 // Дата последнего принятого отчёта на момент сборки страницы ('' — не было).
 const LAST_REPORT_BAKED = "";
 // Состояние, с которым страница собрана: план из хранилища и шапка. К нему
 // возвращает resetForm() — при переключении недели и по кнопке «Очистить».
-const DEFAULTS = {"object": "Тепляк", "internal_name": "Тепляк - этап №5 46602-5-14-КМ", "contract": "№31-07/2026", "zahvatki": "", "author": ""};
+const DEFAULTS = {"object": "Тепляк", "internal_name": "Тепляк этап №5", "contract": "№31-07/2026", "zahvatki": "", "author": ""};
 const TODAY = isoLocal(new Date());
 // Версия формата черновика. Растёт, когда меняется то, как черновик разложен;
 // черновик прежней версии не подставляется, а стирается с плашкой — иначе
@@ -1079,7 +1079,7 @@ const PUB_KEY_B64 = "MIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAmLVO5xLUbD/nHdt
 const KEY_ID      = "9f888f70f11bc7fc";
 // Таблица проверки персонального ключа: sha-256, роль и объекты. Самих ключей
 // здесь нет и быть не может — см. tools/weekly/people.py (auth_entries).
-const AUTH_ENTRIES = [{"p": "p-001", "n": "Мажоров А.В.", "r": "site_head", "o": ["KARE2", "KZH5", "TEPL5", "TEPL5AR", "TEPLKM"], "h": "8f53e2cbcc1f2b99d1a1d77738aded237790a9c29363ed541c69d33a06d5487a"}, {"p": "p-002", "n": "Медведев А.А.", "r": "director", "o": [], "h": "1472176cf0c5ddeaf1a5df30f6a1f075d48f82191878c2242ded07d296ba4274"}, {"p": "p-003", "n": "Елена Ивановна", "r": "office", "o": [], "h": "3c2b05bc8ae4896d025ab2b1bb6003e096909ae478a33c94e62990c2b683bab1"}, {"p": "p-004", "n": "Ефимов А.", "r": "director", "o": [], "h": "ff64f204565e6c07a7817bec33caa5fca86a299c8f830dfc6c35aeb7cc50a978"}, {"p": "p-005", "n": "Антон", "r": "office", "o": [], "h": "cfef5e1a5dcb339bb38ffe6acaf1b795fe7b70a1f5ea6807dabbe06c05ae4c12"}, {"p": "p-006", "n": "Спиридонова Ксения Валерьевна", "r": "office", "o": [], "h": "1851f6edfaaebb4cd616b9cde99b48ae28d8d5d084d9d30e612a14bc73db3ca6"}];
+const AUTH_ENTRIES = [{"p": "p-001", "n": "Мажоров А.В.", "r": "site_head", "o": ["KARE2", "KZH5", "TEPL5", "TEPL5AR", "TEPLKM", "OPERKZH"], "h": "8f53e2cbcc1f2b99d1a1d77738aded237790a9c29363ed541c69d33a06d5487a"}, {"p": "p-002", "n": "Медведев А.А.", "r": "director", "o": [], "h": "1472176cf0c5ddeaf1a5df30f6a1f075d48f82191878c2242ded07d296ba4274"}, {"p": "p-003", "n": "Елена Ивановна", "r": "office", "o": [], "h": "3c2b05bc8ae4896d025ab2b1bb6003e096909ae478a33c94e62990c2b683bab1"}, {"p": "p-004", "n": "Ефимов А.", "r": "director", "o": [], "h": "ff64f204565e6c07a7817bec33caa5fca86a299c8f830dfc6c35aeb7cc50a978"}, {"p": "p-005", "n": "Антон", "r": "office", "o": [], "h": "cfef5e1a5dcb339bb38ffe6acaf1b795fe7b70a1f5ea6807dabbe06c05ae4c12"}, {"p": "p-006", "n": "Спиридонова Ксения Валерьевна", "r": "office", "o": [], "h": "1851f6edfaaebb4cd616b9cde99b48ae28d8d5d084d9d30e612a14bc73db3ca6"}];
 // Журнал изменений объекта — закрытый раздел: соль, шифртекст и обёртки ключа
 // по хэшам персональных ключей. Ни фамилий, ни правок открытым текстом здесь
 // нет. См. tools/weekly/section_crypto.py.
